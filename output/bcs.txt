@@ -1,0 +1,17 @@
+“	pt_-_dqleft_le
+the	d_-_the_le
+food	n_-_mc_le
+is	v_prd_is_le
+wonderful	aj_-_i_le
+and	c_xp_and_le
+it	n_-_pr-it_le
+is	v_np_is_le
+a	d_-_sg-nmd_le
+lot	n_pp_c-gr-of_le
+of	p_np_ptcl-of_le
+fun	n_-_m-ns_le
+to	cm_vp_to_le
+be	v_prd_be_le
+here	n_-_ad-pl_le
+”	pt_-_dqright_le
+!	pt_-_bang_le
