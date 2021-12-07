@@ -1,0 +1,23 @@
+# packages in environment at /Users/olzama/anaconda3/envs/supertagging:
+#
+# Name                    Version                   Build  Channel
+ca-certificates           2021.10.26           hecd8cb5_2  
+certifi                   2021.10.8        py37hecd8cb5_0  
+decorator                 5.1.0              pyhd3eb1b0_0  
+libcxx                    12.0.0               h2f01273_0  
+libffi                    3.3                  hb1e8313_2  
+ncurses                   6.3                  hca72f7f_2  
+networkx                  2.3                        py_0  
+openssl                   1.1.1l               h9ed2024_0  
+penman                    1.1.0                    pypi_0    pypi
+pip                       21.2.2           py37hecd8cb5_0  
+progress                  1.5                      pypi_0    pypi
+pydelphin                 1.6.0                    pypi_0    pypi
+python                    3.7.11               h88f2d9e_0  
+readline                  8.1                  h9ed2024_0  
+setuptools                58.0.4           py37hecd8cb5_0  
+sqlite                    3.36.0               hce871da_0  
+tk                        8.6.11               h7bc2e8c_0  
+wheel                     0.37.0             pyhd3eb1b0_1  
+xz                        5.2.5                h1de35cc_0  
+zlib                      1.2.11               h1de35cc_3  
