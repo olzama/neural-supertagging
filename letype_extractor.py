@@ -1,11 +1,11 @@
 from delphin import tdl, itsdb
-import glob, os
+import glob, sys
 
 
 
-def parse_lexicons(lexicon_files):
+def parse_lexicons(lexicons):
     lextypes = {}  # mapping of lexical entry IDs to types
-    for lexicon in lexicon_files:
+    for lexicon in glob.iglob(lexicons+'**'):
         for event, obj, lineno in tdl.iterparse(lexicon):
             if event == 'TypeDefinition':
                 lextypes[obj.identifier] = obj.supertypes[0]  # assume exactly 1
@@ -44,6 +44,6 @@ def process_testsuites(testsuites,lextypes):
 
 
 if __name__ == "__main__":
-    lextypes = parse_lexicons(['/Users/olzama/Research/ERG/2020/lexicon.tdl','/Users/olzama/Research/ERG/2020/ple.tdl',
-                               '/Users/olzama/Research/ERG/2020/gle.tdl','/Users/olzama/Research/ERG/2020/lexicon-rbst.tdl'])
-    process_testsuites('/Users/olzama/Research/ERG/2020/tsdb/tag/', lextypes)
+    args = sys.argv[1:]
+    lextypes = parse_lexicons(args[0])
+    process_testsuites(args[1],lextypes)
