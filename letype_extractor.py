@@ -12,9 +12,8 @@ def parse_lexicons(lexicons):
     return lextypes
 
 def process_testsuites(testsuites,lextypes):
-    with open('./errors.txt', 'w') as logf:
+    with open('./log.txt', 'w') as logf:
         for testsuite in glob.iglob(testsuites+'**'):
-            log = ''
             try:
                 ts = itsdb.TestSuite(testsuite)
                 print("Processing " + ts.path.stem)
@@ -30,16 +29,16 @@ def process_testsuites(testsuites,lextypes):
                     result = response.result(0)
                     deriv = result.derivation()
                     for t in deriv.terminals():
-                        pairs.append((t.form, t._parent.entity))
+                        pairs.append((t.form, t.parent.entity))
                 else:
                     err = response['error'] if response['error'] else 'None'
-                    log += ts.path.stem + '\t' + str(response['i-id']) + '\t' + response['i-input'] + '\t' + err +'\n'
+                    logf.write(ts.path.stem + '\t' + str(response['i-id']) + '\t'
+                               + response['i-input'] + '\t' + err +'\n')
             with open('./output/'+ts.path.stem+'.txt', 'w') as f:
                 for form, entity in pairs:
                     letype = lextypes.get(entity, None)
                     str_pair = f'{form}\t{letype}'
                     f.write(str_pair+'\n')
-            logf.write(log+'\n')
 
 
 if __name__ == "__main__":
