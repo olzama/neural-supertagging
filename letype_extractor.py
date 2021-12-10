@@ -12,7 +12,7 @@ class LexTypeExtractor:
             for event, obj, lineno in tdl.iterparse(lexicon):
                 if event == 'TypeDefinition':
                     lextypes[obj.identifier] = obj.supertypes[0]  # assume exactly 1
-        return lextypes
+        self.lextypes = lextypes
 
     def process_testsuites(self,testsuites,lextypes):
         with open('./log.txt', 'w') as logf:
@@ -56,9 +56,9 @@ class LexTypeExtractor:
 if __name__ == "__main__":
     args = sys.argv[1:]
     le = LexTypeExtractor()
-    lextypes = le.parse_lexicons(args[0])
-    le.stats['total lextypes'] = len(lextypes)
-    le.process_testsuites(args[1],lextypes)
+    le.parse_lexicons(args[0])
+    le.stats['total lextypes'] = len(le.lextypes)
+    le.process_testsuites(args[1],le.lextypes)
     with open('stats.txt','w') as f:
         for c in le.stats['corpora']:
             for item in c:
