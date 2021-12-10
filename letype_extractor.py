@@ -48,8 +48,6 @@ def process_testsuites(testsuites,lextypes,stats):
                     str_pair = f'{form}\t{letype}'
                     f.write(str_pair+'\n')
 
-            break
-
 if __name__ == "__main__":
     args = sys.argv[1:]
     stats = {'corpora': [], 'failed corpora': [], 'tokens': {}, 'total lextypes': 0}
