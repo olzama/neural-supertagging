@@ -65,7 +65,7 @@ if __name__ == "__main__":
                 f.write(str(item) + ': ' + str(c[item]) + '\n')
         f.write('Failed to load corpora:' + str(len(le.stats['failed corpora'])) + '\n')
         for fc in le.stats['failed corpora']:
-            f.write(fc + '\n')
+            f.write(fc['name'] + '\n')
         f.write('Total tokens in all corpora: ' + str(sum(le.stats['tokens'].values())) + '\n')
         f.write('Total unique tokens: ' + str(len(le.stats['tokens'])) + '\n')
         f.write('Total lextypes: ' + str(le.stats['total lextypes']) + '\n')
