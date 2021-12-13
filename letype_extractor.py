@@ -16,18 +16,18 @@ class LexTypeExtractor:
 
     def process_testsuites(self,testsuites,lextypes):
         with open('./log.txt', 'w') as logf:
-            for j,testsuite in enumerate(glob.iglob(testsuites+'**')):
+            for i,testsuite in enumerate(glob.iglob(testsuites+'**')):
                 try:
-                    num_items, no_parse = self.process_testsuite(j, lextypes, logf, testsuite)
-                    self.stats['corpora'][j]['items'] = num_items
-                    self.stats['corpora'][j]['noparse'] = no_parse
+                    num_items, no_parse = self.process_testsuite(lextypes, logf, testsuite)
+                    self.stats['corpora'][i]['items'] = num_items
+                    self.stats['corpora'][i]['noparse'] = no_parse
                 except:
                     print("ERROR: " + testsuite)
                     self.stats['failed corpora'].append({'name':testsuite})
                     self.stats['corpora'].append(None)
                     logf.write("TESTSUITE ERROR: " + testsuite + '\n')
 
-    def process_testsuite(self, i, lextypes, logf, tsuite):
+    def process_testsuite(self, lextypes, logf, tsuite):
         ts = itsdb.TestSuite(tsuite)
         print("Processing " + ts.path.stem)
         self.stats['corpora'].append({'name': ts.path.stem})
