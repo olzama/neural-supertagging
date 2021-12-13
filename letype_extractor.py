@@ -18,7 +18,9 @@ class LexTypeExtractor:
         with open('./log.txt', 'w') as logf:
             for j,testsuite in enumerate(glob.iglob(testsuites+'**')):
                 try:
-                    self.process_testsuite(j, lextypes, logf, testsuite)
+                    num_items, no_parse = self.process_testsuite(j, lextypes, logf, testsuite)
+                    self.stats['corpora'][j]['items'] = num_items
+                    self.stats['corpora'][j]['noparse'] = no_parse
                 except:
                     print("ERROR: " + testsuite)
                     self.stats['failed corpora'].append({'name':testsuite})
@@ -31,8 +33,7 @@ class LexTypeExtractor:
         self.stats['corpora'].append({'name': ts.path.stem})
         pairs = []
         items = list(ts.processed_items())
-        self.stats['corpora'][i]['items'] = len(items)
-        self.stats['corpora'][i]['noparse'] = 0
+        noparse = 0
         for j, response in enumerate(items):
             if len(response['results']) > 0:
                 if j % 100 == 0:
@@ -45,7 +46,7 @@ class LexTypeExtractor:
                     self.stats['tokens'][t.form] += 1
                     pairs.append((t.form, t.parent.entity))
             else:
-                self.stats['corpora'][i]['noparse'] += 1
+                noparse += 1
                 err = response['error'] if response['error'] else 'None'
                 logf.write(ts.path.stem + '\t' + str(response['i-id']) + '\t'
                            + response['i-input'] + '\t' + err + '\n')
@@ -54,6 +55,7 @@ class LexTypeExtractor:
                 letype = lextypes.get(entity, None)
                 str_pair = f'{form}\t{letype}'
                 f.write(str_pair + '\n')
+        return len(items), noparse
 
 
 if __name__ == "__main__":
@@ -64,6 +66,7 @@ if __name__ == "__main__":
     le.process_testsuites(args[1],le.lextypes)
     with open('stats.txt','w') as f:
         for c in le.stats['corpora']:
+            # This will print out the name of the corpus if the corpus was successfully loaded
             if c:
                 for item in c:
                     f.write(str(item) + ': ' + str(c[item]) + '\n')
