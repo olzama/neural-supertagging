@@ -18,40 +18,42 @@ class LexTypeExtractor:
         with open('./log.txt', 'w') as logf:
             for j,testsuite in enumerate(glob.iglob(testsuites+'**')):
                 try:
-                    ts = itsdb.TestSuite(testsuite)
-                    print("Processing " + ts.path.stem)
-                    self.stats['corpora'].append({'name': ts.path.stem})
-                    pairs = []
-                    items = list(ts.processed_items())
-                    self.stats['corpora'][j]['items'] = len(items)
-                    self.stats['corpora'][j]['noparse'] = 0
-                    for i, response in enumerate(items):
-                        if len(response['results']) > 0:
-                            if i % 100 == 0:
-                                print("Processing item {} out of {}...".format(i, len(items)))
-                            result = response.result(0)
-                            deriv = result.derivation()
-                            for t in deriv.terminals():
-                                if not t.form in self.stats['tokens']:
-                                    self.stats['tokens'][t.form] = 0
-                                self.stats['tokens'][t.form] += 1
-                                pairs.append((t.form, t.parent.entity))
-                        else:
-                            self.stats['corpora'][j]['noparse'] += 1
-                            err = response['error'] if response['error'] else 'None'
-                            logf.write(ts.path.stem + '\t' + str(response['i-id']) + '\t'
-                                       + response['i-input'] + '\t' + err + '\n')
-                    with open('./output/' + ts.path.stem + '.txt', 'w') as f:
-                        for form, entity in pairs:
-                            letype = lextypes.get(entity, None)
-                            str_pair = f'{form}\t{letype}'
-                            f.write(str_pair + '\n')
+                    self.process_testsuite(j, lextypes, logf, testsuite)
                 except:
                     print("ERROR: " + testsuite)
                     self.stats['failed corpora'].append({'name':testsuite})
                     self.stats['corpora'].append(None)
                     logf.write("TESTSUITE ERROR: " + testsuite + '\n')
 
+    def process_testsuite(self, i, lextypes, logf, tsuite):
+        ts = itsdb.TestSuite(tsuite)
+        print("Processing " + ts.path.stem)
+        self.stats['corpora'].append({'name': ts.path.stem})
+        pairs = []
+        items = list(ts.processed_items())
+        self.stats['corpora'][i]['items'] = len(items)
+        self.stats['corpora'][i]['noparse'] = 0
+        for j, response in enumerate(items):
+            if len(response['results']) > 0:
+                if j % 100 == 0:
+                    print("Processing item {} out of {}...".format(j, len(items)))
+                result = response.result(0)
+                deriv = result.derivation()
+                for t in deriv.terminals():
+                    if not t.form in self.stats['tokens']:
+                        self.stats['tokens'][t.form] = 0
+                    self.stats['tokens'][t.form] += 1
+                    pairs.append((t.form, t.parent.entity))
+            else:
+                self.stats['corpora'][i]['noparse'] += 1
+                err = response['error'] if response['error'] else 'None'
+                logf.write(ts.path.stem + '\t' + str(response['i-id']) + '\t'
+                           + response['i-input'] + '\t' + err + '\n')
+        with open('./output/' + ts.path.stem + '.txt', 'w') as f:
+            for form, entity in pairs:
+                letype = lextypes.get(entity, None)
+                str_pair = f'{form}\t{letype}'
+                f.write(str_pair + '\n')
 
 
 if __name__ == "__main__":
