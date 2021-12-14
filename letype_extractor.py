@@ -30,14 +30,15 @@ class LexTypeExtractor:
     def process_testsuite(self, lextypes, logf, tsuite):
         ts = itsdb.TestSuite(tsuite)
         print("Processing " + ts.path.stem)
+        logf.write("Processing " + ts.path.stem + '\n')
         self.stats['corpora'].append({'name': ts.path.stem})
         pairs = []
         items = list(ts.processed_items())
         noparse = 0
         for j, response in enumerate(items):
             if len(response['results']) > 0:
-                if j % 100 == 0:
-                    print("Processing item {} out of {}...".format(j, len(items)))
+                #if j % 100 == 0:
+                print("Processing item {} out of {}...".format(j, len(items)))
                 result = response.result(0)
                 deriv = result.derivation()
                 for t in deriv.terminals():
@@ -48,6 +49,7 @@ class LexTypeExtractor:
             else:
                 noparse += 1
                 err = response['error'] if response['error'] else 'None'
+                print('No parse for item {} out of {}'.format(j,len(items)))
                 logf.write(ts.path.stem + '\t' + str(response['i-id']) + '\t'
                            + response['i-input'] + '\t' + err + '\n')
         with open('./output/' + ts.path.stem + '.txt', 'w') as f:
