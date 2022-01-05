@@ -35,7 +35,8 @@ class LexTypeExtractor:
         logf.write("Processing " + ts.path.stem + '\n')
         self.stats['corpora'].append({'name': ts.path.stem})
         pairs = []
-        tag_windows = []
+        contexts = []
+        y = []
         items = list(ts.processed_items())
         noparse = 0
         for j, response in enumerate(items):
@@ -52,7 +53,8 @@ class LexTypeExtractor:
                         self.stats['tokens'][t] = 0
                     self.stats['tokens'][t] += 1
                     pairs.append((t, tags[k]))
-                    tag_windows.append(self.get_tag_window(t,tokens,tags,k,CONTEXT_WINDOW))
+                    y.append(tags[k])
+                    contexts.append(self.get_context(t,tokens,tags,k,CONTEXT_WINDOW))
 
             else:
                 noparse += 1
@@ -60,28 +62,36 @@ class LexTypeExtractor:
                 #print('No parse for item {} out of {}'.format(j,len(items)))
                 logf.write(ts.path.stem + '\t' + str(response['i-id']) + '\t'
                            + response['i-input'] + '\t' + err + '\n')
-        pathlib.Path('./output/simple/').mkdir(parents=True, exist_ok=True)
-        pathlib.Path('./output/contexts/').mkdir(parents=True, exist_ok=True)
-        with open('./output/simple/' + ts.path.stem + '-simple-seq.txt', 'w') as f:
-            for form, entity in pairs:
-                letype = lextypes.get(entity, None)
-                str_pair = f'{form}\t{letype}'
-                f.write(str_pair + '\n')
-        with open('./output/contexts/' + ts.path.stem + '-windows.txt', 'w') as f:
-            js = json.dumps(tag_windows)
-            f.write(js)
+        self.write_output(contexts, lextypes, pairs, ts)
         return len(items), noparse
 
-    def get_tag_window(self,t,tokens,tags,i,window):
-        tag_window = {'w':t,'tag':tags[i]}
+    def write_output(self, contexts, lextypes, pairs, ts):
+        pathlib.Path('./output/simple/').mkdir(parents=True, exist_ok=True)
+        pathlib.Path('./output/contexts/').mkdir(parents=True, exist_ok=True)
+        pathlib.Path('./output/true_labels/').mkdir(parents=True, exist_ok=True)
+        true_labels = []
+        with open('./output/simple/' + ts.path.stem, 'w') as f:
+            for form, entity in pairs:
+                letype = lextypes.get(entity, None)
+                true_labels.append(str(letype))
+                str_pair = f'{form}\t{letype}'
+                f.write(str_pair + '\n')
+        with open('./output/true_labels/' + ts.path.stem, 'w') as f:
+            for tl in true_labels:
+                f.write(tl + '\n')
+        with open('./output/contexts/' + ts.path.stem, 'w') as f:
+            f.write(json.dumps(contexts))
+
+    def get_context(self,t,tokens,tags,i,window):
+        context = {'w':t,'tag':tags[i]}
         for j in range(1,window+1):
             prev_tok = tokens[i-j]
             prev_tag = tags[i-j]
             next_tok = tokens[i+j]
-            tag_window['w-' + str(j)] = prev_tok
-            tag_window['w+' + str(j)] = next_tok
-            tag_window['tag-' + str(j)] = prev_tag
-        return tag_window
+            context['w-' + str(j)] = prev_tok
+            context['w+' + str(j)] = next_tok
+            context['tag-' + str(j)] = prev_tag
+        return context
 
     def get_tokens_tags(self, deriv, context_window):
         tokens = []
