@@ -1,5 +1,5 @@
 from delphin import tdl, itsdb
-import glob, sys
+import glob, sys, pathlib
 import json
 
 CONTEXT_WINDOW = 2
@@ -7,11 +7,6 @@ CONTEXT_WINDOW = 2
 class LexTypeExtractor:
     def __init__(self):
         self.stats = {'corpora': [], 'failed corpora': [], 'tokens': {}, 'total lextypes': 0}
-        #self.train_list = []
-        self.dev_list = ['ws212','ecpa']
-        self.test_list = ['cb','ecpr','jhk','jhu','tgk','tgu','psk','psu','rondane',
-                          'vm32','ws213','ws214','petet','wsj23']
-        self.ignore_list = ['ntucle','omw','wlb03','wnb03']
 
     def parse_lexicons(self,lexicons):
         lextypes = {}  # mapping of lexical entry IDs to types
@@ -65,12 +60,14 @@ class LexTypeExtractor:
                 #print('No parse for item {} out of {}'.format(j,len(items)))
                 logf.write(ts.path.stem + '\t' + str(response['i-id']) + '\t'
                            + response['i-input'] + '\t' + err + '\n')
-        with open('./output/' + ts.path.stem + '-simple-seq.txt', 'w') as f:
+        pathlib.Path('./output/simple/').mkdir(parents=True, exist_ok=True)
+        pathlib.Path('./output/contexts/').mkdir(parents=True, exist_ok=True)
+        with open('./output/simple/' + ts.path.stem + '-simple-seq.txt', 'w') as f:
             for form, entity in pairs:
                 letype = lextypes.get(entity, None)
                 str_pair = f'{form}\t{letype}'
                 f.write(str_pair + '\n')
-        with open('./output/' + ts.path.stem + '-windows.txt', 'w') as f:
+        with open('./output/contexts/' + ts.path.stem + '-windows.txt', 'w') as f:
             for window in tag_windows:
                 js = json.dumps(window)
                 f.write(js)
