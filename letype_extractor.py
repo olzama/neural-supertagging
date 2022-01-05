@@ -1,10 +1,17 @@
 from delphin import tdl, itsdb
 import glob, sys
+import json
 
+CONTEXT_WINDOW = 2
 
 class LexTypeExtractor:
     def __init__(self):
         self.stats = {'corpora': [], 'failed corpora': [], 'tokens': {}, 'total lextypes': 0}
+        #self.train_list = []
+        self.dev_list = ['ws212','ecpa']
+        self.test_list = ['cb','ecpr','jhk','jhu','tgk','tgu','psk','psu','rondane',
+                          'vm32','ws213','ws214','petet','wsj23']
+        self.ignore_list = ['ntucle','omw','wlb03','wnb03']
 
     def parse_lexicons(self,lexicons):
         lextypes = {}  # mapping of lexical entry IDs to types
@@ -33,31 +40,65 @@ class LexTypeExtractor:
         logf.write("Processing " + ts.path.stem + '\n')
         self.stats['corpora'].append({'name': ts.path.stem})
         pairs = []
+        tag_windows = []
         items = list(ts.processed_items())
         noparse = 0
         for j, response in enumerate(items):
             if len(response['results']) > 0:
-                #if j % 100 == 0:
-                print("Processing item {} out of {}...".format(j, len(items)))
+                if j % 100 == 0:
+                    print("Processing item {} out of {}...".format(j, len(items)))
                 result = response.result(0)
                 deriv = result.derivation()
-                for t in deriv.terminals():
-                    if not t.form in self.stats['tokens']:
-                        self.stats['tokens'][t.form] = 0
-                    self.stats['tokens'][t.form] += 1
-                    pairs.append((t.form, t.parent.entity))
+                tokens,tags = self.get_tokens_tags(deriv,CONTEXT_WINDOW)
+                for k, t in enumerate(tokens):
+                    if k < CONTEXT_WINDOW or k >= len(tokens) - CONTEXT_WINDOW:
+                        continue
+                    if not t in self.stats['tokens']:
+                        self.stats['tokens'][t] = 0
+                    self.stats['tokens'][t] += 1
+                    pairs.append((t, tags[k]))
+                    tag_windows.append(self.get_tag_window(t,tokens,tags,k,CONTEXT_WINDOW))
+
             else:
                 noparse += 1
                 err = response['error'] if response['error'] else 'None'
-                print('No parse for item {} out of {}'.format(j,len(items)))
+                #print('No parse for item {} out of {}'.format(j,len(items)))
                 logf.write(ts.path.stem + '\t' + str(response['i-id']) + '\t'
                            + response['i-input'] + '\t' + err + '\n')
-        with open('./output/' + ts.path.stem + '.txt', 'w') as f:
+        with open('./output/' + ts.path.stem + '-simple-seq.txt', 'w') as f:
             for form, entity in pairs:
                 letype = lextypes.get(entity, None)
                 str_pair = f'{form}\t{letype}'
                 f.write(str_pair + '\n')
+        with open('./output/' + ts.path.stem + '-windows.txt', 'w') as f:
+            for window in tag_windows:
+                js = json.dumps(window)
+                f.write(js)
         return len(items), noparse
+
+    def get_tag_window(self,t,tokens,tags,i,window):
+        tag_window = {'w':t,'tag':tags[i]}
+        for j in range(1,window+1):
+            prev_tok = tokens[i-j]
+            prev_tag = tags[i-j]
+            next_tok = tokens[i+j]
+            tag_window['w-' + str(j)] = prev_tok
+            tag_window['w+' + str(j)] = next_tok
+            tag_window['tag-' + str(j)] = prev_tag
+        return tag_window
+
+    def get_tokens_tags(self, deriv, context_window):
+        tokens = []
+        tags = []
+        for terminal in deriv.terminals():
+            tokens.append(terminal.form)
+            tags.append(terminal.parent.entity)
+        for i in range(1,1+context_window):
+            tokens.insert(0, 'FAKE-' + str(i))
+            tags.insert(0, 'FAKE-' + str(i))
+            tokens.append('FAKE+' + str(i))
+            tags.append('FAKE+' + str(i))
+        return tokens,tags
 
 
 if __name__ == "__main__":
