@@ -68,9 +68,8 @@ class LexTypeExtractor:
                 str_pair = f'{form}\t{letype}'
                 f.write(str_pair + '\n')
         with open('./output/contexts/' + ts.path.stem + '-windows.txt', 'w') as f:
-            for window in tag_windows:
-                js = json.dumps(window)
-                f.write(js)
+            js = json.dumps(tag_windows)
+            f.write(js)
         return len(items), noparse
 
     def get_tag_window(self,t,tokens,tags,i,window):
