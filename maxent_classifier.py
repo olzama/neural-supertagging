@@ -6,7 +6,7 @@
 
 import timeit
 import warnings
-import glob
+import glob, os
 import json
 
 import matplotlib.pyplot as plt
@@ -27,24 +27,33 @@ def read_data(path_X, path_Y):
     test_list = ['cb', 'ecpr', 'jhk', 'jhu', 'tgk', 'tgu', 'psk', 'psu', 'rondane',
                  'vm32', 'ws213', 'ws214', 'petet', 'wsj23']
     ignore_list = ['ntucle', 'omw', 'wlb03', 'wnb03']
+    skip_list = dev_list + test_list + ignore_list
     feature_dicts = []
-    for corpus in glob.iglob(path_X + 'mrs'):
-        with open(corpus,'r') as f:
-            fd = json.loads(f.read())
-        feature_dicts.append(fd)
-    for corpus in glob.iglob(path_Y + 'mrs'):
-        with open(corpus,'r') as f:
-            labels = f.readlines()
+    labels = []
+    for corpus in sorted(glob.iglob(path_X + 'wsj01')):
+        if os.path.basename(corpus) not in skip_list:
+            with open(corpus,'r') as f:
+                fd = json.loads(f.read())
+            feature_dicts.append(fd)
+    for corpus in sorted(glob.iglob(path_Y + 'wsj01')):
+        if os.path.basename(corpus) not in skip_list:
+            with open(corpus,'r') as f:
+                labels.append(f.readlines())
     return feature_dicts, labels
 
-def vectorize_data(word_feature_dicts):
+def vectorize_data(word_feature_dicts, word_labels):
     vectors = []
+    labels = []
     vec = DictVectorizer()
+    le = LabelEncoder()
     for fdl in word_feature_dicts:
         for fd in fdl:
             vectors.append(vec.fit_transform(fd))
     #fnames = vec.get_feature_names_out()
-    return vectors
+    for wl in word_labels:
+        le.fit(wl)
+        labels.append(le.transform(wl))
+    return vectors, labels
 
 solver = "saga"
 
@@ -52,16 +61,13 @@ solver = "saga"
 n_samples = 5000
 
 feature_dicts, true_labels = read_data('./output/contexts/', './output/true_labels/')
-X = vectorize_data(feature_dicts)
-le = LabelEncoder()
-le.fit(true_labels)
-y = le.transform(true_labels)
+#TODO: don't loop below; flatten out all the training data for training.
+X,y = vectorize_data(feature_dicts, true_labels)
 
 # X, y = fetch_20newsgroups_vectorized(subset="all", return_X_y=True)
 # X = X[:n_samples]
 # y = y[:n_samples]
 
-# TODO Next: use the actual train-test split and all the data, see if this kind of code works out of the box...
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, random_state=42, stratify=y, test_size=0.1
 )
