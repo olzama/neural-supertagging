@@ -34,8 +34,7 @@ print(
     % (train_samples, n_features, n_classes)
 )
 
-models = {
-    "ovr": {"name": "One versus Rest", "iters": [1, 2, 3]},
+models = { # "ovr": {"name": "One versus Rest", "iters": [1, 2, 3]},
     "multinomial": {"name": "Multinomial", "iters": [1, 2, 5]},
 }
 
@@ -74,10 +73,10 @@ for model in models:
     models[model]["densities"] = densities
     models[model]["accuracies"] = accuracies
     print("Test accuracy for model %s: %.4f" % (model, accuracies[-1]))
-    print(
-        "%% non-zero coefficients for model %s, per class:\n %s"
-        % (model, densities[-1])
-    )
+    # print(
+    #     "%% non-zero coefficients for model %s, per class:\n %s"
+    #     % (model, densities[-1])
+    # )
     print(
         "Run time (%i epochs) for model %s:%.2f"
         % (model_params["iters"][-1], model, times[-1])
