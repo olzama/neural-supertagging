@@ -4,6 +4,13 @@ import json
 
 CONTEXT_WINDOW = 2
 
+DEV = ['ws212', 'ecpa']
+TEST = ['cb', 'ecpr', 'jhk', 'jhu', 'tgk', 'tgu', 'psk', 'psu', 'rondane',
+             'vm32', 'ws213', 'ws214', 'petet', 'wsj23']
+IGNORE = ['ntucle', 'omw', 'wlb03', 'wnb03']
+NONTRAIN = DEV + TEST + IGNORE
+
+
 class LexTypeExtractor:
     def __init__(self):
         self.stats = {'corpora': [], 'failed corpora': [], 'tokens': {}, 'total lextypes': 0}
@@ -66,20 +73,27 @@ class LexTypeExtractor:
         return len(items), noparse
 
     def write_output(self, contexts, lextypes, pairs, ts):
-        pathlib.Path('./output/simple/').mkdir(parents=True, exist_ok=True)
-        pathlib.Path('./output/contexts/').mkdir(parents=True, exist_ok=True)
-        pathlib.Path('./output/true_labels/').mkdir(parents=True, exist_ok=True)
+        for d in ['train/','test/','dev/']:
+            for pd in ['simple/','contexts/','true_labels/']:
+                pathlib.Path('./output/' + pd + d).mkdir(parents=True, exist_ok=True)
         true_labels = []
-        with open('./output/simple/' + ts.path.stem, 'w') as f:
+        if not ts.path.stem in IGNORE:
+            if ts.path.stem in TEST:
+                suf = 'test/'
+            elif ts.path.stem in DEV:
+                suf = 'dev/'
+            else:
+                suf = 'train/'
+        with open('./output/simple/' + suf + ts.path.stem, 'w') as f:
             for form, entity in pairs:
                 letype = lextypes.get(entity, None)
                 true_labels.append(str(letype))
                 str_pair = f'{form}\t{letype}'
                 f.write(str_pair + '\n')
-        with open('./output/true_labels/' + ts.path.stem, 'w') as f:
+        with open('./output/true_labels/' + suf + ts.path.stem, 'w') as f:
             for tl in true_labels:
                 f.write(tl + '\n')
-        with open('./output/contexts/' + ts.path.stem, 'w') as f:
+        with open('./output/contexts/' + suf + ts.path.stem, 'w') as f:
             f.write(json.dumps(contexts))
 
     def get_context(self,t,tokens,tags,i,window):
