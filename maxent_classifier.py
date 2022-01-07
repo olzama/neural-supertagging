@@ -5,17 +5,29 @@ import warnings
 import matplotlib.pyplot as plt
 import numpy as np
 
-from sklearn.datasets import fetch_20newsgroups_vectorized
+#from sklearn.datasets import fetch_20newsgroups_vectorized
 from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import train_test_split
+#from sklearn.model_selection import train_test_split
 from sklearn.exceptions import ConvergenceWarning
+
+from vectorizer import read_data,vectorize_data
 
 warnings.filterwarnings("ignore", category=ConvergenceWarning, module="sklearn")
 t0 = timeit.default_timer()
 
 
+feature_dicts, true_labels, n_train = read_data('./output/contexts/', './output/true_labels/')
+X, Y = vectorize_data(feature_dicts,true_labels)
+X_train = X[:n_train]
+X_test = X[n_train:]
+Y_train = Y[:n_train]
+Y_test = Y[n_train:]
+
 # The below is from a code sample found here: https://scikit-learn.org/stable/auto_examples/linear_model/plot_sparse_logistic_regression_20newsgroups.html#sphx-glr-auto-examples-linear-model-plot-sparse-logistic-regression-20newsgroups-py
 # by Arthur Mensch
+
+# Turn down for faster run time
+# n_samples = 5000
 
 # X, y = fetch_20newsgroups_vectorized(subset="all", return_X_y=True)
 # X = X[:n_samples]
@@ -23,18 +35,17 @@ t0 = timeit.default_timer()
 
 solver = "saga"
 
-# Turn down for faster run time
-n_samples = 5000
 
 
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, random_state=42, stratify=y, test_size=0.1
-)
+#X_train, X_test, y_train, y_test = train_test_split(
+#    X, y, random_state=42, stratify=y, test_size=0.1
+#)
+
 train_samples, n_features = X_train.shape
-n_classes = np.unique(y).shape[0]
+n_classes = np.unique(Y).shape[0]
 
 print(
-    "Dataset 20newsgroup, train_samples=%i, n_features=%i, n_classes=%i"
+    "Dataset ERG treebanks, train_samples=%i, n_features=%i, n_classes=%i"
     % (train_samples, n_features, n_classes)
 )
 
@@ -65,11 +76,11 @@ for model in models:
             random_state=42,
         )
         t1 = timeit.default_timer()
-        lr.fit(X_train, y_train)
+        lr.fit(X_train, Y_train)
         train_time = timeit.default_timer() - t1
 
         y_pred = lr.predict(X_test)
-        accuracy = np.sum(y_pred == y_test) / y_test.shape[0]
+        accuracy = np.sum(y_pred == Y_test) / Y_test.shape[0]
         density = np.mean(lr.coef_ != 0, axis=1) * 100
         accuracies.append(accuracy)
         densities.append(density)
