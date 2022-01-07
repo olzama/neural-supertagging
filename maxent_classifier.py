@@ -1,69 +1,31 @@
 
-
-
-
-# Author: Arthur Mensch
-
 import timeit
 import warnings
-import glob, os
-import json
 
 import matplotlib.pyplot as plt
 import numpy as np
 
 from sklearn.datasets import fetch_20newsgroups_vectorized
-from sklearn.feature_extraction import DictVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.preprocessing import LabelEncoder
 
 warnings.filterwarnings("ignore", category=ConvergenceWarning, module="sklearn")
 t0 = timeit.default_timer()
 
-def read_data(path_X, path_Y):
-    dev_list = ['ws212', 'ecpa']
-    test_list = ['cb', 'ecpr', 'jhk', 'jhu', 'tgk', 'tgu', 'psk', 'psu', 'rondane',
-                 'vm32', 'ws213', 'ws214', 'petet', 'wsj23']
-    ignore_list = ['ntucle', 'omw', 'wlb03', 'wnb03']
-    skip_list = dev_list + test_list + ignore_list
-    feature_dicts = []
-    labels = []
-    for corpus in sorted(glob.iglob(path_X + 'wsj01')):
-        if os.path.basename(corpus) not in skip_list:
-            with open(corpus,'r') as f:
-                fd = json.loads(f.read())
-            for item in fd:
-                feature_dicts.append(item)
-    for corpus in sorted(glob.iglob(path_Y + 'wsj01')):
-        if os.path.basename(corpus) not in skip_list:
-            with open(corpus,'r') as f:
-                tls = f.readlines()
-            for tl in tls:
-                labels.append(tl)
-    return feature_dicts, labels
 
-def vectorize_data(word_feature_dicts, word_labels):
-    vec = DictVectorizer()
-    le = LabelEncoder()
-    vectors = vec.fit_transform(word_feature_dicts)
-    le.fit(word_labels)
-    labels = le.transform(word_labels)
-    return vectors, labels
+# The below is from a code sample found here: https://scikit-learn.org/stable/auto_examples/linear_model/plot_sparse_logistic_regression_20newsgroups.html#sphx-glr-auto-examples-linear-model-plot-sparse-logistic-regression-20newsgroups-py
+# by Arthur Mensch
+
+# X, y = fetch_20newsgroups_vectorized(subset="all", return_X_y=True)
+# X = X[:n_samples]
+# y = y[:n_samples]
 
 solver = "saga"
 
 # Turn down for faster run time
 n_samples = 5000
 
-feature_dicts, true_labels = read_data('./output/contexts/', './output/true_labels/')
-#TODO: don't loop below; flatten out all the training data for training.
-X,y = vectorize_data(feature_dicts, true_labels)
-
-# X, y = fetch_20newsgroups_vectorized(subset="all", return_X_y=True)
-# X = X[:n_samples]
-# y = y[:n_samples]
 
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, random_state=42, stratify=y, test_size=0.1
