@@ -10,22 +10,36 @@ def read_data(path_X, path_Y):
     test_list = ['cb', 'ecpr', 'jhk', 'jhu', 'tgk', 'tgu', 'psk', 'psu', 'rondane',
                  'vm32', 'ws213', 'ws214', 'petet', 'wsj23']
     ignore_list = ['ntucle', 'omw', 'wlb03', 'wnb03']
-    skip_list = dev_list + test_list + ignore_list
-    feature_dicts = []
-    labels = []
+    nontrain_list = dev_list + test_list + ignore_list
+    X_train = []
+    Y_train = []
+    X_dev = []
+    Y_dev = []
+    X_test = []
+    Y_test = []
     for corpus in sorted(glob.iglob(path_X + 'wsj01')):
-        if os.path.basename(corpus) not in skip_list:
-            with open(corpus,'r') as f:
-                fd = json.loads(f.read())
-            for item in fd:
-                feature_dicts.append(item)
+        corpus_name = os.path.basename(corpus)
+        with open(corpus,'r') as f:
+            fd = json.loads(f.read())
+        for item in fd:
+            if corpus_name not in nontrain_list:
+                X_train.append(item)
+            elif corpus_name in dev_list:
+                X_dev.append(item)
+            elif corpus_name in test_list:
+                X_test.append(item)
     for corpus in sorted(glob.iglob(path_Y + 'wsj01')):
-        if os.path.basename(corpus) not in skip_list:
-            with open(corpus,'r') as f:
-                tls = f.readlines()
-            for tl in tls:
-                labels.append(tl)
-    return feature_dicts, labels
+        corpus_name = os.path.basename(corpus)
+        with open(corpus, 'r') as f:
+            tls = f.readlines()
+        for tl in tls:
+            if os.path.basename(corpus) not in nontrain_list:
+                Y_train.append(tl)
+            elif corpus_name in dev_list:
+                Y_dev.append(tl)
+            elif corpus_name in test_list:
+                Y_test.append(tl)
+    return X_train, Y_train, X_dev, Y_dev, X_test, Y_test
 
 def vectorize_data(word_feature_dicts, word_labels):
     vec = DictVectorizer()
@@ -37,4 +51,4 @@ def vectorize_data(word_feature_dicts, word_labels):
 
 
 feature_dicts, true_labels = read_data('./output/contexts/', './output/true_labels/')
-X,y = vectorize_data(feature_dicts, true_labels)
+X_train, Y_train, X_dev, Y_dev, X_test, Y_test = vectorize_data(feature_dicts, true_labels)
