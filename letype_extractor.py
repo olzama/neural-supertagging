@@ -73,17 +73,17 @@ class LexTypeExtractor:
         return len(items), noparse
 
     def write_output(self, contexts, lextypes, pairs, ts):
-        for d in ['train/','test/','dev/']:
+        for d in ['train/','test/','dev/', 'ignore/']:
             for pd in ['simple/','contexts/','true_labels/']:
                 pathlib.Path('./output/' + pd + d).mkdir(parents=True, exist_ok=True)
         true_labels = []
-        if not ts.path.stem in IGNORE:
-            if ts.path.stem in TEST:
-                suf = 'test/'
-            elif ts.path.stem in DEV:
-                suf = 'dev/'
-            else:
-                suf = 'train/'
+        suf = 'train/'
+        if ts.path.stem in IGNORE:
+            suf = 'ignore/'
+        if ts.path.stem in TEST:
+            suf = 'test/'
+        elif ts.path.stem in DEV:
+            suf = 'dev/'
         with open('./output/simple/' + suf + ts.path.stem, 'w') as f:
             for form, entity in pairs:
                 letype = lextypes.get(entity, None)
