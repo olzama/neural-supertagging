@@ -34,11 +34,14 @@ def read_data(path_X, path_Y):
         if os.path.basename(corpus) not in skip_list:
             with open(corpus,'r') as f:
                 fd = json.loads(f.read())
-            feature_dicts.append(fd)
+            for item in fd:
+                feature_dicts.append(item)
     for corpus in sorted(glob.iglob(path_Y + 'wsj01')):
         if os.path.basename(corpus) not in skip_list:
             with open(corpus,'r') as f:
-                labels.append(f.readlines())
+                tls = f.readlines()
+            for tl in tls:
+                labels.append(tl)
     return feature_dicts, labels
 
 def vectorize_data(word_feature_dicts, word_labels):
@@ -47,12 +50,12 @@ def vectorize_data(word_feature_dicts, word_labels):
     vec = DictVectorizer()
     le = LabelEncoder()
     for fdl in word_feature_dicts:
-        for fd in fdl:
-            vectors.append(vec.fit_transform(fd))
+        #for fd in fdl:
+        vectors.append(vec.fit_transform(fdl))
     #fnames = vec.get_feature_names_out()
-    for wl in word_labels:
-        le.fit(wl)
-        labels.append(le.transform(wl))
+    #for wl in word_labels:
+    le.fit(word_labels)
+    labels = le.transform(word_labels)
     return vectors, labels
 
 solver = "saga"
