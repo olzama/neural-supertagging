@@ -45,15 +45,9 @@ def read_data(path_X, path_Y):
     return feature_dicts, labels
 
 def vectorize_data(word_feature_dicts, word_labels):
-    vectors = []
-    labels = []
     vec = DictVectorizer()
     le = LabelEncoder()
-    for fdl in word_feature_dicts:
-        #for fd in fdl:
-        vectors.append(vec.fit_transform(fdl))
-    #fnames = vec.get_feature_names_out()
-    #for wl in word_labels:
+    vectors = vec.fit_transform(word_feature_dicts)
     le.fit(word_labels)
     labels = le.transform(word_labels)
     return vectors, labels
