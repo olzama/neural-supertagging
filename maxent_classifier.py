@@ -1,13 +1,14 @@
 
+# https://scikit-learn.org/stable/auto_examples/linear_model/plot_sparse_logistic_regression_20newsgroups.html#sphx-glr-auto-examples-linear-model-plot-sparse-logistic-regression-20newsgroups-py
+# Adapted from Arthur Mensch
+
 import timeit
 import warnings
 
 import matplotlib.pyplot as plt
 import numpy as np
 
-#from sklearn.datasets import fetch_20newsgroups_vectorized
 from sklearn.linear_model import LogisticRegression
-#from sklearn.model_selection import train_test_split
 from sklearn.exceptions import ConvergenceWarning
 
 from vectorizer import read_data,vectorize_data
@@ -23,23 +24,7 @@ X_test = X[n_train:]
 Y_train = Y[:n_train]
 Y_test = Y[n_train:]
 
-# The below is from a code sample found here: https://scikit-learn.org/stable/auto_examples/linear_model/plot_sparse_logistic_regression_20newsgroups.html#sphx-glr-auto-examples-linear-model-plot-sparse-logistic-regression-20newsgroups-py
-# by Arthur Mensch
-
-# Turn down for faster run time
-# n_samples = 5000
-
-# X, y = fetch_20newsgroups_vectorized(subset="all", return_X_y=True)
-# X = X[:n_samples]
-# y = y[:n_samples]
-
 solver = "saga"
-
-
-
-#X_train, X_test, y_train, y_test = train_test_split(
-#    X, y, random_state=42, stratify=y, test_size=0.1
-#)
 
 train_samples, n_features = X_train.shape
 n_classes = np.unique(Y).shape[0]
@@ -109,7 +94,7 @@ for model in models:
     ax.set_xlabel("Train time (s)")
     ax.set_ylabel("Test accuracy")
 ax.legend()
-fig.suptitle("Multinomial vs One-vs-Rest Logistic L1\nDataset %s" % "20newsgroups")
+fig.suptitle("Multinomial vs One-vs-Rest Logistic L1\nDataset %s" % "ERG")
 fig.tight_layout()
 fig.subplots_adjust(top=0.85)
 run_time = timeit.default_timer() - t0
