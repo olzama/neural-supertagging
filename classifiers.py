@@ -41,11 +41,11 @@ def train_MaxEnt_SAGA(X_train, Y_train):
     )
 
     models = {
-        'l1': {"multinomial": {"name": "Multinomial-L1", "iters": [1, 2, 5]},
-               "ovr": {"name": "One versus Rest-L1", "iters": [1, 2, 3]}},
-        'l2': {"multinomial": {"name": "Multinomial-L2", "iters": [1, 2, 5]},
-               "ovr": {"name": "One versus Rest-L2", "iters": [1, 2, 3]}},
-        'elastic-net': {"multinomial": {"name": "Multinomial-ENet", "iters": [1, 2, 5]}},
+        'l1': {"multinomial": {"name": "Multinomial-L1", "iters": [10]},
+               "ovr": {"name": "One versus Rest-L1", "iters": [10]}},
+        'l2': {"multinomial": {"name": "Multinomial-L2", "iters": [10]},
+               "ovr": {"name": "One versus Rest-L2", "iters": [10]}},
+        'elastic-net': {"multinomial": {"name": "Multinomial-ENet", "iters": [10]}},
     }
 
     # models = {
