@@ -39,3 +39,28 @@ def vectorize_data(word_feature_dicts, word_labels):
     le.fit(word_labels)
     labels = le.transform(word_labels)
     return vectors, labels
+
+# Below just a small example I used to inspect the features.
+
+# pos_window = [     {
+#          'word-2': 'the',
+#          'pos-2': 'DT',
+#          'word-1': 'cat',
+#          'pos-1': 'NN',
+#          'word+1': 'on',
+#          'pos+1': 'PP',
+#      }, {
+#          'word-2': 'the',
+#          'pos-2': 'DT',
+#          'word-1': 'dog',
+#          'pos-1': 'NN',
+#          'word+1': 'on',
+#          'pos+1': 'PP',
+#      },
+#
+#  ]
+
+# vec = DictVectorizer()
+# pos_vectorized = vec.fit_transform(pos_window)
+# arr = pos_vectorized.toarray()
+# names = vec.get_feature_names_out()
