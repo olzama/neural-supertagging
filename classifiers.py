@@ -78,7 +78,8 @@ def train_MaxEnt_SAGA(X_train, Y_train):
 
 def test_model(model, X_test, Y_test, n_classes):
 
-    clf = pickle.load(model)
+    with open(model, 'rb') as f:
+        clf = pickle.load(f)
 
     y_pred = clf.predict(X_test)
     accuracy = np.sum(y_pred == Y_test) / Y_test.shape[0]
@@ -101,9 +102,9 @@ if __name__ == "__main__":
     Y_test = Y[n_train:]
 
 
-    train_MaxEnt_SAGA(X_train,Y_train)
+    #train_MaxEnt_SAGA(X_train,Y_train)
 
-    #test_model('models/Multinomial-L1',X_test,Y_test)
+    test_model('models/Multinomial-L1.model',X_test,Y_test,n_classes)
 
 
     # Add initial chance-level values for plotting purpose
