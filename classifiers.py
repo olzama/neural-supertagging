@@ -103,7 +103,8 @@ if __name__ == "__main__":
     Y_test = Y[n_train:]
 
 
-    train_MaxEnt_SAGA(X_train,Y_train)
+    train_SVM(X_train,Y_train)
+    #train_MaxEnt_SAGA(X_train,Y_train)
 
     #test_model('models/Multinomial-L1.model',X_test,Y_test,n_classes)
 
