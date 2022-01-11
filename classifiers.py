@@ -67,7 +67,7 @@ def train_MaxEnt_SAGA(X_train, Y_train):
                     penalty=penalty,
                     max_iter=this_max_iter,
                     random_state=42,
-                    l1_ratio=0.7
+                    l1_ratio=0.5
                 )
                 t1 = timeit.default_timer()
                 lr.fit(X_train, Y_train)
