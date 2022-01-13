@@ -8,7 +8,7 @@ import warnings
 import matplotlib.pyplot as plt
 import numpy as np
 
-import pickle
+import pickle,glob
 
 from sklearn.linear_model import LogisticRegression
 from sklearn.exceptions import ConvergenceWarning
@@ -29,8 +29,8 @@ def train_SVM(X_train, Y_train):
     #accuracy = np.sum(svm_pred == Y_test) / Y_test.shape[0]
     #print("Test accuracy for SVM: %.4f" % (accuracy))
 
-def train_MaxEnt_SAGA(X_train, Y_train):
-    solver = "saga"
+def train_MaxEnt(X_train, Y_train):
+    solver = "sag"
 
     train_samples, n_features = X_train.shape
 
@@ -40,6 +40,7 @@ def train_MaxEnt_SAGA(X_train, Y_train):
         % (train_samples, n_features, n_classes)
     )
 
+    # For SAGA:
     # models = {
     #     'l1': {"multinomial": {"name": "Multinomial-L1", "iters": [10]},
     #            "ovr": {"name": "One versus Rest-L1", "iters": [10]}},
@@ -48,9 +49,16 @@ def train_MaxEnt_SAGA(X_train, Y_train):
     #     'elasticnet': {"multinomial": {"name": "Multinomial-ENet", "iters": [10]}},
     # }
 
+    # for SAG:
     models = {
-        'elasticnet': {"multinomial": {"name": "Multinomial-ENet", "iters": [10]}},
+        'l2': {"multinomial": {"name": "Multinomial-L2", "iters": [10]},
+               "ovr": {"name": "One versus Rest-L2", "iters": [10]}}
     }
+
+
+    # models = {
+    #     'l1': {"multinomial": {"name": "Multinomial-L1", "iters": [10]}},
+    # }
 
     for penalty in models:
         for model in models[penalty]:
@@ -86,6 +94,7 @@ def test_model(model, X_test, Y_test, n_classes):
     accuracy = np.sum(y_pred == Y_test) / Y_test.shape[0]
     #density = np.mean(clf.coef_ != 0, axis=1) * 100
     print("Test accuracy for model %s: %.4f" % (model, accuracy))
+    return accuracy
     # print(
     #     "%% non-zero coefficients for model %s, per class:\n %s"
     #     % (model, densities[-1])
@@ -103,40 +112,27 @@ if __name__ == "__main__":
     Y_test = Y[n_train:]
 
 
-    train_SVM(X_train,Y_train)
+    #train_SVM(X_train,Y_train)
     #train_MaxEnt_SAGA(X_train,Y_train)
-
-    #test_model('models/Multinomial-L1.model',X_test,Y_test,n_classes)
-
+    train_MaxEnt(X_train, Y_train)
 
     # Add initial chance-level values for plotting purpose
-    #accuracies = [1 / n_classes]
-    #times = [0]
+    accuracies = [1 / n_classes]
+    names = []
+    #times = [{'maxent-elastic':11907}, {'maxent-l1'}]
     #densities = [1]
 
-    # accuracies.append(accuracy)
-    # densities.append(density)
-    #
-    # times.append(train_time)
-    # models[penalty][model]["times"] = times
-    # models[penalty][model]["densities"] = densities
-    # models[penalty][model]["accuracies"] = accuracies
 
+    # for model in glob.iglob('models/' + '*'):
+    #     accuracies.append(test_model(model,X_test,Y_test,n_classes))
+    #     names.append(model)
+
+    # ind = np.arange(len(names))
     # fig = plt.figure()
     # ax = fig.add_subplot(111)
-    #
-    # for penalty in models:
-    #     for model in models[penalty]:
-    #         name = models[penalty][model]["name"]
-    #         times = models[penalty][model]["times"]
-    #         accuracies = models[penalty][model]["accuracies"]
-    #         ax.plot(times, accuracies, marker="o", label="Model: %s" % name)
-    #         ax.set_xlabel("Train time (s)")
-    #         ax.set_ylabel("Test accuracy")
     # ax.legend()
-    # fig.suptitle("Multinomial Logistic L1-L2\nDataset %s" % "WS212")
-    # fig.tight_layout()
-    # fig.subplots_adjust(top=0.85)
-    # run_time = timeit.default_timer() - t0
-    # print("Example run in %.3f s" % run_time)
-    # plt.savefig('maxent.png')
+    # fig.suptitle("Accuracies on the ERG dev data")
+    # ax.set_ylabel("Dev accuracy")
+    # ax.set_xticks(ind, labels=names)
+    # ax.plot(accuracies)
+    # plt.savefig('accuracies.png')
