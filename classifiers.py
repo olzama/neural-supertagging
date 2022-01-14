@@ -10,6 +10,8 @@ import numpy as np
 
 import pickle,glob
 
+import sys
+
 from sklearn.linear_model import LogisticRegression
 from sklearn.exceptions import ConvergenceWarning
 from sklearn import svm
@@ -111,28 +113,28 @@ if __name__ == "__main__":
     X_test = X[n_train:]
     Y_test = Y[n_train:]
 
+    if sys.argv[1] == 'train':
+        #train_SVM(X_train,Y_train)
+        #train_MaxEnt_SAGA(X_train,Y_train)
+        train_MaxEnt(X_train, Y_train)
+    elif sys.argv[1] == 'test':
+        # Add initial chance-level values for plotting purpose
+        accuracies = [1 / n_classes]
+        names = []
+        #times = [{'maxent-elastic':11907}, {'maxent-l1'}]
+        #densities = [1]
 
-    #train_SVM(X_train,Y_train)
-    #train_MaxEnt_SAGA(X_train,Y_train)
-    #train_MaxEnt(X_train, Y_train)
 
-    # Add initial chance-level values for plotting purpose
-    accuracies = [1 / n_classes]
-    names = []
-    #times = [{'maxent-elastic':11907}, {'maxent-l1'}]
-    #densities = [1]
+        for model in glob.iglob('models/' + '*'):
+            accuracies.append(test_model(model,X_test,Y_test,n_classes))
+            names.append(model)
 
-
-    for model in glob.iglob('models/' + '*'):
-        accuracies.append(test_model(model,X_test,Y_test,n_classes))
-        names.append(model)
-
-    # ind = np.arange(len(names))
-    # fig = plt.figure()
-    # ax = fig.add_subplot(111)
-    # ax.legend()
-    # fig.suptitle("Accuracies on the ERG dev data")
-    # ax.set_ylabel("Dev accuracy")
-    # ax.set_xticks(ind, labels=names)
-    # ax.plot(accuracies)
-    # plt.savefig('accuracies.png')
+        # ind = np.arange(len(names))
+        # fig = plt.figure()
+        # ax = fig.add_subplot(111)
+        # ax.legend()
+        # fig.suptitle("Accuracies on the ERG dev data")
+        # ax.set_ylabel("Dev accuracy")
+        # ax.set_xticks(ind, labels=names)
+        # ax.plot(accuracies)
+        # plt.savefig('accuracies.png')
