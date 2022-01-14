@@ -51,10 +51,10 @@ def train_MaxEnt(X_train, Y_train):
     #     'elasticnet': {"multinomial": {"name": "Multinomial-ENet", "iters": [10]}},
     # }
 
-    # for SAG:
+
     models = {
-        'l2': {"multinomial": {"name": "Multinomial-L2", "iters": [10]},
-               "ovr": {"name": "One versus Rest-L2", "iters": [10]}}
+        'l1': {"multinomial": {"name": "Multinomial-L1", "iters": [10]},
+               "ovr": {"name": "One versus Rest-L1", "iters": [10]}}
     }
 
 
@@ -77,7 +77,7 @@ def train_MaxEnt(X_train, Y_train):
                     penalty=penalty,
                     max_iter=this_max_iter,
                     random_state=42,
-                    l1_ratio=0.5
+                    l1_ratio=0.5 # only for elastic-net
                 )
                 t1 = timeit.default_timer()
                 lr.fit(X_train, Y_train)
