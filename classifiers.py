@@ -32,7 +32,7 @@ def train_SVM(X_train, Y_train):
     #print("Test accuracy for SVM: %.4f" % (accuracy))
 
 def train_MaxEnt(X_train, Y_train):
-    solver = "sag"
+    solver = "saga"
 
     train_samples, n_features = X_train.shape
 
@@ -83,7 +83,7 @@ def train_MaxEnt(X_train, Y_train):
                 lr.fit(X_train, Y_train)
                 train_time = timeit.default_timer() - t1
                 print('Training time of {}: {}'.format(models[penalty][model]["name"],train_time))
-                with open('models/'+models[penalty][model]["name"]+'.model','wb') as f:
+                with open('models/'+models[penalty][model]["name"]+'-'+solver+'.model','wb') as f:
                     pickle.dump(lr,f)
 
 
