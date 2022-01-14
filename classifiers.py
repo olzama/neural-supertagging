@@ -114,7 +114,7 @@ if __name__ == "__main__":
 
     #train_SVM(X_train,Y_train)
     #train_MaxEnt_SAGA(X_train,Y_train)
-    train_MaxEnt(X_train, Y_train)
+    #train_MaxEnt(X_train, Y_train)
 
     # Add initial chance-level values for plotting purpose
     accuracies = [1 / n_classes]
@@ -123,9 +123,9 @@ if __name__ == "__main__":
     #densities = [1]
 
 
-    # for model in glob.iglob('models/' + '*'):
-    #     accuracies.append(test_model(model,X_test,Y_test,n_classes))
-    #     names.append(model)
+    for model in glob.iglob('models/' + '*'):
+        accuracies.append(test_model(model,X_test,Y_test,n_classes))
+        names.append(model)
 
     # ind = np.arange(len(names))
     # fig = plt.figure()
