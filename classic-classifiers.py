@@ -120,13 +120,18 @@ if __name__ == "__main__":
         # Add initial chance-level values for plotting purpose
         accuracies = [1 / n_classes]
         names = []
-        #times = [{'maxent-elastic':11907}, {'maxent-l1'}]
+        times = []
         #densities = [1]
 
 
         for model in glob.iglob('models/' + '*'):
-            accuracies.append(test_model(model,X_test,Y_test,n_classes))
+            t1 = timeit.default_timer()
+            acc = test_model(model,X_test,Y_test,n_classes)
+            test_time = timeit.default_timer() - t1
+            print('Test time of {}: {}'.format(model, test_time))
+            accuracies.append(acc)
             names.append(model)
+            times.append(test_time)
 
         # ind = np.arange(len(names))
         # fig = plt.figure()

@@ -1,4 +1,4 @@
-import glob, os
+import glob
 import json
 
 from sklearn.feature_extraction import DictVectorizer
