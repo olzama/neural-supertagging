@@ -114,8 +114,8 @@ if __name__ == "__main__":
     Y_test = Y[n_train:]
 
     if sys.argv[1] == 'train':
-        #train_SVM(X_train,Y_train)
-        train_MaxEnt(X_train, Y_train)
+        train_SVM(X_train,Y_train)
+        #train_MaxEnt(X_train, Y_train)
     elif sys.argv[1] == 'test':
         # Add initial chance-level values for plotting purpose
         accuracies = [1 / n_classes]
