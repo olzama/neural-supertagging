@@ -124,7 +124,7 @@ if __name__ == "__main__":
         #densities = [1]
 
 
-        for model in glob.iglob('models/SAG/' + '*'):
+        for model in glob.iglob('models/' + '*'):
             accuracies.append(test_model(model,X_test,Y_test,n_classes))
             names.append(model)
 
