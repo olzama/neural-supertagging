@@ -25,7 +25,7 @@ t0 = timeit.default_timer()
 def train_SVM(X_train, Y_train):
     svm_clf = svm.SVC(kernel="linear", C=1.0)
     svm_clf.fit(X_train, Y_train)
-    with open('svm.model', 'wb') as f:
+    with open('models/svm.model', 'wb') as f:
         pickle.dump(svm_clf, f, protocol=4)
     #svm_pred = svm_clf.predict(X_test)
     #accuracy = np.sum(svm_pred == Y_test) / Y_test.shape[0]
