@@ -47,8 +47,8 @@ class LexTypeExtractor:
         items = list(ts.processed_items())
         noparse = 0
         for j, response in enumerate(items):
+            contexts.append([])
             if len(response['results']) > 0:
-                contexts.append([])
                 if j % 100 == 0:
                     print("Processing item {} out of {}...".format(j, len(items)))
                 result = response.result(0)
