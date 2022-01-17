@@ -48,6 +48,7 @@ class LexTypeExtractor:
         noparse = 0
         for j, response in enumerate(items):
             if len(response['results']) > 0:
+                contexts.append([])
                 if j % 100 == 0:
                     print("Processing item {} out of {}...".format(j, len(items)))
                 result = response.result(0)
@@ -61,8 +62,9 @@ class LexTypeExtractor:
                     self.stats['tokens'][t] += 1
                     pairs.append((t, tags[k]))
                     y.append(tags[k])
-                    contexts.append(self.get_context(t,tokens,tags,k,CONTEXT_WINDOW))
-
+                    contexts[j].append(self.get_context(t,tokens,tags,k,CONTEXT_WINDOW))
+                pairs.append(('--EOS--','--EOS--')) # sentence separator
+                y.append('\n') # sentence separator
             else:
                 noparse += 1
                 err = response['error'] if response['error'] else 'None'
@@ -86,13 +88,19 @@ class LexTypeExtractor:
             suf = 'dev/'
         with open('./output/simple/' + suf + ts.path.stem, 'w') as f:
             for form, entity in pairs:
-                letype = lextypes.get(entity, None)
-                true_labels.append(str(letype))
-                str_pair = f'{form}\t{letype}'
-                f.write(str_pair + '\n')
+                if not entity=='--EOS--':
+                    letype = lextypes.get(entity, None)
+                    true_labels.append(str(letype))
+                    str_pair = f'{form}\t{letype}'
+                    f.write(str_pair + '\n')
+                else:
+                    f.write('\n') # sentence separator
+                    true_labels.append('\n') # sentence separator
         with open('./output/true_labels/' + suf + ts.path.stem, 'w') as f:
             for tl in true_labels:
-                f.write(tl + '\n')
+                f.write(tl)
+                if tl != '\n':
+                    f.write('\n')
         with open('./output/contexts/' + suf + ts.path.stem, 'w') as f:
             f.write(json.dumps(contexts))
 
