@@ -8,10 +8,10 @@ from sklearn.preprocessing import LabelEncoder
 def read_data(path_X, path_Y):
     feature_dicts = []
     true_labels = []
-    train_corpora = sorted(glob.iglob(path_X + 'small-train/' + '*'))
-    test_corpora = sorted(glob.iglob(path_X + 'small-test/' + '*'))
-    train_label_files = sorted(glob.iglob(path_Y + 'small-train/' + '*'))
-    test_label_files = sorted(glob.iglob(path_Y + 'small-test/' + '*'))
+    train_corpora = sorted(glob.iglob(path_X + 'train/' + '*'))
+    test_corpora = sorted(glob.iglob(path_X + 'test/' + '*'))
+    train_label_files = sorted(glob.iglob(path_Y + 'train/' + '*'))
+    test_label_files = sorted(glob.iglob(path_Y + 'test/' + '*'))
     all_label_files = train_label_files + test_label_files
     n_train = 0
     for corpus in train_corpora:

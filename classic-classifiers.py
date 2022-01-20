@@ -5,7 +5,6 @@
 import timeit
 import warnings
 
-import matplotlib.pyplot as plt
 import numpy as np
 
 import pickle,glob
@@ -19,30 +18,23 @@ from sklearn import svm
 from vectorizer import read_data,vectorize_data
 
 warnings.filterwarnings("ignore", category=ConvergenceWarning, module="sklearn")
-t0 = timeit.default_timer()
 
 
-def train_SVM(X_train, Y_train):
-    svm_clf = svm.SVC(kernel="linear", C=1.0)
-    svm_clf.fit(X_train, Y_train)
-    with open('models/svm.model', 'wb') as f:
-        pickle.dump(svm_clf, f, protocol=4)
-    #svm_pred = svm_clf.predict(X_test)
-    #accuracy = np.sum(svm_pred == Y_test) / Y_test.shape[0]
-    #print("Test accuracy for SVM: %.4f" % (accuracy))
-
-def train_MaxEnt(X_train, Y_train):
-    solver = "saga"
-
-    train_samples, n_features = X_train.shape
+def train_SVM(X, Y):
+    clf = svm.LinearSVC() # Kernels would be too slow, so using liblinear SVM
+    name = "svm-liblinear-l2-sq-hinge-1000"
+    fit_serialize(X,Y,clf,name)
 
 
+def train_MaxEnt(X, Y):
+    solver = "saga" # Another option is "sag"; it was also tried in development
+    train_samples, n_features = X.shape
     print(
         "Dataset ERG treebanks, train_samples=%i, n_features=%i, n_classes=%i"
         % (train_samples, n_features, n_classes)
     )
 
-    # For SAGA:
+    # All MaxEnt models tried in development:
     # models = {
     #     'l1': {"multinomial": {"name": "Multinomial-L1", "iters": [10]},
     #            "ovr": {"name": "One versus Rest-L1", "iters": [10]}},
@@ -51,16 +43,11 @@ def train_MaxEnt(X_train, Y_train):
     #     'elasticnet': {"multinomial": {"name": "Multinomial-ENet", "iters": [10]}},
     # }
 
-
+    # The overall best MaxEnt model (high accuracy, low train time, best test time, out of other MaxEnts
+    # This assumes SAGA solver; with SAG OVR L1, can get higher accuracy but training time is huge.
     models = {
-        'l1': {"multinomial": {"name": "Multinomial-L1", "iters": [10]},
-               "ovr": {"name": "One versus Rest-L1", "iters": [10]}}
+        'l2': {"multinomial": {"name": "Multinomial-L2", "iters": [1]}}
     }
-
-
-    # models = {
-    #     'l1': {"multinomial": {"name": "Multinomial-L1", "iters": [10]}},
-    # }
 
     for penalty in models:
         for model in models[penalty]:
@@ -71,7 +58,7 @@ def train_MaxEnt(X_train, Y_train):
                     "[model=%s, solver=%s] Number of epochs: %s"
                     % (model_params["name"], solver, this_max_iter)
                 )
-                lr = LogisticRegression(
+                clf = LogisticRegression(
                     solver=solver,
                     multi_class=model,
                     penalty=penalty,
@@ -79,19 +66,22 @@ def train_MaxEnt(X_train, Y_train):
                     random_state=42,
                     l1_ratio=0.5 # only for elastic-net
                 )
-                t1 = timeit.default_timer()
-                lr.fit(X_train, Y_train)
-                train_time = timeit.default_timer() - t1
-                print('Training time of {}: {}'.format(models[penalty][model]["name"],train_time))
-                with open('models/'+models[penalty][model]["name"]+'-'+solver+'.model','wb') as f:
-                    pickle.dump(lr,f)
+                model_name = models[penalty][model]["name"] + '-' + solver
+                fit_serialize(X, Y, clf, model_name)
+
+
+def fit_serialize(X, Y, clf, name):
+    t1 = timeit.default_timer()
+    clf.fit(X, Y)
+    train_time = timeit.default_timer() - t1
+    print('Training time of {}: {}'.format(name, train_time))
+    with open('models/' + name + '.model', 'wb') as f:
+        pickle.dump(clf, f)
 
 
 def test_model(model, X_test, Y_test, n_classes):
-
     with open(model, 'rb') as f:
         clf = pickle.load(f)
-
     y_pred = clf.predict(X_test)
     accuracy = np.sum(y_pred == Y_test) / Y_test.shape[0]
     #density = np.mean(clf.coef_ != 0, axis=1) * 100
@@ -105,7 +95,7 @@ def test_model(model, X_test, Y_test, n_classes):
 
 
 if __name__ == "__main__":
-    feature_dicts, true_labels, n_train = read_data('./data/contexts/', './data/true_labels/')
+    feature_dicts, true_labels, n_train = read_data('./sample-data/contexts/', './sample-data/true_labels/')
     X, Y = vectorize_data(feature_dicts,true_labels)
     n_classes = np.unique(Y).shape[0]
     X_train = X[:n_train]
@@ -114,8 +104,8 @@ if __name__ == "__main__":
     Y_test = Y[n_train:]
 
     if sys.argv[1] == 'train':
-        train_SVM(X_train,Y_train)
-        #train_MaxEnt(X_train, Y_train)
+        #train_SVM(X_train,Y_train)
+        train_MaxEnt(X_train, Y_train)
     elif sys.argv[1] == 'test':
         # Add initial chance-level values for plotting purpose
         accuracies = [1 / n_classes]
