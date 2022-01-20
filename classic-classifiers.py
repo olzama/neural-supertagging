@@ -15,7 +15,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.exceptions import ConvergenceWarning
 from sklearn import svm
 
-from vectorizer import read_data,vectorize_data
+from vectorizer import read_data,vectorize_train_data
 
 warnings.filterwarnings("ignore", category=ConvergenceWarning, module="sklearn")
 
@@ -23,7 +23,7 @@ warnings.filterwarnings("ignore", category=ConvergenceWarning, module="sklearn")
 def train_SVM(X, Y):
     clf = svm.LinearSVC() # Kernels would be too slow, so using liblinear SVM
     name = "svm-liblinear-l2-sq-hinge-1000"
-    fit_serialize(X,Y,clf,name)
+    fit_serialize(X,Y,clf,name) # for models over 4GB, need to add protocol=4
 
 
 def train_MaxEnt(X, Y):
@@ -82,8 +82,16 @@ def fit_serialize(X, Y, clf, name):
 def test_model(model, X_test, Y_test, n_classes):
     with open(model, 'rb') as f:
         clf = pickle.load(f)
-    y_pred = clf.predict(X_test)
-    accuracy = np.sum(y_pred == Y_test) / Y_test.shape[0]
+    y_pred = []
+    Y_gold = []
+    for sentence in X_test:
+        pred = clf.predict(sentence)
+        for l in pred:
+            y_pred.append(l)
+    for sentence in Y_test:
+        for l in sentence:
+            Y_gold.append(l)
+    accuracy = np.sum(np.array(y_pred) == np.array(Y_gold)) / len(Y_gold)
     #density = np.mean(clf.coef_ != 0, axis=1) * 100
     print("Test accuracy for model %s: %.4f" % (model, accuracy))
     return accuracy
@@ -95,16 +103,23 @@ def test_model(model, X_test, Y_test, n_classes):
 
 
 if __name__ == "__main__":
-    feature_dicts, true_labels, n_train = read_data('./sample-data/contexts/', './sample-data/true_labels/')
-    X, Y = vectorize_data(feature_dicts,true_labels)
+    feature_dicts, true_labels, n_train, test_sen_lengths = read_data('./sample-data/contexts/', './sample-data/true_labels/')
+    X, Y = vectorize_train_data(feature_dicts,true_labels)
     n_classes = np.unique(Y).shape[0]
     X_train = X[:n_train]
     Y_train = Y[:n_train]
-    X_test = X[n_train:]
-    Y_test = Y[n_train:]
+    X_test = []
+    Y_test = []
+    start = n_train
+    for l in test_sen_lengths:
+        X_test.append(X[start:start+l])
+        Y_test.append(Y[start:start+l])
+        start = start + l
+    #X_test = X[n_train:]
+    #Y_test = Y[n_train:]
 
     if sys.argv[1] == 'train':
-        #train_SVM(X_train,Y_train)
+        train_SVM(X_train,Y_train)
         train_MaxEnt(X_train, Y_train)
     elif sys.argv[1] == 'test':
         # Add initial chance-level values for plotting purpose
@@ -112,8 +127,6 @@ if __name__ == "__main__":
         names = []
         times = []
         #densities = [1]
-
-
         for model in glob.iglob('models/' + '*'):
             t1 = timeit.default_timer()
             acc = test_model(model,X_test,Y_test,n_classes)
