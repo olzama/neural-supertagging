@@ -27,9 +27,11 @@ class LexTypeExtractor:
         with open('./log.txt', 'w') as logf:
             for i,testsuite in enumerate(glob.iglob(testsuites+'**')):
                 try:
-                    num_items, no_parse = self.process_testsuite(lextypes, logf, testsuite)
+                    num_items, no_parse, sentence_lens = self.process_testsuite(lextypes, logf, testsuite)
                     self.stats['corpora'][i]['items'] = num_items
                     self.stats['corpora'][i]['noparse'] = no_parse
+                    all_lengths = sorted(list(sentence_lens),reverse=True)
+                    self.stats['corpora'][i]['max-len'] = max(all_lengths)
                 except:
                     print("ERROR: " + testsuite)
                     self.stats['failed corpora'].append({'name':testsuite})
@@ -46,6 +48,7 @@ class LexTypeExtractor:
         y = []
         items = list(ts.processed_items())
         noparse = 0
+        sentence_lens = {}
         for j, response in enumerate(items):
             contexts.append([])
             if len(response['results']) > 0:
@@ -54,6 +57,11 @@ class LexTypeExtractor:
                 result = response.result(0)
                 deriv = result.derivation()
                 tokens,tags = self.get_tokens_tags(deriv,CONTEXT_WINDOW)
+                if response['i-length'] not in sentence_lens:
+                    sentence_lens[response['i-length']] = 0
+                sentence_lens[response['i-length']] += 1
+                if response['i-length'] == 139:
+                    print(response['i-input'])
                 for k, t in enumerate(tokens):
                     if k < CONTEXT_WINDOW or k >= len(tokens) - CONTEXT_WINDOW:
                         continue
@@ -72,7 +80,7 @@ class LexTypeExtractor:
                 logf.write(ts.path.stem + '\t' + str(response['i-id']) + '\t'
                            + response['i-input'] + '\t' + err + '\n')
         self.write_output(contexts, lextypes, pairs, ts)
-        return len(items), noparse
+        return len(items), noparse, sentence_lens
 
     def write_output(self, contexts, lextypes, pairs, ts):
         for d in ['train/','test/','dev/', 'ignore/']:
@@ -147,3 +155,4 @@ if __name__ == "__main__":
         f.write('Total tokens in all corpora: ' + str(sum(le.stats['tokens'].values())) + '\n')
         f.write('Total unique tokens: ' + str(len(le.stats['tokens'])) + '\n')
         f.write('Total lextypes: ' + str(le.stats['total lextypes']) + '\n')
+
