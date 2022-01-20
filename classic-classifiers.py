@@ -107,7 +107,7 @@ def test_model(model, X_test, Y_test, n_classes, corpus_id):
 
 if __name__ == "__main__":
     feature_dicts, true_labels, n_train, test_sen_lengths, test_corpus_lengths\
-        = read_data('./sample-data/contexts/', './sample-data/true_labels/')
+        = read_data('./data/contexts/', './data/true_labels/')
     X, Y = vectorize_train_data(feature_dicts,true_labels)
     n_classes = np.unique(Y).shape[0]
     X_train = X[:n_train]
