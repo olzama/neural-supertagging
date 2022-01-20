@@ -79,7 +79,7 @@ def fit_serialize(X, Y, clf, name):
         pickle.dump(clf, f)
 
 
-def test_model(model, X_test, Y_test, n_classes):
+def test_model(model, X_test, Y_test, n_classes, corpus_id):
     with open(model, 'rb') as f:
         clf = pickle.load(f)
     y_pred = []
@@ -93,7 +93,7 @@ def test_model(model, X_test, Y_test, n_classes):
             Y_gold.append(l)
     accuracy = np.sum(np.array(y_pred) == np.array(Y_gold)) / len(Y_gold)
     #density = np.mean(clf.coef_ != 0, axis=1) * 100
-    print("Test accuracy for model %s: %.4f" % (model, accuracy))
+    print("Test accuracy for model %s: %.4f on corpus %s" % (model, accuracy, str(corpus_id)))
     return accuracy
     # print(
     #     "%% non-zero coefficients for model %s, per class:\n %s"
@@ -103,36 +103,44 @@ def test_model(model, X_test, Y_test, n_classes):
 
 
 if __name__ == "__main__":
-    feature_dicts, true_labels, n_train, test_sen_lengths = read_data('./sample-data/contexts/', './sample-data/true_labels/')
+    feature_dicts, true_labels, n_train, test_sen_lengths, test_corpus_lengths\
+        = read_data('./sample-data/contexts/', './sample-data/true_labels/')
     X, Y = vectorize_train_data(feature_dicts,true_labels)
     n_classes = np.unique(Y).shape[0]
     X_train = X[:n_train]
     Y_train = Y[:n_train]
-    X_test = []
-    Y_test = []
+    test_corpora = []
+    true_labels_per_corpus = []
     start = n_train
-    for l in test_sen_lengths:
-        X_test.append(X[start:start+l])
-        Y_test.append(Y[start:start+l])
-        start = start + l
-    #X_test = X[n_train:]
-    #Y_test = Y[n_train:]
-
+    corpus_start = 0
+    for cl in test_corpus_lengths:
+        X_test = []
+        Y_test = []
+        test_sentences = test_sen_lengths[corpus_start:corpus_start+cl]
+        for l in test_sentences:
+            X_test.append(X[start:start+l])
+            Y_test.append(Y[start:start+l])
+            start = start + l
+        test_corpora.append(X_test)
+        true_labels_per_corpus.append(Y_test)
+        corpus_start = corpus_start + cl
     if sys.argv[1] == 'train':
         train_SVM(X_train,Y_train)
         train_MaxEnt(X_train, Y_train)
     elif sys.argv[1] == 'test':
-        # Add initial chance-level values for plotting purpose
-        accuracies = [1 / n_classes]
+        model_accuracies = []
         names = []
         times = []
         #densities = [1]
         for model in glob.iglob('models/' + '*'):
+            accuracies = []
             t1 = timeit.default_timer()
-            acc = test_model(model,X_test,Y_test,n_classes)
+            for i,tc in enumerate(test_corpora):
+                acc = test_model(model,tc,true_labels_per_corpus[i],n_classes,i)
+                accuracies.append(acc)
             test_time = timeit.default_timer() - t1
             print('Test time of {}: {}'.format(model, test_time))
-            accuracies.append(acc)
+            model_accuracies.append(accuracies)
             names.append(model)
             times.append(test_time)
 
