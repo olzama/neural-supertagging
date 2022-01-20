@@ -113,21 +113,22 @@ if __name__ == "__main__":
     true_labels_per_corpus = []
     start = n_train
     corpus_start = 0
-    for cl in test_corpus_lengths:
+    for corpus in test_corpus_lengths:
         X_test = []
         Y_test = []
-        test_sentences = test_sen_lengths[corpus_start:corpus_start+cl]
+        test_sentences = test_sen_lengths[corpus_start:corpus_start+test_corpus_lengths[corpus]]
         for l in test_sentences:
             X_test.append(X[start:start+l])
             Y_test.append(Y[start:start+l])
             start = start + l
         test_corpora.append(X_test)
         true_labels_per_corpus.append(Y_test)
-        corpus_start = corpus_start + cl
+        corpus_start = corpus_start + test_corpus_lengths[corpus]
     if sys.argv[1] == 'train':
         train_SVM(X_train,Y_train)
         train_MaxEnt(X_train, Y_train)
     elif sys.argv[1] == 'test':
+        corpus_names = list(test_corpus_lengths.keys())
         model_accuracies = []
         names = []
         times = []
@@ -136,7 +137,8 @@ if __name__ == "__main__":
             accuracies = []
             t1 = timeit.default_timer()
             for i,tc in enumerate(test_corpora):
-                acc = test_model(model,tc,true_labels_per_corpus[i],n_classes,i)
+                corpus_name = corpus_names[i]
+                acc = test_model(model,tc,true_labels_per_corpus[i],n_classes,corpus_names[i])
                 accuracies.append(acc)
             test_time = timeit.default_timer() - t1
             print('Test time of {}: {}'.format(model, test_time))

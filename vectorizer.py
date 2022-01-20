@@ -9,7 +9,7 @@ def read_data(path_X, path_Y):
     feature_dicts = []
     true_labels = []
     test_sen_lengths = []
-    test_corpus_lengths = []
+    test_corpus_lengths = {}
     train_corpora = sorted(glob.iglob(path_X + 'train/' + '*'))
     test_corpora = sorted(glob.iglob(path_X + 'test/' + '*'))
     train_label_files = sorted(glob.iglob(path_Y + 'train/' + '*'))
@@ -26,7 +26,7 @@ def read_data(path_X, path_Y):
     for corpus in test_corpora:
         with open(corpus,'r') as f:
             fd = json.loads(f.read())
-        test_corpus_lengths.append(len(fd))
+        test_corpus_lengths[corpus] = len(fd)
         for sentence in fd:
             test_sen_lengths.append(len(sentence))
             for item in sentence:
