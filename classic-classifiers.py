@@ -84,10 +84,13 @@ def test_model(model, X_test, Y_test, n_classes, corpus_id):
         clf = pickle.load(f)
     y_pred = []
     Y_gold = []
+    t1 = timeit.default_timer()
     for sentence in X_test:
         pred = clf.predict(sentence)
         for l in pred:
             y_pred.append(l)
+    test_time = timeit.default_timer() - t1
+    print('Test time of {}: {}; {} average per sentence'.format(model, test_time, test_time/len(X_test)))
     for sentence in Y_test:
         for l in sentence:
             Y_gold.append(l)
@@ -130,21 +133,14 @@ if __name__ == "__main__":
     elif sys.argv[1] == 'test':
         corpus_names = list(test_corpus_lengths.keys())
         model_accuracies = []
-        names = []
-        times = []
         #densities = [1]
         for model in glob.iglob('models/' + '*'):
             accuracies = []
-            t1 = timeit.default_timer()
             for i,tc in enumerate(test_corpora):
                 corpus_name = corpus_names[i]
                 acc = test_model(model,tc,true_labels_per_corpus[i],n_classes,corpus_names[i])
                 accuracies.append(acc)
-            test_time = timeit.default_timer() - t1
-            print('Test time of {}: {}'.format(model, test_time))
             model_accuracies.append(accuracies)
-            names.append(model)
-            times.append(test_time)
 
         # ind = np.arange(len(names))
         # fig = plt.figure()
