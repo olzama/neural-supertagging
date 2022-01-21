@@ -86,9 +86,12 @@ def test_model(model, X_test, Y_test, n_classes, corpus_id):
     Y_gold = []
     t1 = timeit.default_timer()
     for sentence in X_test:
-        pred = clf.predict(sentence)
-        for l in pred:
-            y_pred.append(l)
+        try:
+            pred = clf.predict(sentence)
+            for l in pred:
+                y_pred.append(l)
+        except:
+            print(corpus_id + ' ' + sentence)
     test_time = timeit.default_timer() - t1
     print('Test time of {}: {}; {} average per sentence'.format(model, test_time, test_time/len(X_test)))
     for sentence in Y_test:
