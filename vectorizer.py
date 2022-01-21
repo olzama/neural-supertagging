@@ -20,22 +20,24 @@ def read_data(path_X, path_Y):
         with open(corpus,'r') as f:
             fd = json.loads(f.read())
         for sentence in fd:
-            for item in sentence:
-                feature_dicts.append(item)
-                n_train += 1
+            if sentence != 'NO PARSE':
+                for item in sentence:
+                    feature_dicts.append(item)
+                    n_train += 1
     for corpus in test_corpora:
         with open(corpus,'r') as f:
             fd = json.loads(f.read())
         test_corpus_lengths[corpus] = len(fd)
         for sentence in fd:
-            test_sen_lengths.append(len(sentence))
-            for item in sentence:
-                feature_dicts.append(item)
+            if sentence != 'NO PARSE':
+                test_sen_lengths.append(len(sentence))
+                for item in sentence:
+                    feature_dicts.append(item)
     for label_file in all_label_files:
         with open(label_file, 'r') as f:
             tls = f.readlines()
         for tl in tls:
-            if tl != '\n': # ignore sentence boundaries for now
+            if tl != '\n':
                 true_labels.append(tl)
     return feature_dicts, true_labels, n_train, test_sen_lengths, test_corpus_lengths
 

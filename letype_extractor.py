@@ -74,6 +74,7 @@ class LexTypeExtractor:
                 pairs.append(('--EOS--','--EOS--')) # sentence separator
                 y.append('\n') # sentence separator
             else:
+                contexts[j].append('NO PARSE')
                 noparse += 1
                 err = response['error'] if response['error'] else 'None'
                 #print('No parse for item {} out of {}'.format(j,len(items)))
