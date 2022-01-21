@@ -46,7 +46,7 @@ def train_MaxEnt(X, Y):
     # The overall best MaxEnt model (high accuracy, low train time, best test time, out of other MaxEnts
     # This assumes SAGA solver; with SAG OVR L1, can get higher accuracy but training time is huge.
     models = {
-        'l2': {"multinomial": {"name": "Multinomial-L2", "iters": [10]}}
+        'l2': {"multinomial": {"name": "Multinomial-L2", "iters": [100]}}
     }
 
     for penalty in models:
