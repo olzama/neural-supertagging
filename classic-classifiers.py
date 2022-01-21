@@ -46,7 +46,7 @@ def train_MaxEnt(X, Y):
     # The overall best MaxEnt model (high accuracy, low train time, best test time, out of other MaxEnts
     # This assumes SAGA solver; with SAG OVR L1, can get higher accuracy but training time is huge.
     models = {
-        'l2': {"multinomial": {"name": "Multinomial-L2", "iters": [1]}}
+        'l2': {"multinomial": {"name": "Multinomial-L2", "iters": [10]}}
     }
 
     for penalty in models:
@@ -64,7 +64,7 @@ def train_MaxEnt(X, Y):
                     penalty=penalty,
                     max_iter=this_max_iter,
                     random_state=42,
-                    l1_ratio=0.5 # only for elastic-net
+                    #l1_ratio=0.5 # only for elastic-net
                 )
                 model_name = models[penalty][model]["name"] + '-' + solver
                 fit_serialize(X, Y, clf, model_name)
