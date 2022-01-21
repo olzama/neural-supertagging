@@ -20,7 +20,7 @@ def read_data(path_X, path_Y):
         with open(corpus,'r') as f:
             fd = json.loads(f.read())
         for sentence in fd:
-            if sentence != 'NO PARSE':
+            if sentence[0] != 'NO PARSE':
                 for item in sentence:
                     feature_dicts.append(item)
                     n_train += 1
@@ -29,7 +29,7 @@ def read_data(path_X, path_Y):
             fd = json.loads(f.read())
         test_corpus_lengths[corpus] = len(fd)
         for sentence in fd:
-            if sentence != 'NO PARSE':
+            if sentence[0] != 'NO PARSE':
                 test_sen_lengths.append(len(sentence))
                 for item in sentence:
                     feature_dicts.append(item)
