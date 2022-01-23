@@ -15,7 +15,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.exceptions import ConvergenceWarning
 from sklearn import svm
 
-from vectorizer import read_data,vectorize_train_data
+from vectorizer import read_data,vectorize_data
 
 warnings.filterwarnings("ignore", category=ConvergenceWarning, module="sklearn")
 
@@ -46,7 +46,7 @@ def train_MaxEnt(X, Y):
     # The overall best MaxEnt model (high accuracy, low train time, best test time, out of other MaxEnts
     # This assumes SAGA solver; with SAG OVR L1, can get higher accuracy but training time is huge.
     models = {
-        'l2': {"multinomial": {"name": "Multinomial-L2", "iters": [100]}}
+        'l2': {"multinomial": {"name": "Multinomial-L2", "iters": [1]}}
     }
 
     for penalty in models:
@@ -79,21 +79,26 @@ def fit_serialize(X, Y, clf, name):
         pickle.dump(clf, f)
 
 
-def test_model(model, X_test, Y_test, n_classes, corpus_id):
+def test_model(model, X_test, Y_test, n_classes, corpus_id,num_sentences,by_sentence):
     with open(model, 'rb') as f:
         clf = pickle.load(f)
     y_pred = []
     Y_gold = []
-    t1 = timeit.default_timer()
+    times = []
     for i,sentence in enumerate(X_test):
+        t1 = timeit.default_timer()
         pred = clf.predict(sentence)
-        for l in pred:
-            y_pred.append(l)
-    test_time = timeit.default_timer() - t1
-    print('Test time of {}: {}; {} average per sentence'.format(model, test_time, test_time/len(X_test)))
-    for sentence in Y_test:
-        for l in sentence:
-            Y_gold.append(l)
+        test_time = timeit.default_timer() - t1
+        times.append(test_time)
+        y_pred = y_pred + list(pred)
+    t_sum = sum(times)
+    if by_sentence:
+        avg_time = t_sum/len(X_test)
+    else:
+        avg_time = t_sum/num_sentences
+    print('Test time of {}: {}; {} average per sentence'.format(model, t_sum, avg_time))
+    for sentence_labels in Y_test:
+        Y_gold = Y_gold + list(sentence_labels)
     accuracy = np.sum(np.array(y_pred) == np.array(Y_gold)) / len(Y_gold)
     #density = np.mean(clf.coef_ != 0, axis=1) * 100
     print("Test accuracy for model %s: %.4f on corpus %s" % (model, accuracy, str(corpus_id)))
@@ -108,46 +113,42 @@ def test_model(model, X_test, Y_test, n_classes, corpus_id):
 if __name__ == "__main__":
     feature_dicts, true_labels, n_train, test_sen_lengths, test_corpus_lengths\
         = read_data('./data/contexts/', './data/true_labels/')
-    X, Y = vectorize_train_data(feature_dicts,true_labels)
+    X_train, X_test, Y = vectorize_data(feature_dicts,true_labels,n_train)
     n_classes = np.unique(Y).shape[0]
-    X_train = X[:n_train]
     Y_train = Y[:n_train]
-    test_corpora = []
-    true_labels_per_corpus = []
-    start = n_train
-    corpus_start = 0
-    for corpus in test_corpus_lengths:
-        X_test = []
-        Y_test = []
-        test_sentences = test_sen_lengths[corpus_start:corpus_start+test_corpus_lengths[corpus]]
-        for l in test_sentences:
-            X_test.append(X[start:start+l])
-            Y_test.append(Y[start:start+l])
-            start = start + l
-        test_corpora.append(X_test)
-        true_labels_per_corpus.append(Y_test)
-        corpus_start = corpus_start + test_corpus_lengths[corpus]
+    Y_test = Y[n_train:]
     if sys.argv[1] == 'train':
-        train_SVM(X_train,Y_train)
+        #train_SVM(X_train,Y_train)
         train_MaxEnt(X_train, Y_train)
     elif sys.argv[1] == 'test':
+        test_corpora = []
+        true_labels_per_corpus = []
+        start = 0
+        corpus_start = 0
+        # TODO: do this better, via parse_args()
+        by_sentence = sys.argv[2] == 'True'
+        for corpus in test_corpus_lengths:
+            if by_sentence:
+                X_test_per_sentence = []
+                Y_test_per_sentence = []
+                test_sentences = test_sen_lengths[corpus_start:corpus_start + test_corpus_lengths[corpus]]
+                for l in test_sentences:
+                    X_test_per_sentence.append(X_test[start:start + l])
+                    Y_test_per_sentence.append(Y_test[start:start + l])
+                    start = start + l
+                test_corpora.append(X_test_per_sentence)
+                true_labels_per_corpus.append(Y_test_per_sentence)
+            else:
+                test_corpora.append([X_test])
+                true_labels_per_corpus.append([Y_test])
+            corpus_start = corpus_start + test_corpus_lengths[corpus]
         corpus_names = list(test_corpus_lengths.keys())
         model_accuracies = []
-        #densities = [1]
         for model in glob.iglob('models/' + '*'):
             accuracies = []
             for i,tc in enumerate(test_corpora):
                 corpus_name = corpus_names[i]
-                acc = test_model(model,tc,true_labels_per_corpus[i],n_classes,corpus_names[i])
+                acc = test_model(model,tc,true_labels_per_corpus[i],n_classes,corpus_name,
+                                 test_corpus_lengths[corpus_name],by_sentence)
                 accuracies.append(acc)
             model_accuracies.append(accuracies)
-
-        # ind = np.arange(len(names))
-        # fig = plt.figure()
-        # ax = fig.add_subplot(111)
-        # ax.legend()
-        # fig.suptitle("Accuracies on the ERG dev data")
-        # ax.set_ylabel("Dev accuracy")
-        # ax.set_xticks(ind, labels=names)
-        # ax.plot(accuracies)
-        # plt.savefig('accuracies.png')

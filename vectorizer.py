@@ -11,9 +11,9 @@ def read_data(path_X, path_Y):
     test_sen_lengths = []
     test_corpus_lengths = {}
     train_corpora = sorted(glob.iglob(path_X + 'train/' + '*'))
-    test_corpora = sorted(glob.iglob(path_X + 'test/' + '*'))
+    test_corpora = sorted(glob.iglob(path_X + 'dev/' + '*'))
     train_label_files = sorted(glob.iglob(path_Y + 'train/' + '*'))
-    test_label_files = sorted(glob.iglob(path_Y + 'test/' + '*'))
+    test_label_files = sorted(glob.iglob(path_Y + 'dev/' + '*'))
     all_label_files = train_label_files + test_label_files
     n_train = 0
     for corpus in train_corpora:
@@ -45,13 +45,14 @@ def read_data(path_X, path_Y):
 This function needs to treat the entire data set as a matrix,
 so training and test data must have the same dimensions.
 '''
-def vectorize_train_data(word_feature_dicts, word_labels):
+def vectorize_data(word_feature_dicts, word_labels, n_train):
     vec = DictVectorizer()
     le = LabelEncoder()
-    vectors = vec.fit_transform(word_feature_dicts)
+    train_vectors = vec.fit_transform(word_feature_dicts[:n_train])
+    test_vectors = vec.transform(word_feature_dicts[n_train:])
     le.fit(word_labels)
     labels = le.transform(word_labels)
-    return vectors, labels
+    return train_vectors, test_vectors, labels
 
 def vectorize_test_data(word_feature_dicts, word_labels):
     pass
