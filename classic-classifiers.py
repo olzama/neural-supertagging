@@ -46,13 +46,12 @@ def train_MaxEnt(X, Y):
     # The overall best MaxEnt model (high accuracy, low train time, best test time, out of other MaxEnts
     # This assumes SAGA solver; with SAG OVR L1, can get higher accuracy but training time is huge.
     models = {
-        'l2': {"multinomial": {"name": "Multinomial-L2", "iters": [1]}}
+        'l2': {"multinomial": {"name": "Multinomial-L2", "iters": [100]}}
     }
 
     for penalty in models:
         for model in models[penalty]:
             model_params = models[penalty][model]
-            # Small number of epochs for fast runtime; 100 is the default
             for this_max_iter in model_params["iters"]:
                 print(
                     "[model=%s, solver=%s] Number of epochs: %s"
@@ -139,7 +138,7 @@ if __name__ == "__main__":
                 test_corpora.append(X_test_per_sentence)
                 true_labels_per_corpus.append(Y_test_per_sentence)
             else:
-                test_corpora.append([X_test])
+                test_corpora.append([X_test]) #TODO this is a bug; adding all the corpora many times
                 true_labels_per_corpus.append([Y_test])
             corpus_start = corpus_start + test_corpus_lengths[corpus]
         corpus_names = list(test_corpus_lengths.keys())
