@@ -48,16 +48,20 @@ def vectorize_train_data(word_feature_dicts, word_labels):
     le = LabelEncoder()
     vectors = vec.fit_transform(word_feature_dicts)
     le.fit(word_labels)
-    labels = le.transform(le.classes_)
-    le_dict = dict(zip(le.classes_, labels))
+    labels = le.transform(word_labels)
+    le_dict = dict(zip(le.classes_, le.transform(le.classes_)))
     return vectors, labels, vec, le_dict
 
 def vectorize_test_data(word_feature_dicts, word_labels, vec, le_dict):
     vectors = vec.transform(word_feature_dicts)
     labels = []
+    unknowns = 0
     for l in word_labels:
-        labels.append(le_dict.get(l,'-1')) # Return -1 is unknown value
-    return vectors, labels
+        tl = le_dict.get(l,'-1')
+        if tl == -1:
+            unknowns += 1
+        labels.append(tl) # Return -1 is unknown value
+    return vectors, labels, unknowns
 
 
 def pickle_vectors(path,X, Y, suf):
@@ -86,8 +90,8 @@ if __name__ == "__main__":
             testcorpora_with_labels = zip(sorted(glob.iglob(sys.argv[1] + '*')),sorted(glob.iglob(sys.argv[2] + '*')))
         for testcorpus, labels in testcorpora_with_labels:
             feature_dicts, true_labels, sen_lengths = read_data(testcorpus, labels)
-            X,Y = vectorize_test_data(feature_dicts,true_labels, vec, ld)
-            c = ERG_Corpus.ERG_Corpus(os.path.basename(testcorpus),X,Y,sen_lengths)
+            X,Y, unk = vectorize_test_data(feature_dicts,true_labels, vec, ld)
+            c = ERG_Corpus.ERG_Corpus(os.path.basename(testcorpus),X,Y,sen_lengths,unk)
             with open(sys.argv[5]+'/'+c.name, 'wb') as cf:
                 pickle.dump(c,cf)
 

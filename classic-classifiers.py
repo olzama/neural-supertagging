@@ -9,7 +9,7 @@ import numpy as np
 
 import pickle,glob
 
-import sys
+import sys,os
 
 from sklearn.linear_model import LogisticRegression
 from sklearn.exceptions import ConvergenceWarning
@@ -101,10 +101,16 @@ if __name__ == "__main__":
         train_SVM(X,Y)
         train_MaxEnt(X, Y)
     elif sys.argv[1] == 'test':
-        with open(sys.argv[2], 'rb') as cf:
-            corpus = pickle.load(cf)
-        print('Testing corpus {}'.format(corpus.name))
-        for model in glob.iglob('models/' + '*'):
-            with open(model, 'rb') as f:
-                clf = pickle.load(f)
-            acc = test_model(clf,corpus.X,corpus.Y,len(corpus.sen_lengths))
+        corpora = []
+        if os.path.isdir(sys.argv[2]):
+            corpora = sorted(glob.iglob(sys.argv[2] + '/*'))
+        elif os.path.isfile(sys.argv[2]):
+            corpora = glob.glob(sys.argv[2])
+        for c in corpora:
+            with open(c, 'rb') as cf:
+                corpus = pickle.load(cf)
+            print('Testing corpus {} which has {} unknown labels'.format(corpus.name, corpus.unk))
+            for model in glob.iglob('models/' + '*'):
+                with open(model, 'rb') as f:
+                    clf = pickle.load(f)
+                acc = test_model(clf,corpus.X,corpus.Y,len(corpus.sen_lengths))
