@@ -6,6 +6,7 @@ import pickle
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.preprocessing import LabelEncoder
 
+import ERG_Corpus
 
 def read_data(path_X, path_Y):
     feature_dicts = []
@@ -71,7 +72,9 @@ if __name__ == "__main__":
         with open(sys.argv[4]+'/label-encoder', 'rb') as f:
             le = pickle.load(f)
         X,Y = vectorize_test_data(feature_dicts,true_labels, vec, le)
-        pickle_vectors(sys.argv[4], X, Y,'test')
+        c = ERG_Corpus.ERG_Corpus(sys.argv[5],X,Y,sen_lengths)
+        with open(sys.argv[4]+'/'+c.name, 'wb') as cf:
+            pickle.dump(c,cf)
     #n_classes = np.unique(Y).shape[0]
 
 
