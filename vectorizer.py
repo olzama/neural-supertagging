@@ -1,5 +1,7 @@
 import glob
 import json
+import sys
+import pickle
 
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.preprocessing import LabelEncoder
@@ -8,54 +10,71 @@ from sklearn.preprocessing import LabelEncoder
 def read_data(path_X, path_Y):
     feature_dicts = []
     true_labels = []
-    test_sen_lengths = []
-    test_corpus_lengths = {}
-    train_corpora = sorted(glob.iglob(path_X + 'train/' + '*'))
-    test_corpora = sorted(glob.iglob(path_X + 'dev/' + '*'))
-    train_label_files = sorted(glob.iglob(path_Y + 'train/' + '*'))
-    test_label_files = sorted(glob.iglob(path_Y + 'dev/' + '*'))
-    all_label_files = train_label_files + test_label_files
-    n_train = 0
-    for corpus in train_corpora:
+    sen_lengths = []
+    corpora = sorted(glob.iglob(path_X + '*'))
+    label_files = sorted(glob.iglob(path_Y + '*'))
+    for corpus in corpora:
         with open(corpus,'r') as f:
             fd = json.loads(f.read())
         for sentence in fd:
+            sen_lengths.append(len(sentence))
             if sentence[0] != 'NO PARSE':
                 for item in sentence:
                     feature_dicts.append(item)
-                    n_train += 1
-    for corpus in test_corpora:
-        with open(corpus,'r') as f:
-            fd = json.loads(f.read())
-        test_corpus_lengths[corpus] = len(fd)
-        for sentence in fd:
-            if sentence[0] != 'NO PARSE':
-                test_sen_lengths.append(len(sentence))
-                for item in sentence:
-                    feature_dicts.append(item)
-    for label_file in all_label_files:
+    for label_file in label_files:
         with open(label_file, 'r') as f:
             tls = f.readlines()
         for tl in tls:
             if tl != '\n':
                 true_labels.append(tl)
-    return feature_dicts, true_labels, n_train, test_sen_lengths, test_corpus_lengths
+    return feature_dicts, true_labels, sen_lengths
 
 '''
 This function needs to treat the entire data set as a matrix,
 so training and test data must have the same dimensions.
 '''
-def vectorize_data(word_feature_dicts, word_labels, n_train):
+def vectorize_train_data(word_feature_dicts, word_labels):
     vec = DictVectorizer()
     le = LabelEncoder()
-    train_vectors = vec.fit_transform(word_feature_dicts[:n_train])
-    test_vectors = vec.transform(word_feature_dicts[n_train:])
+    vectors = vec.fit_transform(word_feature_dicts)
     le.fit(word_labels)
     labels = le.transform(word_labels)
-    return train_vectors, test_vectors, labels
+    return vectors, labels, vec, le
 
-def vectorize_test_data(word_feature_dicts, word_labels):
-    pass
+def vectorize_test_data(word_feature_dicts, word_labels, vec, le):
+    vectors = vec.transform(word_feature_dicts)
+    labels = le.transform(word_labels)
+    return vectors, labels
+
+
+def pickle_vectors(path,suf):
+    with open(path + 'X_'+suf, 'wb') as xf:
+        pickle.dump(X, xf)
+    with open(path + 'Y_'+suf, 'wb') as yf:
+        pickle.dump(Y, yf)
+
+
+if __name__ == "__main__":
+    # See sample data for the expected format.
+    # The paths must end with '/' (be directories)
+    feature_dicts, true_labels, sen_lengths = read_data(sys.argv[1], sys.argv[2])
+    if sys.argv[3]=='train':
+        X, Y, vectorizer, label_encoder = vectorize_train_data(feature_dicts,true_labels)
+        with open(sys.argv[4]+'/vectorizer', 'wb') as f:
+            pickle.dump(vectorizer,f)
+        with open(sys.argv[4]+'/label-encoder','wb') as f:
+            pickle.dump(label_encoder,f)
+        pickle_vectors(sys.argv[4],'train')
+    if sys.argv[3]=='test':
+        with open(sys.argv[4]+'/vectorizer', 'rb') as f:
+            vec = pickle.load(f)
+        with open(sys.argv[4]+'/label-encoder', 'rb') as f:
+            le = pickle.load(f)
+        X,Y = vectorize_test_data(feature_dicts,true_labels, vec, le)
+        pickle_vectors(sys.argv[4], 'test')
+    #n_classes = np.unique(Y).shape[0]
+
+
 
 # Below just a small example I used to inspect the features.
 
