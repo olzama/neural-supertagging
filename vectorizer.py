@@ -57,7 +57,7 @@ def vectorize_test_data(word_feature_dicts, word_labels, vec, le_dict):
     labels = []
     unknowns = 0
     for l in word_labels:
-        tl = le_dict.get(l,'-1')
+        tl = le_dict.get(l,-1)
         if tl == -1:
             unknowns += 1
         labels.append(tl) # Return -1 is unknown value
