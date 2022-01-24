@@ -75,7 +75,6 @@ if __name__ == "__main__":
         c = ERG_Corpus.ERG_Corpus(sys.argv[5],X,Y,sen_lengths)
         with open(sys.argv[4]+'/'+c.name, 'wb') as cf:
             pickle.dump(c,cf)
-    #n_classes = np.unique(Y).shape[0]
 
 
 
