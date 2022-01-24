@@ -47,7 +47,7 @@ def vectorize_test_data(word_feature_dicts, word_labels, vec, le):
     return vectors, labels
 
 
-def pickle_vectors(path,suf):
+def pickle_vectors(path,X, Y, suf):
     with open(path + 'X_'+suf, 'wb') as xf:
         pickle.dump(X, xf)
     with open(path + 'Y_'+suf, 'wb') as yf:
@@ -64,14 +64,14 @@ if __name__ == "__main__":
             pickle.dump(vectorizer,f)
         with open(sys.argv[4]+'/label-encoder','wb') as f:
             pickle.dump(label_encoder,f)
-        pickle_vectors(sys.argv[4],'train')
+        pickle_vectors(sys.argv[4], X, Y, 'train')
     if sys.argv[3]=='test':
         with open(sys.argv[4]+'/vectorizer', 'rb') as f:
             vec = pickle.load(f)
         with open(sys.argv[4]+'/label-encoder', 'rb') as f:
             le = pickle.load(f)
         X,Y = vectorize_test_data(feature_dicts,true_labels, vec, le)
-        pickle_vectors(sys.argv[4], 'test')
+        pickle_vectors(sys.argv[4], X, Y,'test')
     #n_classes = np.unique(Y).shape[0]
 
 
