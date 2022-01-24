@@ -45,7 +45,7 @@ def train_MaxEnt(X, Y):
     # The overall best MaxEnt model (high accuracy, low train time, best test time, out of other MaxEnts
     # This assumes SAGA solver; with SAG OVR L1, can get higher accuracy but training time is huge.
     models = {
-        'l2': {"multinomial": {"name": "Multinomial-L2", "iters": [1]}}
+        'l2': {"multinomial": {"name": "Multinomial-L2", "iters": [100]}}
     }
 
     for penalty in models:
@@ -79,21 +79,12 @@ def fit_serialize(X, Y, clf, name):
 
 
 def test_model(clf, X_test, Y_test, num_sentences):
-    y_pred = []
-    Y_gold = []
-    times = []
-    for i,sentence in enumerate(X_test):
-        t1 = timeit.default_timer()
-        pred = clf.predict(sentence)
-        test_time = timeit.default_timer() - t1
-        times.append(test_time)
-        y_pred = y_pred + list(pred)
-    t_sum = sum(times)
-    avg_time = t_sum/num_sentences
-    print('Test time of {}: {}; {} average per sentence'.format(model, t_sum, avg_time))
-    for sentence_labels in Y_test:
-        Y_gold = Y_gold + list(sentence_labels)
-    accuracy = np.sum(np.array(y_pred) == np.array(Y_gold)) / len(Y_gold)
+    t1 = timeit.default_timer()
+    y_pred = clf.predict(X_test)
+    test_time = timeit.default_timer() - t1
+    avg_time = test_time/num_sentences
+    print('Test time of {}: {}; {} average per sentence'.format(model, test_time, avg_time))
+    accuracy = np.sum(np.array(y_pred) == np.array(Y_test)) / len(Y_test)
     print("Test accuracy for model %s: %.4f" % (model, accuracy))
     return accuracy
 
@@ -107,16 +98,13 @@ def load_vectors(path_to_vecs, path_to_labels):
 if __name__ == "__main__":
     if sys.argv[1] == 'train':
         X, Y = load_vectors(sys.argv[2], sys.argv[3])
-        #train_SVM(X_train,Y_train)
+        train_SVM(X,Y)
         train_MaxEnt(X, Y)
     elif sys.argv[1] == 'test':
         with open(sys.argv[2], 'rb') as cf:
             corpus = pickle.load(cf)
-        model_accuracies = []
+        print('Testing corpus {}'.format(corpus.name))
         for model in glob.iglob('models/' + '*'):
             with open(model, 'rb') as f:
                 clf = pickle.load(f)
-            accuracies = []
             acc = test_model(clf,corpus.X,corpus.Y,len(corpus.sen_lengths))
-            accuracies.append(acc)
-            model_accuracies.append(accuracies)
