@@ -34,19 +34,19 @@ def train_MaxEnt(X, Y):
     )
 
     # All MaxEnt models tried in development:
-    # models = {
-    #     'l1': {"multinomial": {"name": "Multinomial-L1", "iters": [10]},
-    #            "ovr": {"name": "One versus Rest-L1", "iters": [10]}},
-    #     'l2': {"multinomial": {"name": "Multinomial-L2", "iters": [10]},
-    #            "ovr": {"name": "One versus Rest-L2", "iters": [10]}},
-    #     'elasticnet': {"multinomial": {"name": "Multinomial-ENet", "iters": [10]}},
-    # }
+    models = {
+        'l1': {"multinomial": {"name": "Multinomial-L1", "iters": [100]},
+               "ovr": {"name": "One versus Rest-L1", "iters": [100]}},
+        'l2': {"multinomial": {"name": "Multinomial-L2", "iters": [100]},
+               "ovr": {"name": "One versus Rest-L2", "iters": [100]}},
+        'elasticnet': {"multinomial": {"name": "Multinomial-ENet", "iters": [100]}},
+    }
 
     # The overall best MaxEnt model (high accuracy, low train time, best test time, out of other MaxEnts
     # This assumes SAGA solver; with SAG OVR L1, can get higher accuracy but training time is huge.
-    models = {
-        'l2': {"multinomial": {"name": "Multinomial-L2", "iters": [100]}}
-    }
+    # models = {
+    #     'l2': {"multinomial": {"name": "Multinomial-L2", "iters": [100]}}
+    # }
 
     for penalty in models:
         for model in models[penalty]:
@@ -62,7 +62,7 @@ def train_MaxEnt(X, Y):
                     penalty=penalty,
                     max_iter=this_max_iter,
                     random_state=42,
-                    #l1_ratio=0.5 # only for elastic-net
+                    l1_ratio=0.5 # only for elastic-net
                 )
                 model_name = models[penalty][model]["name"] + '-' + solver
                 fit_serialize(X, Y, clf, model_name)
