@@ -1,6 +1,8 @@
 from delphin import tdl, itsdb
+from delphin.tokens import YYTokenLattice
 import glob, sys, pathlib
 import json
+import re
 
 CONTEXT_WINDOW = 2
 
@@ -26,17 +28,18 @@ class LexTypeExtractor:
     def process_testsuites(self,testsuites,lextypes):
         with open('./log.txt', 'w') as logf:
             for i,testsuite in enumerate(glob.iglob(testsuites+'**')):
-                try:
-                    num_items, no_parse, sentence_lens = self.process_testsuite(lextypes, logf, testsuite)
-                    self.stats['corpora'][i]['items'] = num_items
-                    self.stats['corpora'][i]['noparse'] = no_parse
-                    all_lengths = sorted(list(sentence_lens),reverse=True)
-                    self.stats['corpora'][i]['max-len'] = max(all_lengths)
-                except:
-                    print("ERROR: " + testsuite)
-                    self.stats['failed corpora'].append({'name':testsuite})
-                    self.stats['corpora'].append(None)
-                    logf.write("TESTSUITE ERROR: " + testsuite + '\n')
+                #try:
+                num_items, no_parse, sentence_lens, unk_pos = self.process_testsuite(lextypes, logf, testsuite)
+                self.stats['corpora'][i]['items'] = num_items
+                self.stats['corpora'][i]['noparse'] = no_parse
+                self.stats['corpora'][i]['unk-pos'] = unk_pos
+                all_lengths = sorted(list(sentence_lens),reverse=True)
+                self.stats['corpora'][i]['max-len'] = max(all_lengths)
+                # except:
+                #     print("ERROR: " + testsuite)
+                #     self.stats['failed corpora'].append({'name':testsuite})
+                #     self.stats['corpora'].append(None)
+                #     logf.write("TESTSUITE ERROR: " + testsuite + '\n')
 
     def process_testsuite(self, lextypes, logf, tsuite):
         ts = itsdb.TestSuite(tsuite)
@@ -48,6 +51,7 @@ class LexTypeExtractor:
         y = []
         items = list(ts.processed_items())
         noparse = 0
+        unk_pos = 0
         sentence_lens = {}
         for j, response in enumerate(items):
             contexts.append([])
@@ -56,12 +60,14 @@ class LexTypeExtractor:
                     print("Processing item {} out of {}...".format(j, len(items)))
                 result = response.result(0)
                 deriv = result.derivation()
-                tokens,tags = self.get_tokens_tags(deriv,CONTEXT_WINDOW)
+                # p_input = response['p-input']
+                # p_tokens = response['p-tokens']
+                # yy_lattice = YYTokenLattice.from_string(p_tokens)
+                tokens,tags = \
+                     self.get_tokens_tags(deriv,CONTEXT_WINDOW)
                 if response['i-length'] not in sentence_lens:
                     sentence_lens[response['i-length']] = 0
                 sentence_lens[response['i-length']] += 1
-                if response['i-length'] == 139:
-                    print(response['i-input'])
                 for k, t in enumerate(tokens):
                     if k < CONTEXT_WINDOW or k >= len(tokens) - CONTEXT_WINDOW:
                         continue
@@ -70,7 +76,7 @@ class LexTypeExtractor:
                     self.stats['tokens'][t] += 1
                     pairs.append((t, tags[k]))
                     y.append(tags[k])
-                    contexts[j].append(self.get_context(t,tokens,tags,k,CONTEXT_WINDOW))
+                    contexts[j].append(self.get_context(t, tokens, tags, k, CONTEXT_WINDOW))
                 pairs.append(('--EOS--','--EOS--')) # sentence separator
                 y.append('\n') # sentence separator
             else:
@@ -81,7 +87,7 @@ class LexTypeExtractor:
                 logf.write(ts.path.stem + '\t' + str(response['i-id']) + '\t'
                            + response['i-input'] + '\t' + err + '\n')
         self.write_output(contexts, lextypes, pairs, ts)
-        return len(items), noparse, sentence_lens
+        return len(items), noparse, sentence_lens, unk_pos
 
     def write_output(self, contexts, lextypes, pairs, ts):
         for d in ['train/','test/','dev/', 'ignore/']:
@@ -113,8 +119,8 @@ class LexTypeExtractor:
         with open('./output/contexts/' + suf + ts.path.stem, 'w') as f:
             f.write(json.dumps(contexts))
 
-    def get_context(self,t,tokens,tags,i,window):
-        context = {'w':t,'tag':tags[i]}
+    def get_context(self, t, tokens,tags, i, window):
+        context = {'w': t}
         for j in range(1,window+1):
             prev_tok = tokens[i-j]
             prev_tag = tags[i-j]
@@ -124,10 +130,43 @@ class LexTypeExtractor:
             context['tag-' + str(j)] = prev_tag
         return context
 
+    # Work in progress
+    # def get_tokens_tags(self, deriv, context_window, p_input, yy_lattice, sentence, unk_pos, logf):
+    #     tokens = []
+    #     pos_tags = []
+    #     tags = []
+    #     p_input_per_word = [m.group() for m in re.finditer('\([^()]+\)',p_input)]
+    #     for ptok in p_input_per_word:
+    #         items = ptok.split(',')
+    #         span = items[3].strip()
+    #         match = re.search('<([0-9]+):([0-9]+)>',span)
+    #         start = match.group(1)
+    #         end = match.group(2)
+    #         for yyt in yy_lattice.tokens:
+    #             if yyt[3].data[0] == start and yyt[3].data[1] == end:
+    #                 print(yyt)
+    #         print(ptok)
+    #     for i,terminal in enumerate(deriv.terminals()):
+    #         tokens.append(terminal.form)
+    #         tags.append(terminal.parent.entity)
+    #         try:
+    #             pos_tag = self.get_pos_tag(p_input_per_word[i], terminal.form, sentence, logf, unk_pos)
+    #             pos_tags.append(pos_tag)
+    #         except:
+    #             print(i)
+    #     for i in range(1,1+context_window):
+    #         tokens.insert(0, 'FAKE-' + str(i))
+    #         tags.insert(0, 'FAKE-' + str(i))
+    #         pos_tags.insert(0,'FAKE-'+str(i))
+    #         tokens.append('FAKE+' + str(i))
+    #         tags.append('FAKE+' + str(i))
+    #         pos_tags.append('FAKE+' + str(i))
+    #     return tokens, tags, pos_tags
+
     def get_tokens_tags(self, deriv, context_window):
         tokens = []
         tags = []
-        for terminal in deriv.terminals():
+        for i,terminal in enumerate(deriv.terminals()):
             tokens.append(terminal.form)
             tags.append(terminal.parent.entity)
         for i in range(1,1+context_window):
@@ -135,8 +174,19 @@ class LexTypeExtractor:
             tags.insert(0, 'FAKE-' + str(i))
             tokens.append('FAKE+' + str(i))
             tags.append('FAKE+' + str(i))
-        return tokens,tags
+        return tokens, tags
 
+
+    def get_pos_tag(self, p_input,token, sentence,logf,unk_pos_tags):
+        items = p_input.split(',')
+        try:
+            pos_tag,prob = items[-1].strip().split(' ')
+        except:
+            pos_tag = '"<UNK-POS>"'
+            logf.write('Missing POS tag for token {} in sentence {}'.format(token, sentence))
+            unk_pos_tags += 1
+        pos_tag = pos_tag.strip('"')
+        return pos_tag
 
 if __name__ == "__main__":
     args = sys.argv[1:]
