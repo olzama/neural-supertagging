@@ -60,9 +60,9 @@ class LexTypeExtractor:
                     print("Processing item {} out of {}...".format(j, len(items)))
                 result = response.result(0)
                 deriv = result.derivation()
-                # p_input = response['p-input']
-                # p_tokens = response['p-tokens']
-                # yy_lattice = YYTokenLattice.from_string(p_tokens)
+                p_input = response['p-input']
+                p_tokens = response['p-tokens']
+                token_mappings = self.map_lattice_to_input(p_input,p_tokens, deriv)
                 tokens,tags = \
                      self.get_tokens_tags(deriv,CONTEXT_WINDOW)
                 if response['i-length'] not in sentence_lens:
@@ -88,6 +88,28 @@ class LexTypeExtractor:
                            + response['i-input'] + '\t' + err + '\n')
         self.write_output(contexts, lextypes, pairs, ts)
         return len(items), noparse, sentence_lens, unk_pos
+
+    def map_lattice_to_input(self, p_input,p_tokens, deriv):
+        yy_lattice = YYTokenLattice.from_string(p_tokens)
+        yy_input = YYTokenLattice.from_string(p_input)
+        terminals = deriv.terminals()
+        pos_tags = []
+        for t in terminals:
+            span = None
+            pos_list = []
+            for ttok in t.tokens:
+                id = ttok.id
+                for lat_tok in yy_lattice.tokens:
+                    if lat_tok.id == id:
+                        span = lat_tok.lnk.data
+                        break
+                for in_tok in yy_input.tokens:
+                    if in_tok.lnk.data == span:
+                        pos_list = in_tok.pos
+                        break
+            pos_tags.append((t,pos_list))
+        return pos_tags
+
 
     def write_output(self, contexts, lextypes, pairs, ts):
         for d in ['train/','test/','dev/', 'ignore/']:
