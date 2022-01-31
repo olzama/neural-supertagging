@@ -62,7 +62,7 @@ class LexTypeExtractor:
                 deriv = result.derivation()
                 p_input = response['p-input']
                 p_tokens = response['p-tokens']
-                token_mappings = self.map_lattice_to_input(p_input,p_tokens, deriv)
+                terminals_toks_pos_tags = self.map_lattice_to_input(p_input,p_tokens, deriv)
                 tokens,tags = \
                      self.get_tokens_tags(deriv,CONTEXT_WINDOW)
                 if response['i-length'] not in sentence_lens:
@@ -93,22 +93,24 @@ class LexTypeExtractor:
         yy_lattice = YYTokenLattice.from_string(p_tokens)
         yy_input = YYTokenLattice.from_string(p_input)
         terminals = deriv.terminals()
-        pos_tags = []
+        terminals_toks_postags = []
         for t in terminals:
             span = None
-            pos_list = []
+            toks_pos_tags = []
             for ttok in t.tokens:
                 id = ttok.id
+                pos_list = []
                 for lat_tok in yy_lattice.tokens:
                     if lat_tok.id == id:
                         span = lat_tok.lnk.data
                         break
                 for in_tok in yy_input.tokens:
                     if in_tok.lnk.data == span:
-                        pos_list = in_tok.pos
+                        pos_list.append(in_tok.pos)
                         break
-            pos_tags.append((t,pos_list))
-        return pos_tags
+                toks_pos_tags.append((ttok, pos_list))
+            terminals_toks_postags.append((t,toks_pos_tags))
+        return terminals_toks_postags
 
 
     def write_output(self, contexts, lextypes, pairs, ts):
