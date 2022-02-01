@@ -2,7 +2,8 @@ from delphin import tdl, itsdb
 from delphin.tokens import YYTokenLattice
 import glob, sys, pathlib
 import json
-import re
+
+from pos_map import POS_MAP
 
 CONTEXT_WINDOW = 2
 
@@ -53,6 +54,7 @@ class LexTypeExtractor:
         noparse = 0
         unk_pos = 0
         sentence_lens = {}
+        mwe = {}
         for j, response in enumerate(items):
             contexts.append([])
             if len(response['results']) > 0:
@@ -63,8 +65,8 @@ class LexTypeExtractor:
                 p_input = response['p-input']
                 p_tokens = response['p-tokens']
                 terminals_toks_pos_tags = self.map_lattice_to_input(p_input,p_tokens, deriv)
-                tokens,tags = \
-                     self.get_tokens_tags(deriv,CONTEXT_WINDOW)
+                tokens,tags,pos_tags = \
+                     self.get_tokens_tags(terminals_toks_pos_tags,CONTEXT_WINDOW, lextypes,mwe)
                 if response['i-length'] not in sentence_lens:
                     sentence_lens[response['i-length']] = 0
                 sentence_lens[response['i-length']] += 1
@@ -86,7 +88,7 @@ class LexTypeExtractor:
                 #print('No parse for item {} out of {}'.format(j,len(items)))
                 logf.write(ts.path.stem + '\t' + str(response['i-id']) + '\t'
                            + response['i-input'] + '\t' + err + '\n')
-        self.write_output(contexts, lextypes, pairs, ts)
+        self.write_output(contexts, pairs, ts)
         return len(items), noparse, sentence_lens, unk_pos
 
     def map_lattice_to_input(self, p_input,p_tokens, deriv):
@@ -95,25 +97,41 @@ class LexTypeExtractor:
         terminals = deriv.terminals()
         terminals_toks_postags = []
         for t in terminals:
-            span = None
+            if t.form == "can’t":
+                print(5)
             toks_pos_tags = []
             for ttok in t.tokens:
+                span = None
                 id = ttok.id
-                pos_list = []
+                pos_probs = {}
                 for lat_tok in yy_lattice.tokens:
                     if lat_tok.id == id:
                         span = lat_tok.lnk.data
                         break
-                for in_tok in yy_input.tokens:
-                    if in_tok.lnk.data == span:
-                        pos_list.append(in_tok.pos)
-                        break
-                toks_pos_tags.append((ttok, pos_list))
+                for i,in_tok in enumerate(yy_input.tokens):
+                    if in_tok.lnk.data[0] == span[0]:
+                        for pos,p in in_tok.pos:
+                            if pos not in pos_probs:
+                                pos_probs[pos] = []
+                            pos_probs[pos].append(float(p))
+                        if in_tok.lnk.data[1] != span[1]:
+                            cur_tok = in_tok
+                            while cur_tok.lnk.data[1] != span[1]:
+                                next_tok = yy_input.tokens[i+1]
+                                i += 1
+                                for pos,p in next_tok.pos:
+                                    if pos not in pos_probs:
+                                        pos_probs[pos] = []
+                                    pos_probs[pos].append(float(p))
+                                cur_tok = next_tok
+                        else:
+                            break
+                toks_pos_tags.append((ttok, pos_probs))
             terminals_toks_postags.append((t,toks_pos_tags))
         return terminals_toks_postags
 
 
-    def write_output(self, contexts, lextypes, pairs, ts):
+    def write_output(self, contexts, pairs, ts):
         for d in ['train/','test/','dev/', 'ignore/']:
             for pd in ['simple/','contexts/','true_labels/']:
                 pathlib.Path('./output/' + pd + d).mkdir(parents=True, exist_ok=True)
@@ -126,9 +144,8 @@ class LexTypeExtractor:
         elif ts.path.stem in DEV:
             suf = 'dev/'
         with open('./output/simple/' + suf + ts.path.stem, 'w') as f:
-            for form, entity in pairs:
-                if not entity=='--EOS--':
-                    letype = lextypes.get(entity, None)
+            for form, letype in pairs:
+                if not letype=='--EOS--':
                     true_labels.append(str(letype))
                     str_pair = f'{form}\t{letype}'
                     f.write(str_pair + '\n')
@@ -154,63 +171,39 @@ class LexTypeExtractor:
             context['tag-' + str(j)] = prev_tag
         return context
 
-    # Work in progress
-    # def get_tokens_tags(self, deriv, context_window, p_input, yy_lattice, sentence, unk_pos, logf):
-    #     tokens = []
-    #     pos_tags = []
-    #     tags = []
-    #     p_input_per_word = [m.group() for m in re.finditer('\([^()]+\)',p_input)]
-    #     for ptok in p_input_per_word:
-    #         items = ptok.split(',')
-    #         span = items[3].strip()
-    #         match = re.search('<([0-9]+):([0-9]+)>',span)
-    #         start = match.group(1)
-    #         end = match.group(2)
-    #         for yyt in yy_lattice.tokens:
-    #             if yyt[3].data[0] == start and yyt[3].data[1] == end:
-    #                 print(yyt)
-    #         print(ptok)
-    #     for i,terminal in enumerate(deriv.terminals()):
-    #         tokens.append(terminal.form)
-    #         tags.append(terminal.parent.entity)
-    #         try:
-    #             pos_tag = self.get_pos_tag(p_input_per_word[i], terminal.form, sentence, logf, unk_pos)
-    #             pos_tags.append(pos_tag)
-    #         except:
-    #             print(i)
-    #     for i in range(1,1+context_window):
-    #         tokens.insert(0, 'FAKE-' + str(i))
-    #         tags.insert(0, 'FAKE-' + str(i))
-    #         pos_tags.insert(0,'FAKE-'+str(i))
-    #         tokens.append('FAKE+' + str(i))
-    #         tags.append('FAKE+' + str(i))
-    #         pos_tags.append('FAKE+' + str(i))
-    #     return tokens, tags, pos_tags
 
-    def get_tokens_tags(self, deriv, context_window):
+    def get_tokens_tags(self, terms_and_tokens_tags, context_window, lextypes,mwe):
         tokens = []
         tags = []
-        for i,terminal in enumerate(deriv.terminals()):
+        pos_tags = []
+        for i,(terminal, toks_tags) in enumerate(terms_and_tokens_tags):
+            letype = lextypes.get(terminal.parent.entity, None)
             tokens.append(terminal.form)
-            tags.append(terminal.parent.entity)
+            tags.append(letype)
+            pos_tags.append(self.get_pos_tag(toks_tags, terminal.form,mwe))
         for i in range(1,1+context_window):
             tokens.insert(0, 'FAKE-' + str(i))
             tags.insert(0, 'FAKE-' + str(i))
             tokens.append('FAKE+' + str(i))
             tags.append('FAKE+' + str(i))
-        return tokens, tags
+        return tokens, tags, pos_tags
 
+    def get_pos_tag(self,tokens_tags, form, mwe):
+        tag = ''
+        for tt in tokens_tags:
+            pos_probs = tt[1]
+            for pos in pos_probs:
+                #print(form + '\t' + pos + '\t')
+                tag = tag + '+' + pos
+        tag = tag.strip('+')
+        if '+' in tag:
+            if not form in mwe:
+                mwe[form] = []
+            mwe[form].append(tag)
+        return tag
 
-    def get_pos_tag(self, p_input,token, sentence,logf,unk_pos_tags):
-        items = p_input.split(',')
-        try:
-            pos_tag,prob = items[-1].strip().split(' ')
-        except:
-            pos_tag = '"<UNK-POS>"'
-            logf.write('Missing POS tag for token {} in sentence {}'.format(token, sentence))
-            unk_pos_tags += 1
-        pos_tag = pos_tag.strip('"')
-        return pos_tag
+    def map_tag_sequence(self,seq):
+        pass
 
 if __name__ == "__main__":
     args = sys.argv[1:]
