@@ -13,14 +13,18 @@ class Pos_mapper:
         with open(filepath,'r') as f:
             lines = f.readlines()
         self.pos_map = {}
+        self.unknowns = []
         for ln in lines:
-            tag,mapping = ln.strip().split('\t')
-            self.pos_map[tag] = mapping
+            if ln:
+                tag,mapping = ln.strip().split('\t')
+                self.pos_map[tag] = mapping
 
     def map_tag(self,tag):
         if tag in self.pos_map:
             return self.pos_map[tag]
         else:
-            #return the last tag
+            #return the first tag
+            self.unknowns.append(tag)
+            #print('Unknown POS tag: ' + tag)
             tags = tag.split('+')
-            return tags[-1]
+            return tags[0]

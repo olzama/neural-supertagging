@@ -4,7 +4,7 @@ import glob, sys, pathlib
 import json
 import os
 
-from pos_map import POS_MAP
+import pos_map
 
 CONTEXT_WINDOW = 2
 
@@ -28,7 +28,7 @@ class LexTypeExtractor:
         self.lextypes = lextypes
 
     def process_testsuites(self,testsuites,lextypes):
-        mwe = {}
+        mwe = {} # only needed to inspect tags in training data
         with open('./log.txt', 'w') as logf:
             for i,testsuite in enumerate(glob.iglob(testsuites+'**')):
                 #try:
@@ -43,12 +43,12 @@ class LexTypeExtractor:
                 #     self.stats['failed corpora'].append({'name':testsuite})
                 #     self.stats['corpora'].append(None)
                 #     logf.write("TESTSUITE ERROR: " + testsuite + '\n')
-        with open('./mwe.txt', 'w') as f:
-            for tag in mwe:
-                f.write(tag)
-                for form in mwe[tag]:
-                    f.write('\t' + form)
-                f.write('\n')
+        # with open('./mwe.txt', 'w') as f:
+        #     for tag in mwe:
+        #         f.write(tag)
+        #         for form in mwe[tag]:
+        #             f.write('\t' + form)
+        #         f.write('\n')
 
 
     def process_testsuite(self, lextypes, logf, tsuite, mwe):
@@ -61,8 +61,8 @@ class LexTypeExtractor:
         y = []
         items = list(ts.processed_items())
         noparse = 0
-        unk_pos = 0
         sentence_lens = {}
+        pos_mapper = pos_map.Pos_mapper('./pos-map.txt')  # do this for every test suite to count unknowns in each
         for j, response in enumerate(items):
             contexts.append([])
             if len(response['results']) > 0:
@@ -73,8 +73,8 @@ class LexTypeExtractor:
                 p_input = response['p-input']
                 p_tokens = response['p-tokens']
                 terminals_toks_pos_tags = self.map_lattice_to_input(p_input,p_tokens, deriv)
-                tokens,tags,pos_tags = \
-                     self.get_tokens_tags(terminals_toks_pos_tags,CONTEXT_WINDOW, lextypes,mwe)
+                tokens,labels,pos_tags = \
+                     self.get_tokens_labels(terminals_toks_pos_tags,CONTEXT_WINDOW, lextypes,mwe,pos_mapper)
                 if response['i-length'] not in sentence_lens:
                     sentence_lens[response['i-length']] = 0
                 sentence_lens[response['i-length']] += 1
@@ -84,9 +84,9 @@ class LexTypeExtractor:
                     if not t in self.stats['tokens']:
                         self.stats['tokens'][t] = 0
                     self.stats['tokens'][t] += 1
-                    pairs.append((t, tags[k]))
-                    y.append(tags[k])
-                    contexts[j].append(self.get_context(t, tokens, tags, k, CONTEXT_WINDOW))
+                    pairs.append((t, labels[k]))
+                    y.append(labels[k])
+                    contexts[j].append(self.get_context(t, tokens, pos_tags, k, CONTEXT_WINDOW))
                 pairs.append(('--EOS--','--EOS--')) # sentence separator
                 y.append('\n') # sentence separator
             else:
@@ -97,7 +97,7 @@ class LexTypeExtractor:
                 logf.write(ts.path.stem + '\t' + str(response['i-id']) + '\t'
                            + response['i-input'] + '\t' + err + '\n')
         self.write_output(contexts, pairs, ts)
-        return len(items), noparse, sentence_lens, unk_pos
+        return len(items), noparse, sentence_lens, len(pos_mapper.unknowns)
 
     def map_lattice_to_input(self, p_input,p_tokens, deriv):
         yy_lattice = YYTokenLattice.from_string(p_tokens)
@@ -166,35 +166,40 @@ class LexTypeExtractor:
         with open('./output/contexts/' + suf + ts.path.stem, 'w') as f:
             f.write(json.dumps(contexts))
 
-    def get_context(self, t, tokens,tags, i, window):
-        context = {'w': t}
+    def get_context(self, t, tokens, pos_tags, i, window):
+        context = {'w': t, 'pos': pos_tags[i]}
         for j in range(1,window+1):
             prev_tok = tokens[i-j]
-            prev_tag = tags[i-j]
+            prev_pos = pos_tags[i-j]
             next_tok = tokens[i+j]
+            next_pos = pos_tags[i+j]
             context['w-' + str(j)] = prev_tok
             context['w+' + str(j)] = next_tok
-            context['tag-' + str(j)] = prev_tag
+            context['pos-' + str(j)] = prev_pos
+            context['pos+' + str(j)] = next_pos
+            #context['tag-' + str(j)] = prev_tag # this is a bug: can't use gold tags. Need an autoregressive model.
         return context
 
 
-    def get_tokens_tags(self, terms_and_tokens_tags, context_window, lextypes,mwe):
+    def get_tokens_labels(self, terms_and_tokens_tags, context_window, lextypes,mwe, pos_mapper):
         tokens = []
-        tags = []
+        labels = []
         pos_tags = []
         for i,(terminal, toks_tags) in enumerate(terms_and_tokens_tags):
-            letype = lextypes.get(terminal.parent.entity, None)
+            letype = lextypes.get(terminal.parent.entity, "<UNK>")
             tokens.append(terminal.form)
-            tags.append(letype)
-            pos_tags.append(self.get_pos_tag(toks_tags, terminal.form,mwe))
+            labels.append(str(letype))
+            pos_tags.append(self.get_pos_tag(toks_tags, terminal.form,mwe, pos_mapper))
         for i in range(1,1+context_window):
             tokens.insert(0, 'FAKE-' + str(i))
-            tags.insert(0, 'FAKE-' + str(i))
+            labels.insert(0, 'FAKE-' + str(i))
+            pos_tags.insert(0,'FAKE-' + str(i))
             tokens.append('FAKE+' + str(i))
-            tags.append('FAKE+' + str(i))
-        return tokens, tags, pos_tags
+            labels.append('FAKE+' + str(i))
+            pos_tags.append('FAKE+' + str(i))
+        return tokens, labels, pos_tags
 
-    def get_pos_tag(self,tokens_tags, form, mwe):
+    def get_pos_tag(self,tokens_tags, form, mwe, pos_mapper):
         tag = ''
         for tt in tokens_tags:
             pos_probs = tt[1]
@@ -206,6 +211,7 @@ class LexTypeExtractor:
             if not tag in mwe:
                 mwe[tag] = set()
             mwe[tag].add(form)
+            tag = pos_mapper.map_tag(tag)
         return tag
 
     def map_tag_sequence(self,seq):
