@@ -2,6 +2,7 @@ from delphin import tdl, itsdb
 from delphin.tokens import YYTokenLattice
 import glob, sys, pathlib
 import json
+import os
 
 from pos_map import POS_MAP
 
@@ -27,10 +28,11 @@ class LexTypeExtractor:
         self.lextypes = lextypes
 
     def process_testsuites(self,testsuites,lextypes):
+        mwe = {}
         with open('./log.txt', 'w') as logf:
             for i,testsuite in enumerate(glob.iglob(testsuites+'**')):
                 #try:
-                num_items, no_parse, sentence_lens, unk_pos = self.process_testsuite(lextypes, logf, testsuite)
+                num_items, no_parse, sentence_lens, unk_pos = self.process_testsuite(lextypes, logf, testsuite, mwe)
                 self.stats['corpora'][i]['items'] = num_items
                 self.stats['corpora'][i]['noparse'] = no_parse
                 self.stats['corpora'][i]['unk-pos'] = unk_pos
@@ -41,8 +43,15 @@ class LexTypeExtractor:
                 #     self.stats['failed corpora'].append({'name':testsuite})
                 #     self.stats['corpora'].append(None)
                 #     logf.write("TESTSUITE ERROR: " + testsuite + '\n')
+        with open('./mwe.txt', 'w') as f:
+            for tag in mwe:
+                f.write(tag)
+                for form in mwe[tag]:
+                    f.write('\t' + form)
+                f.write('\n')
 
-    def process_testsuite(self, lextypes, logf, tsuite):
+
+    def process_testsuite(self, lextypes, logf, tsuite, mwe):
         ts = itsdb.TestSuite(tsuite)
         print("Processing " + ts.path.stem)
         logf.write("Processing " + ts.path.stem + '\n')
@@ -54,7 +63,6 @@ class LexTypeExtractor:
         noparse = 0
         unk_pos = 0
         sentence_lens = {}
-        mwe = {}
         for j, response in enumerate(items):
             contexts.append([])
             if len(response['results']) > 0:
@@ -97,8 +105,6 @@ class LexTypeExtractor:
         terminals = deriv.terminals()
         terminals_toks_postags = []
         for t in terminals:
-            if t.form == "can’t":
-                print(5)
             toks_pos_tags = []
             for ttok in t.tokens:
                 span = None
@@ -197,9 +203,9 @@ class LexTypeExtractor:
                 tag = tag + '+' + pos
         tag = tag.strip('+')
         if '+' in tag:
-            if not form in mwe:
-                mwe[form] = []
-            mwe[form].append(tag)
+            if not tag in mwe:
+                mwe[tag] = set()
+            mwe[tag].add(form)
         return tag
 
     def map_tag_sequence(self,seq):
