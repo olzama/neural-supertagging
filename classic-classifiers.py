@@ -24,7 +24,7 @@ def train_SVM(X, Y):
     fit_serialize(X,Y,clf,name) # for models over 4GB, need to add protocol=4
 
 
-def train_MaxEnt(X, Y):
+def train_MaxEnt(X, Y, all=False):
     solver = "saga" # Another option is "sag"; it was also tried in development
     train_samples, n_features = X.shape
     n_classes = np.unique(Y).shape[0]
@@ -33,20 +33,19 @@ def train_MaxEnt(X, Y):
         % (train_samples, n_features, n_classes)
     )
 
-    # All MaxEnt models tried in development:
-    models = {
-        'l1': {"multinomial": {"name": "Multinomial-L1", "iters": [100]},
-               "ovr": {"name": "One versus Rest-L1", "iters": [100]}},
-        'l2': {"multinomial": {"name": "Multinomial-L2", "iters": [100]},
-               "ovr": {"name": "One versus Rest-L2", "iters": [100]}},
-        'elasticnet': {"multinomial": {"name": "Multinomial-ENet", "iters": [100]}},
-    }
-
-    # The overall best MaxEnt model (high accuracy, low train time, best test time, out of other MaxEnts
-    # This assumes SAGA solver; with SAG OVR L1, can get higher accuracy but training time is huge.
-    # models = {
-    #     'l2': {"multinomial": {"name": "Multinomial-L2", "iters": [100]}}
-    # }
+    if all:
+        # All MaxEnt models tried in development:
+        models = {
+            'l1': {"multinomial": {"name": "Multinomial-L1", "iters": [100]},
+                   "ovr": {"name": "One versus Rest-L1", "iters": [100]}},
+            'l2': {"multinomial": {"name": "Multinomial-L2", "iters": [100]},
+                   "ovr": {"name": "One versus Rest-L2", "iters": [100]}},
+            'elasticnet': {"multinomial": {"name": "Multinomial-ENet", "iters": [100]}},
+        }
+    else:
+        models = {
+            'l2': {"multinomial": {"name": "Multinomial-L2", "iters": [1]}}
+        }
 
     for penalty in models:
         for model in models[penalty]:
@@ -98,8 +97,8 @@ def load_vectors(path_to_vecs, path_to_labels):
 if __name__ == "__main__":
     if sys.argv[1] == 'train':
         X, Y = load_vectors(sys.argv[2], sys.argv[3])
-        train_SVM(X,Y)
-        train_MaxEnt(X, Y)
+        #train_SVM(X,Y)
+        train_MaxEnt(X, Y, all=False)
     elif sys.argv[1] == 'test':
         corpora = []
         if os.path.isdir(sys.argv[2]):
