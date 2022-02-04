@@ -416,11 +416,11 @@ def train(data):
             # print("loss:",loss.item())
             sample_loss += loss.item()
             total_loss += loss.item()
-            if end%500 == 0:
+            if end%100 == 0:
                 temp_time = time.time()
                 temp_cost = temp_time - temp_start
                 temp_start = temp_time
-                print("     Instance: %s; Time: %.2fs; loss: %.4f; acc: %s/%s=%.4f"%(end, temp_cost, sample_loss, right_token, whole_token,(right_token+0.)/whole_token))
+                print("     Instance: %s/%s; Time: %.2fs; loss: %.4f; acc: %s/%s=%.4f"%(end, train_num, temp_cost, sample_loss, right_token, whole_token,(right_token+0.)/whole_token))
                 if sample_loss > 1e8 or str(sample_loss) == "nan":
                     print("ERROR: LOSS EXPLOSION (>1e8) ! PLEASE SET PROPER PARAMETERS AND STRUCTURE! EXIT....")
                     exit(1)

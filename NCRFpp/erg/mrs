@@ -1,0 +1,698 @@
+it	n_-_pr-it-x_le
+rained	v_-_it_le
+.	pt_-_period_le
+
+abrams	n_-_pn_le
+barked	v_-_le
+.	pt_-_period_le
+
+the	d_-_the_le
+window	n_-_c-ed-ns_le
+opened	v_pp_unacc_le
+.	pt_-_period_le
+
+abrams	n_-_pn_le
+chased	v_np_le
+browne	n_-_pn_le
+.	pt_-_period_le
+
+abrams	n_-_pn_le
+handed	v_np-np_le
+browne	n_-_pn_le
+the	d_-_the_le
+cigarette	n_-_c_le
+.	pt_-_period_le
+
+abrams	n_-_pn_le
+handed	v_np-np_le
+the	d_-_the_le
+cigarette	n_-_c_le
+to	p_np_ptcl_le
+browne	n_-_pn_le
+.	pt_-_period_le
+
+abrams	n_-_pn_le
+bet	v_np-np-cp_le
+browne	n_-_pn_le
+a	d_-_sg-nmd_le
+cigarette	n_-_c_le
+that	cm_np-vp_that_le
+it	n_-_pr-it-x_le
+rained	v_-_it_le
+.	pt_-_period_le
+
+abrams	n_-_pn_le
+knew	v_cp_prop_le
+that	cm_np-vp_that_le
+it	n_-_pr-it-x_le
+rained	v_-_it_le
+.	pt_-_period_le
+
+abrams	n_-_pn_le
+intended	v_vp_seq_le
+to	cm_vp_to_le
+bark	v_-_le
+.	pt_-_period_le
+
+abrams	n_-_pn_le
+intended	v_np-vp_sor_le
+browne	n_-_pn_le
+to	cm_vp_to_le
+bark	v_-_le
+.	pt_-_period_le
+
+every	d_-_sg-every_le
+cat	n_-_c_le
+barked	v_-_le
+.	pt_-_period_le
+
+every	d_-_sg-every_le
+cat	n_-_c_le
+chased	v_np_le
+some	d_-_ndiv_le
+dog	n_-_c_le
+.	pt_-_period_le
+
+my	d_-_poss-my_le
+cat	n_-_c_le
+barked	v_-_le
+.	pt_-_period_le
+
+it	n_-_pr-it_le
+barked	v_-_le
+.	pt_-_period_le
+
+the	d_-_the_le
+cat	n_-_c_le
+chased	v_np_le
+it	n_-_pr-it_le
+.	pt_-_period_le
+
+the	d_-_the_le
+cat	n_-_c_le
+chased	v_np_le
+itself	n_-_pr-itself_le
+.	pt_-_period_le
+
+the	d_-_the_le
+cat	n_-_c_le
+chased	v_np_le
+one	aj_-_i-one_le
+.	pt_-_period_le
+
+mine	n_-_pr-mine_le
+barked	v_-_le
+.	pt_-_period_le
+
+that	n_-_pr-dei-sg_le
+opened	v_pp_unacc_le
+.	pt_-_period_le
+
+cats	n_-_c_le
+go	v_pp*_dir_le
+.	pt_-_period_le
+
+tobacco	n_-_m_le
+arrived	v_-_le
+.	pt_-_period_le
+
+some	d_-_prt-div_le
+went	v_pp*_dir_le
+.	pt_-_period_le
+
+some	d_-_prt-div_le
+of	p_np_ptcl-of_le
+the	d_-_the_le
+cats	n_-_c_le
+bark	v_-_le
+.	pt_-_period_le
+
+no	d_-_no_le
+cat	n_-_c_le
+barked	v_-_le
+.	pt_-_period_le
+
+did	v_vp_did_le
+the	d_-_the_le
+dog	n_-_c_le
+bark	v_-_le
+?	pt_-_qmark_le
+
+which	d_-_prt-unsp_le
+dog	n_-_c_le
+barked	v_-_le
+?	pt_-_qmark_le
+
+whose	d_-_wh-poss_le
+dog	n_-_c_le
+barked	v_-_le
+?	pt_-_qmark_le
+
+chase	v_np_le
+browne	n_-_pn_le
+!	pt_-_bang_le
+
+abrams	n_-_pn_le
+wondered	v_cp_fin-inf-q_le
+which	d_-_prt-unsp_le
+dog	n_-_c_le
+barked	v_-_le
+.	pt_-_period_le
+
+abrams	n_-_pn_le
+wondered	v_cp_fin-inf-q_le
+whether	cm_np-vp_wh_le
+browne	n_-_pn_le
+barked	v_-_le
+.	pt_-_period_le
+
+the	d_-_the_le
+dog	n_-_c_le
+that	n_-_pr-rel-nwh_le
+browne	n_-_pn_le
+chased	v_np_le
+barked	v_-_le
+.	pt_-_period_le
+
+the	d_-_the_le
+dog	n_-_c_le
+to	cm_vp_to_le
+chase	v_np_le
+is	v_prd_is_le
+barking	v_-_le
+.	pt_-_period_le
+
+the	d_-_the_le
+dog	n_-_c_le
+was	v_prd_was_le
+chased	v_np_le
+by	p_np_ptcl-ref_le
+browne	n_-_pn_le
+.	pt_-_period_le
+
+the	d_-_the_le
+dog	n_-_c_le
+chased	v_np_le
+by	p_np_ptcl-ref_le
+browne	n_-_pn_le
+barked	v_-_le
+.	pt_-_period_le
+
+the	d_-_the_le
+dog	n_-_c_le
+is	v_prd_is_le
+barking	v_-_le
+.	pt_-_period_le
+
+the	d_-_the_le
+dog	n_-_c_le
+has	v_vp_has_le
+barked	v_-_le
+.	pt_-_period_le
+
+the	d_-_the_le
+dog	n_-_c_le
+has	v_vp_has_le
+been	v_prd_been_le
+barking	v_-_le
+.	pt_-_period_le
+
+the	d_-_the_le
+dog	n_-_c_le
+had	v_vp_had_le
+been	v_prd_been_le
+barking	v_-_le
+.	pt_-_period_le
+
+the	d_-_the_le
+dog	n_-_c_le
+will	v_vp_will-p_le
+bark	v_-_le
+.	pt_-_period_le
+
+the	d_-_the_le
+dog	n_-_c_le
+is	v_prd_is_le
+going	v_vp_qsmd_le
+to	cm_vp_to_le
+bark	v_-_le
+.	pt_-_period_le
+
+the	d_-_the_le
+dog	n_-_c_le
+could	v_vp_mdl-p-unsp_le
+bark	v_-_le
+.	pt_-_period_le
+
+the	d_-_the_le
+dog	n_-_c_le
+couldn’t	v_vp_mdl-n_le
+bark	v_-_le
+.	pt_-_period_le
+
+the	d_-_the_le
+old	aj_-_i-er_le
+dog	n_-_c_le
+barked	v_-_le
+.	pt_-_period_le
+
+the	d_-_the_le
+dog	n_-_c_le
+barked	v_-_le
+softly	av_-_i-vp_le
+.	pt_-_period_le
+
+the	d_-_the_le
+dog	n_-_c_le
+probably	av_-_s-vp-x_le
+barked	v_-_le
+.	pt_-_period_le
+
+the	d_-_the_le
+dog	n_-_c_le
+barked	v_-_le
+in	p_np_i-reg_le
+the	d_-_the_le
+garden	n_-_c_le
+.	pt_-_period_le
+
+the	d_-_the_le
+dog	n_-_c_le
+barks	v_-_le
+now	n_-_ad-time_le
+.	pt_-_period_le
+
+the	d_-_the_le
+garden	n_-_c_le
+dog	n_-_c_le
+barked	v_-_le
+.	pt_-_period_le
+
+the	d_-_the_le
+tobacco	n_-_m_le
+garden	n_-_c_le
+dog	n_-_c_le
+barked	v_-_le
+.	pt_-_period_le
+
+the	d_-_the_le
+cat	n_-_c_le
+is	v_prd_is_le
+old	aj_-_i-er_le
+.	pt_-_period_le
+
+the	d_-_the_le
+cat	n_-_c_le
+is	v_prd_is_le
+in	p_np_i-reg_le
+the	d_-_the_le
+garden	n_-_c_le
+.	pt_-_period_le
+
+the	d_-_the_le
+barking	v_-_le
+dog	n_-_c_le
+chased	v_np_le
+browne	n_-_pn_le
+.	pt_-_period_le
+
+chased	v_np_le
+dogs	n_-_c_le
+go	v_pp*_dir_le
+.	pt_-_period_le
+
+chasing	v_np_le
+the	d_-_the_le
+cat	n_-_c_le
+is	v_prd_is_le
+old	aj_-_i-er_le
+.	pt_-_period_le
+
+that	cm_np-vp_that_le
+the	d_-_the_le
+cat	n_-_c_le
+chases	v_np_le
+browne	n_-_pn_le
+is	v_prd_is_le
+obvious	aj_cp_i-it_le
+.	pt_-_period_le
+
+dogs	n_-_c_le
+chase	v_np_le
+whatever	n_-_pr-fr-ever_le
+barks	v_-_le
+.	pt_-_period_le
+
+the	d_-_the_le
+dog	n_-_c_le
+barked	v_-_le
+every	d_-_sg-every_le
+day	n_pp_c-day_le
+.	pt_-_period_le
+
+when	n_-_ad-wh-tm_le
+did	v_vp_did_le
+the	d_-_the_le
+dog	n_-_c_le
+bark	v_-_le
+?	pt_-_qmark_le
+
+three	aj_-_i-crd-one_le
+of	p_np_i-nm-poss_le
+the	d_-_the_le
+dogs	n_-_c_le
+bark	v_-_le
+.	pt_-_period_le
+
+three	aj_-_i-crd-one_le
+bark	v_-_le
+.	pt_-_period_le
+
+browne	n_-_pn_le
+’s	n_-_cl-poss_le
+dog	n_-_c_le
+barks	v_-_le
+.	pt_-_period_le
+
+browne	n_-_pn_le
+’s	n_-_cl-poss_le
+goes	v_pp*_dir_le
+.	pt_-_period_le
+
+twenty	aj_np_i-crd-nsp_le
+three	aj_-_i-crd-one_le
+dogs	n_-_c_le
+go	v_pp*_dir_le
+.	pt_-_period_le
+
+two	aj_-_i-crd-one_le
+hundred	aj_np_i-crd-hnd_le
+twenty	aj_-_i-crd-two_le
+dogs	n_-_c_le
+go	v_pp*_dir_le
+.	pt_-_period_le
+
+abrams	n_-_pn_le
+arrived	v_-_le
+by	p_nb_i_le
+car	n_-_c_le
+.	pt_-_period_le
+
+abrams	n_-_pn_le
+kept	v_vp_ssr-prp_le
+barking	v_-_le
+.	pt_-_period_le
+
+browne	n_-_pn_le
+squeezed	v_p-np_le
+the	d_-_the_le
+cat	n_-_c_le
+in	p_np_ptcl_le
+.	pt_-_period_le
+
+browne	n_-_pn_le
+squeezed	v_p-np_le
+in	p_np_ptcl_le
+the	d_-_the_le
+cat	n_-_c_le
+.	pt_-_period_le
+
+the	d_-_the_le
+picture	n_pp_c-of_le
+of	p_np_ptcl-of_le
+abrams	n_-_pn_le
+arrived	v_-_le
+.	pt_-_period_le
+
+abrams	n_-_pn_le
+wiped	v_np-prd_oeq_le
+the	d_-_the_le
+table	n_-_c_le
+clean	aj_pp_i-er_le
+.	pt_-_period_le
+
+abrams	n_-_pn_le
+put	v_np-pp_prop_le
+browne	n_-_pn_le
+in	p_np_i-reg_le
+the	d_-_the_le
+garden	n_-_c_le
+.	pt_-_period_le
+
+the	d_-_the_le
+dog	n_-_c_le
+will	v_vp_will-p_le
+bark	v_-_le
+if	p_cp_s-unsp_le
+browne	n_-_pn_le
+arrives	v_-_le
+.	pt_-_period_le
+
+abrams	n_-_pn_le
+and	c_xp_and_le
+browne	n_-_pn_le
+arrived	v_-_le
+.	pt_-_period_le
+
+abrams	n_-_pn_le
+,	pt_-_comma_le
+browne	n_-_pn_le
+,	pt_-_comma_le
+and	c_xp_and_le
+the	d_-_the_le
+dog	n_-_c_le
+arrived	v_-_le
+.	pt_-_period_le
+
+the	d_-_the_le
+dog	n_-_c_le
+arrived	v_-_le
+and	c_xp_and_le
+barked	v_-_le
+.	pt_-_period_le
+
+the	d_-_the_le
+dog	n_-_c_le
+arrived	v_-_le
+and	c_xp_and_le
+browne	n_-_pn_le
+barked	v_-_le
+.	pt_-_period_le
+
+the	d_-_the_le
+dog	n_-_c_le
+barked	v_-_le
+,	pt_-_comma_le
+didn’t	v_vp_did-n_le
+it	n_-_pr-it_le
+?	pt_-_qmark_le
+
+it	n_-_pr-it-x_le
+is	v_prd_is_le
+obvious	aj_cp_i-it_le
+that	cm_np-vp_that_le
+the	d_-_the_le
+dog	n_-_c_le
+barked	v_-_le
+.	pt_-_period_le
+
+abrams	n_-_pn_le
+promised	v_np-vp_aeq-ntr_le
+browne	n_-_pn_le
+to	cm_vp_to_le
+go	v_pp*_dir_le
+.	pt_-_period_le
+
+abrams	n_-_pn_le
+seems	v_pp-vp_ssr_le
+to	cm_vp_to_le
+bark	v_-_le
+.	pt_-_period_le
+
+abrams	n_-_pn_le
+believes	v_np-vp_sor_le
+browne	n_-_pn_le
+to	cm_vp_to_le
+be	v_prd_be_le
+barking	v_-_le
+.	pt_-_period_le
+
+it	n_-_pr-it-x_le
+bothered	v_np-cp_it-s_le
+abrams	n_-_pn_le
+that	cm_np-vp_that_le
+browne	n_-_pn_le
+barked	v_-_le
+.	pt_-_period_le
+
+it	n_-_pr-it-x_le
+took	v_np*-np-vp_it-s_le
+abrams	n_-_pn_le
+ten	aj_-_i-crd-two_le
+minutes	n_-_c-min_le
+to	cm_vp_to_le
+arrive	v_-_le
+.	pt_-_period_le
+
+abrams	n_-_pn_le
+left	v_it-pp-vp_oeq_le
+it	n_-_pr-it-x_le
+to	p_np_ptcl_le
+browne	n_-_pn_le
+to	cm_vp_to_le
+bark	v_-_le
+.	pt_-_period_le
+
+abrams	n_-_pn_le
+strikes	v_np-pp_seq-as_le
+browne	n_-_pn_le
+as	p_prd_ptcl_le
+old	aj_-_i-er_le
+.	pt_-_period_le
+
+browne	n_-_pn_le
+considers	v_np-prd_oeq_le
+abrams	n_-_pn_le
+old	aj_-_i-er_le
+.	pt_-_period_le
+
+abrams	n_-_pn_le
+liked	v_np_le
+the	d_-_the_le
+idea	n_cp_mc-optc_le
+that	cm_np-vp_that_le
+browne	n_-_pn_le
+could	v_vp_mdl-p-unsp_le
+bark	v_-_le
+.	pt_-_period_le
+
+abrams	n_-_pn_le
+barked	v_-_le
+from	p_np-pp_i-frm-to_le
+ten	n_-_pn-hour_le
+to	p_np_i-nnm_le
+three	n_-_pn-hour_le
+.	pt_-_period_le
+
+abrams	n_-_pn_le
+was	v_prd_was_le
+very	av_-_dg-v_le
+old	aj_-_i-er_le
+.	pt_-_period_le
+
+nearly	av_-_dg-jo_le
+every	d_-_sg-every_le
+dog	n_-_c_le
+barked	v_-_le
+.	pt_-_period_le
+
+abrams	n_-_pn_le
+barked	v_-_le
+very	av_-_dg-v_le
+softly	av_-_i-vp_le
+.	pt_-_period_le
+
+browne	n_-_pn_le
+’s	n_-_cl-poss_le
+chasing	v_np_le
+of	p_np_ptcl-of_le
+cats	n_-_c_le
+bothered	v_np*_le
+abrams	n_-_pn_le
+.	pt_-_period_le
+
+it	n_-_pr-it-x_le
+bothered	v_np-cp_it-s_le
+browne	n_-_pn_le
+that	cm_np-vp_that_le
+abrams	n_-_pn_le
+chased	v_np_le
+cats	n_-_c_le
+.	pt_-_period_le
+
+june	n_np_c-month_le
+third	n_-_pn-dom-ord_le
+arrived	v_-_le
+.	pt_-_period_le
+
+abrams	n_-_pn_le
+arrived	v_-_le
+at	p_np_i-tmp_le
+three	n_-_pn-hour_le
+twenty	aj_-_i-crd-two_le
+.	pt_-_period_le
+
+browne	n_-_pn_le
+arrived	v_-_le
+on	p_np_i-tmp_le
+tuesday	n_-_c-dow_le
+morning	n_-_c-dpt_le
+.	pt_-_period_le
+
+the	d_-_the_le
+cats	n_-_c_le
+found	v_np_le
+a	d_-_sg-nmd_le
+way	n_vp_c_le
+to	cm_vp_to_le
+go	v_pp*_dir_le
+.	pt_-_period_le
+
+the	d_-_the_le
+happier	aj_pp_i-cmp-att_le
+dog	n_-_c_le
+chased	v_np_le
+browne	n_-_pn_le
+.	pt_-_period_le
+
+there	n_-_pr-there-x_le
+were	v_np-xp_wre_le
+cats	n_-_c_le
+in	p_np_i-reg_le
+the	d_-_the_le
+garden	n_-_c_le
+.	pt_-_period_le
+
+that	d_-_sgm_le
+dog	n_-_c_le
+chased	v_np_le
+browne	n_-_pn_le
+.	pt_-_period_le
+
+somebody	n_-_pr_le
+chased	v_np_le
+abrams	n_-_pn_le
+.	pt_-_period_le
+
+how	av_-_dg-v-wh_le
+happy	aj_pp_i-er_le
+was	v_prd_was_le
+abrams	n_-_pn_le
+?	pt_-_qmark_le
+
+the	d_-_the_le
+number	n_-_c-gr_le
+five	aj_-_i-crd-one_le
+bothers	v_np*_le
+browne	n_-_pn_le
+.	pt_-_period_le
+
+abrams	n_-_pn_le
+could	v_vp_mdl-p-unsp_le
+.	pt_-_period_le
+
+browne	n_-_pn_le
+tried	v_vp_seq_le
+to	cm_-_to_le
+.	pt_-_period_le
+
+don’t	v_vp_dont-imp_le
+bark	v_-_le
+!	pt_-_bang_le
+
+the	d_-_the_le
+dog	n_-_c_le
+arrived	v_-_le
+barking	v_-_le
+.	pt_-_period_le
+
