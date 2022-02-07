@@ -31,6 +31,10 @@ torch.manual_seed(seed_num)
 np.random.seed(seed_num)
 
 
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
+
+
 def data_initialization(data):
     data.initial_feature_alphabets()
     data.build_alphabet(data.train_dir)
@@ -421,6 +425,8 @@ def train(data):
                 temp_cost = temp_time - temp_start
                 temp_start = temp_time
                 print("     Instance: %s/%s; Time: %.2fs; loss: %.4f; acc: %s/%s=%.4f"%(end, train_num, temp_cost, sample_loss, right_token, whole_token,(right_token+0.)/whole_token))
+                eprint("     Instance: %s/%s; Time: %.2fs; loss: %.4f; acc: %s/%s=%.4f" % (
+                end, train_num, temp_cost, sample_loss, right_token, whole_token, (right_token + 0.) / whole_token))
                 if sample_loss > 1e8 or str(sample_loss) == "nan":
                     print("ERROR: LOSS EXPLOSION (>1e8) ! PLEASE SET PROPER PARAMETERS AND STRUCTURE! EXIT....")
                     exit(1)
