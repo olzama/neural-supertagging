@@ -402,7 +402,7 @@ def train(data):
         for batch_id in range(total_batch):
             start = batch_id*batch_size
             end = (batch_id+1)*batch_size
-            if end >train_num:
+            if end > train_num:
                 end = train_num
             instance = data.train_Ids[start:end]
             if not instance:
