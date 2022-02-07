@@ -381,6 +381,7 @@ def train(data):
         exit(1)
     best_dev = -10
     # data.HP_iteration = 1
+    no_change = 0
     ## start training
     for idx in range(data.HP_iteration):
         epoch_start = time.time()
@@ -457,7 +458,7 @@ def train(data):
         else:
             current_score = acc
             print("Dev: time: %.2fs speed: %.2fst/s; acc: %.4f"%(dev_cost, speed, acc))
-
+        gc.collect()
         if current_score > best_dev:
             if data.seg:
                 print("Exceed previous best f score:", best_dev)
@@ -467,15 +468,23 @@ def train(data):
             print("Save current best model in file:", model_name)
             torch.save(model.state_dict(), model_name)
             best_dev = current_score
-        # ## decode test
-        speed, acc, p, r, f, _,_ = evaluate(data, model, "test")
-        test_finish = time.time()
-        test_cost = test_finish - dev_finish
-        if data.seg:
-            print("Test: time: %.2fs, speed: %.2fst/s; acc: %.4f, p: %.4f, r: %.4f, f: %.4f"%(test_cost, speed, acc, p, r, f))
         else:
-            print("Test: time: %.2fs, speed: %.2fst/s; acc: %.4f"%(test_cost, speed, acc))
-        gc.collect()
+            #implement early stopping
+            if no_change <= 3:
+                no_change += 1
+                print('No improvement for the last {} epochs'.format(no_change))
+                if no_change == 3:
+                    print('Stopping at epoch {}'.format(idx))
+                    break
+        # ## decode test
+        # speed, acc, p, r, f, _,_ = evaluate(data, model, "test")
+        # test_finish = time.time()
+        # test_cost = test_finish - dev_finish
+        # if data.seg:
+        #     print("Test: time: %.2fs, speed: %.2fst/s; acc: %.4f, p: %.4f, r: %.4f, f: %.4f"%(test_cost, speed, acc, p, r, f))
+        # else:
+        #     print("Test: time: %.2fs, speed: %.2fst/s; acc: %.4f"%(test_cost, speed, acc))
+        # gc.collect()
 
 
 def load_model_decode(data, name):
