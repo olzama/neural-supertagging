@@ -458,6 +458,7 @@ def train(data):
         else:
             current_score = acc
             print("Dev: time: %.2fs speed: %.2fst/s; acc: %.4f"%(dev_cost, speed, acc))
+            eprint("Dev: time: %.2fs speed: %.2fst/s; acc: %.4f" % (dev_cost, speed, acc))
         gc.collect()
         if current_score > best_dev:
             if data.seg:
@@ -473,8 +474,10 @@ def train(data):
             if no_improve <= 3:
                 no_improve += 1
                 print('No improvement for the last {} epochs'.format(no_improve))
+                eprint('No improvement for the last {} epochs'.format(no_improve))
                 if no_improve == 3:
                     print('Stopping at epoch {}'.format(idx))
+                    eprint('Stopping at epoch {}'.format(idx))
                     break
         # ## decode test
         # speed, acc, p, r, f, _,_ = evaluate(data, model, "test")
