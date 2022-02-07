@@ -381,7 +381,7 @@ def train(data):
         exit(1)
     best_dev = -10
     # data.HP_iteration = 1
-    no_change = 0
+    no_improve = 0
     ## start training
     for idx in range(data.HP_iteration):
         epoch_start = time.time()
@@ -425,7 +425,7 @@ def train(data):
                 temp_time = time.time()
                 temp_cost = temp_time - temp_start
                 temp_start = temp_time
-                print("     Instance: %s/%s; Time: %.2fs; loss: %.4f; acc: %s/%s=%.4f"%(end, train_num, temp_cost, sample_loss, right_token, whole_token,(right_token+0.)/whole_token))
+                #print("     Instance: %s/%s; Time: %.2fs; loss: %.4f; acc: %s/%s=%.4f"%(end, train_num, temp_cost, sample_loss, right_token, whole_token,(right_token+0.)/whole_token))
                 eprint("     Instance: %s/%s; Time: %.2fs; loss: %.4f; acc: %s/%s=%.4f" % (
                 end, train_num, temp_cost, sample_loss, right_token, whole_token, (right_token + 0.) / whole_token))
                 if sample_loss > 1e8 or str(sample_loss) == "nan":
@@ -470,10 +470,10 @@ def train(data):
             best_dev = current_score
         else:
             #implement early stopping
-            if no_change <= 3:
-                no_change += 1
-                print('No improvement for the last {} epochs'.format(no_change))
-                if no_change == 3:
+            if no_improve <= 3:
+                no_improve += 1
+                print('No improvement for the last {} epochs'.format(no_improve))
+                if no_improve == 3:
                     print('Stopping at epoch {}'.format(idx))
                     break
         # ## decode test
