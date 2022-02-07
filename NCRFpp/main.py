@@ -387,6 +387,7 @@ def train(data):
         epoch_start = time.time()
         temp_start = epoch_start
         print("Epoch: %s/%s" %(idx,data.HP_iteration))
+        eprint("Epoch: %s/%s" % (idx, data.HP_iteration))
         if data.optimizer == "SGD":
             optimizer = lr_decay(optimizer, idx, data.HP_lr_decay, data.HP_lr)
         instance_count = 0
