@@ -462,6 +462,7 @@ def train(data):
             eprint("Dev: time: %.2fs speed: %.2fst/s; acc: %.4f" % (dev_cost, speed, acc))
         gc.collect()
         if current_score > best_dev:
+            no_improve = 0
             if data.seg:
                 print("Exceed previous best f score:", best_dev)
             else:
