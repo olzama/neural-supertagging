@@ -38,9 +38,9 @@ def train_MaxEnt(X, Y, all=False):
         models = {
             #'l1': {"multinomial": {"name": "Multinomial-L1", "iters": [100]},
             #       "ovr": {"name": "One versus Rest-L1", "iters": [100]}},
-            'l2': {"multinomial": {"name": "Multinomial-L2", "iters": [100]},
-                   "ovr": {"name": "One versus Rest-L2", "iters": [100]}},
-            #'elasticnet': {"multinomial": {"name": "Multinomial-ENet", "iters": [100]}},
+            #'l2': {"multinomial": {"name": "Multinomial-L2", "iters": [100]},
+            #       "ovr": {"name": "One versus Rest-L2", "iters": [100]}},
+            'elasticnet': {"multinomial": {"name": "Multinomial-ENet", "iters": [100]}},
         }
     else:
         models = {
