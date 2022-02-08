@@ -5,73 +5,57 @@
 import timeit
 import warnings
 
-import matplotlib.pyplot as plt
 import numpy as np
 
 import pickle,glob
 
-import sys
+import sys,os
 
 from sklearn.linear_model import LogisticRegression
 from sklearn.exceptions import ConvergenceWarning
 from sklearn import svm
 
-from vectorizer import read_data,vectorize_data
-
 warnings.filterwarnings("ignore", category=ConvergenceWarning, module="sklearn")
-t0 = timeit.default_timer()
 
 
-def train_SVM(X_train, Y_train):
-    svm_clf = svm.SVC(kernel="linear", C=1.0)
-    svm_clf.fit(X_train, Y_train)
-    with open('models/svm.model', 'wb') as f:
-        pickle.dump(svm_clf, f, protocol=4)
-    #svm_pred = svm_clf.predict(X_test)
-    #accuracy = np.sum(svm_pred == Y_test) / Y_test.shape[0]
-    #print("Test accuracy for SVM: %.4f" % (accuracy))
-
-def train_MaxEnt(X_train, Y_train):
-    solver = "saga"
-
-    train_samples, n_features = X_train.shape
+def train_SVM(X, Y):
+    clf = svm.LinearSVC() # Kernels would be too slow, so using liblinear SVM
+    name = "svm-liblinear-l2-sq-hinge-1000"
+    fit_serialize(X,Y,clf,name) # for models over 4GB, need to add protocol=4
 
 
+def train_MaxEnt(X, Y, all=False):
+    solver = "saga" # Another option is "sag"; it was also tried in development
+    train_samples, n_features = X.shape
+    n_classes = np.unique(Y).shape[0]
     print(
         "Dataset ERG treebanks, train_samples=%i, n_features=%i, n_classes=%i"
         % (train_samples, n_features, n_classes)
     )
 
-    # For SAGA:
-    # models = {
-    #     'l1': {"multinomial": {"name": "Multinomial-L1", "iters": [10]},
-    #            "ovr": {"name": "One versus Rest-L1", "iters": [10]}},
-    #     'l2': {"multinomial": {"name": "Multinomial-L2", "iters": [10]},
-    #            "ovr": {"name": "One versus Rest-L2", "iters": [10]}},
-    #     'elasticnet': {"multinomial": {"name": "Multinomial-ENet", "iters": [10]}},
-    # }
-
-
-    models = {
-        'l1': {"multinomial": {"name": "Multinomial-L1", "iters": [10]},
-               "ovr": {"name": "One versus Rest-L1", "iters": [10]}}
-    }
-
-
-    # models = {
-    #     'l1': {"multinomial": {"name": "Multinomial-L1", "iters": [10]}},
-    # }
+    if all:
+        # All MaxEnt models tried in development:
+        models = {
+            #'l1': {"multinomial": {"name": "Multinomial-L1", "iters": [100]},
+            #       "ovr": {"name": "One versus Rest-L1", "iters": [100]}},
+            #'l2': {"multinomial": {"name": "Multinomial-L2", "iters": [100]},
+            #       "ovr": {"name": "One versus Rest-L2", "iters": [100]}},
+            'elasticnet': {"multinomial": {"name": "Multinomial-ENet", "iters": [100]}},
+        }
+    else:
+        models = {
+            'l2': {"multinomial": {"name": "Multinomial-L2", "iters": [1]}}
+        }
 
     for penalty in models:
         for model in models[penalty]:
             model_params = models[penalty][model]
-            # Small number of epochs for fast runtime; 100 is the default
             for this_max_iter in model_params["iters"]:
                 print(
                     "[model=%s, solver=%s] Number of epochs: %s"
                     % (model_params["name"], solver, this_max_iter)
                 )
-                lr = LogisticRegression(
+                clf = LogisticRegression(
                     solver=solver,
                     multi_class=model,
                     penalty=penalty,
@@ -79,66 +63,53 @@ def train_MaxEnt(X_train, Y_train):
                     random_state=42,
                     l1_ratio=0.5 # only for elastic-net
                 )
-                t1 = timeit.default_timer()
-                lr.fit(X_train, Y_train)
-                train_time = timeit.default_timer() - t1
-                print('Training time of {}: {}'.format(models[penalty][model]["name"],train_time))
-                with open('models/'+models[penalty][model]["name"]+'-'+solver+'.model','wb') as f:
-                    pickle.dump(lr,f)
+                model_name = models[penalty][model]["name"] + '-' + solver
+                fit_serialize(X, Y, clf, model_name)
 
 
-def test_model(model, X_test, Y_test, n_classes):
+def fit_serialize(X, Y, clf, name):
+    t1 = timeit.default_timer()
+    clf.fit(X, Y)
+    train_time = timeit.default_timer() - t1
+    print('Training time of {}: {}'.format(name, train_time))
+    with open('models/' + name + '.model', 'wb') as f:
+        pickle.dump(clf, f)
 
-    with open(model, 'rb') as f:
-        clf = pickle.load(f)
 
+
+def test_model(clf, X_test, Y_test, num_sentences):
+    t1 = timeit.default_timer()
     y_pred = clf.predict(X_test)
-    accuracy = np.sum(y_pred == Y_test) / Y_test.shape[0]
-    #density = np.mean(clf.coef_ != 0, axis=1) * 100
+    test_time = timeit.default_timer() - t1
+    avg_time = test_time/num_sentences
+    print('Test time of {}: {}; {} average per sentence'.format(model, test_time, avg_time))
+    accuracy = np.sum(np.array(y_pred) == np.array(Y_test)) / len(Y_test)
     print("Test accuracy for model %s: %.4f" % (model, accuracy))
     return accuracy
-    # print(
-    #     "%% non-zero coefficients for model %s, per class:\n %s"
-    #     % (model, densities[-1])
-    # )
 
-
+def load_vectors(path_to_vecs, path_to_labels):
+    with open(path_to_vecs, 'rb') as vf:
+        vecs = pickle.load(vf)
+    with open(path_to_labels,'rb') as lf:
+        labels = pickle.load(lf)
+    return vecs, labels
 
 if __name__ == "__main__":
-    feature_dicts, true_labels, n_train = read_data('./data/contexts/', './data/true_labels/')
-    X, Y = vectorize_data(feature_dicts,true_labels)
-    n_classes = np.unique(Y).shape[0]
-    X_train = X[:n_train]
-    Y_train = Y[:n_train]
-    X_test = X[n_train:]
-    Y_test = Y[n_train:]
-
     if sys.argv[1] == 'train':
-        train_SVM(X_train,Y_train)
-        #train_MaxEnt(X_train, Y_train)
+        X, Y = load_vectors(sys.argv[2], sys.argv[3])
+        #train_SVM(X,Y)
+        train_MaxEnt(X, Y, all=True)
     elif sys.argv[1] == 'test':
-        # Add initial chance-level values for plotting purpose
-        accuracies = [1 / n_classes]
-        names = []
-        times = []
-        #densities = [1]
-
-
-        for model in glob.iglob('models/' + '*'):
-            t1 = timeit.default_timer()
-            acc = test_model(model,X_test,Y_test,n_classes)
-            test_time = timeit.default_timer() - t1
-            print('Test time of {}: {}'.format(model, test_time))
-            accuracies.append(acc)
-            names.append(model)
-            times.append(test_time)
-
-        # ind = np.arange(len(names))
-        # fig = plt.figure()
-        # ax = fig.add_subplot(111)
-        # ax.legend()
-        # fig.suptitle("Accuracies on the ERG dev data")
-        # ax.set_ylabel("Dev accuracy")
-        # ax.set_xticks(ind, labels=names)
-        # ax.plot(accuracies)
-        # plt.savefig('accuracies.png')
+        corpora = []
+        if os.path.isdir(sys.argv[2]):
+            corpora = sorted(glob.iglob(sys.argv[2] + '/*'))
+        elif os.path.isfile(sys.argv[2]):
+            corpora = glob.glob(sys.argv[2])
+        for c in corpora:
+            with open(c, 'rb') as cf:
+                corpus = pickle.load(cf)
+            print('Testing corpus {} which has {} unknown labels'.format(corpus.name, corpus.unk))
+            for model in glob.iglob('models/' + '*'):
+                with open(model, 'rb') as f:
+                    clf = pickle.load(f)
+                acc = test_model(clf,corpus.X,corpus.Y,len(corpus.sen_lengths))

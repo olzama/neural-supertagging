@@ -31,6 +31,10 @@ torch.manual_seed(seed_num)
 np.random.seed(seed_num)
 
 
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
+
+
 def data_initialization(data):
     data.initial_feature_alphabets()
     data.build_alphabet(data.train_dir)
@@ -377,11 +381,13 @@ def train(data):
         exit(1)
     best_dev = -10
     # data.HP_iteration = 1
+    no_improve = 0
     ## start training
     for idx in range(data.HP_iteration):
         epoch_start = time.time()
         temp_start = epoch_start
         print("Epoch: %s/%s" %(idx,data.HP_iteration))
+        eprint("Epoch: %s/%s" % (idx, data.HP_iteration))
         if data.optimizer == "SGD":
             optimizer = lr_decay(optimizer, idx, data.HP_lr_decay, data.HP_lr)
         instance_count = 0
@@ -402,7 +408,7 @@ def train(data):
         for batch_id in range(total_batch):
             start = batch_id*batch_size
             end = (batch_id+1)*batch_size
-            if end >train_num:
+            if end > train_num:
                 end = train_num
             instance = data.train_Ids[start:end]
             if not instance:
@@ -416,11 +422,13 @@ def train(data):
             # print("loss:",loss.item())
             sample_loss += loss.item()
             total_loss += loss.item()
-            if end%500 == 0:
+            if end%100 == 0:
                 temp_time = time.time()
                 temp_cost = temp_time - temp_start
                 temp_start = temp_time
-                print("     Instance: %s; Time: %.2fs; loss: %.4f; acc: %s/%s=%.4f"%(end, temp_cost, sample_loss, right_token, whole_token,(right_token+0.)/whole_token))
+                #print("     Instance: %s/%s; Time: %.2fs; loss: %.4f; acc: %s/%s=%.4f"%(end, train_num, temp_cost, sample_loss, right_token, whole_token,(right_token+0.)/whole_token))
+                eprint("     Instance: %s/%s; Time: %.2fs; loss: %.4f; acc: %s/%s=%.4f" % (
+                end, train_num, temp_cost, sample_loss, right_token, whole_token, (right_token + 0.) / whole_token))
                 if sample_loss > 1e8 or str(sample_loss) == "nan":
                     print("ERROR: LOSS EXPLOSION (>1e8) ! PLEASE SET PROPER PARAMETERS AND STRUCTURE! EXIT....")
                     exit(1)
@@ -451,8 +459,10 @@ def train(data):
         else:
             current_score = acc
             print("Dev: time: %.2fs speed: %.2fst/s; acc: %.4f"%(dev_cost, speed, acc))
-
+            eprint("Dev: time: %.2fs speed: %.2fst/s; acc: %.4f" % (dev_cost, speed, acc))
+        gc.collect()
         if current_score > best_dev:
+            no_improve = 0
             if data.seg:
                 print("Exceed previous best f score:", best_dev)
             else:
@@ -461,15 +471,25 @@ def train(data):
             print("Save current best model in file:", model_name)
             torch.save(model.state_dict(), model_name)
             best_dev = current_score
-        # ## decode test
-        speed, acc, p, r, f, _,_ = evaluate(data, model, "test")
-        test_finish = time.time()
-        test_cost = test_finish - dev_finish
-        if data.seg:
-            print("Test: time: %.2fs, speed: %.2fst/s; acc: %.4f, p: %.4f, r: %.4f, f: %.4f"%(test_cost, speed, acc, p, r, f))
         else:
-            print("Test: time: %.2fs, speed: %.2fst/s; acc: %.4f"%(test_cost, speed, acc))
-        gc.collect()
+            #implement early stopping
+            if no_improve <= 3:
+                no_improve += 1
+                print('No improvement for the last {} epochs'.format(no_improve))
+                eprint('No improvement for the last {} epochs'.format(no_improve))
+                if no_improve == 3:
+                    print('Stopping at epoch {}'.format(idx))
+                    eprint('Stopping at epoch {}'.format(idx))
+                    break
+        # ## decode test
+        # speed, acc, p, r, f, _,_ = evaluate(data, model, "test")
+        # test_finish = time.time()
+        # test_cost = test_finish - dev_finish
+        # if data.seg:
+        #     print("Test: time: %.2fs, speed: %.2fst/s; acc: %.4f, p: %.4f, r: %.4f, f: %.4f"%(test_cost, speed, acc, p, r, f))
+        # else:
+        #     print("Test: time: %.2fs, speed: %.2fst/s; acc: %.4f"%(test_cost, speed, acc))
+        # gc.collect()
 
 
 def load_model_decode(data, name):
