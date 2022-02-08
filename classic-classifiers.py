@@ -25,7 +25,7 @@ def train_SVM(X, Y):
 
 
 def train_MaxEnt(X, Y, all=False):
-    solver = "sag" # Another option is "sag"; it was also tried in development
+    solver = "saga" # Another option is "sag"; it was also tried in development
     train_samples, n_features = X.shape
     n_classes = np.unique(Y).shape[0]
     print(
