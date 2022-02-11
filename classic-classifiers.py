@@ -36,11 +36,11 @@ def train_MaxEnt(X, Y, all=False):
     if all:
         # All MaxEnt models tried in development:
         models = {
-            #'l1': {"multinomial": {"name": "Multinomial-L1", "iters": [100]},
-            #       "ovr": {"name": "One versus Rest-L1", "iters": [100]}},
-            #'l2': {"multinomial": {"name": "Multinomial-L2", "iters": [100]},
-            #       "ovr": {"name": "One versus Rest-L2", "iters": [100]}},
-            'elasticnet': {"multinomial": {"name": "Multinomial-ENet", "iters": [100]}},
+            'l1': {"multinomial": {"name": "Multinomial-L1", "iters": [100]},
+                  "ovr": {"name": "One versus Rest-L1", "iters": [100]}},
+            'l2': {"multinomial": {"name": "Multinomial-L2", "iters": [100]},
+                  "ovr": {"name": "One versus Rest-L2", "iters": [100]}}#,
+            #'elasticnet': {"multinomial": {"name": "Multinomial-ENet", "iters": [100]}},
         }
     else:
         models = {
@@ -97,7 +97,7 @@ def load_vectors(path_to_vecs, path_to_labels):
 if __name__ == "__main__":
     if sys.argv[1] == 'train':
         X, Y = load_vectors(sys.argv[2], sys.argv[3])
-        #train_SVM(X,Y)
+        train_SVM(X,Y)
         train_MaxEnt(X, Y, all=True)
     elif sys.argv[1] == 'test':
         corpora = []
