@@ -55,7 +55,7 @@ class LexTypeExtractor:
         ts = itsdb.TestSuite(tsuite)
         print("Processing " + ts.path.stem)
         logf.write("Processing " + ts.path.stem + '\n')
-        self.stats['corpora'].append({'name': ts.path.stem})
+        self.stats['corpora'].append({'name': ts.path.stem, 'tokens':0})
         pairs = []
         contexts = []
         y = []
@@ -70,6 +70,7 @@ class LexTypeExtractor:
                     print("Processing item {} out of {}...".format(j, len(items)))
                 result = response.result(0)
                 deriv = result.derivation()
+                self.stats['corpora'][-1]['tokens'] += len(deriv.terminals())
                 p_input = response['p-input']
                 p_tokens = response['p-tokens']
                 terminals_toks_pos_tags = self.map_lattice_to_input(p_input,p_tokens, deriv)
@@ -96,27 +97,25 @@ class LexTypeExtractor:
                 #print('No parse for item {} out of {}'.format(j,len(items)))
                 logf.write(ts.path.stem + '\t' + str(response['i-id']) + '\t'
                            + response['i-input'] + '\t' + err + '\n')
-        self.write_output(contexts, pairs, ts)
+        self.write_output(contexts, pairs, ts, pos_mapper.unknowns)
         return len(items), noparse, sentence_lens, len(pos_mapper.unknowns)
 
-    def map_lattice_to_input(self, p_input,p_tokens, deriv):
+    def map_lattice_to_input(self, p_input, p_tokens, deriv):
         yy_lattice = YYTokenLattice.from_string(p_tokens)
         yy_input = YYTokenLattice.from_string(p_input)
-        terminals = deriv.terminals()
         terminals_toks_postags = []
-        for t in terminals:
+        for t in deriv.terminals():
             toks_pos_tags = []
             for ttok in t.tokens:
                 span = None
-                id = ttok.id
                 pos_probs = {}
                 for lat_tok in yy_lattice.tokens:
-                    if lat_tok.id == id:
+                    if lat_tok.id == ttok.id:
                         span = lat_tok.lnk.data
                         break
                 for i,in_tok in enumerate(yy_input.tokens):
                     if in_tok.lnk.data[0] == span[0]:
-                        for pos,p in in_tok.pos:
+                        for pos, p in in_tok.pos:
                             if pos not in pos_probs:
                                 pos_probs[pos] = []
                             pos_probs[pos].append(float(p))
@@ -125,7 +124,7 @@ class LexTypeExtractor:
                             while cur_tok.lnk.data[1] != span[1]:
                                 next_tok = yy_input.tokens[i+1]
                                 i += 1
-                                for pos,p in next_tok.pos:
+                                for pos, p in next_tok.pos:
                                     if pos not in pos_probs:
                                         pos_probs[pos] = []
                                     pos_probs[pos].append(float(p))
@@ -137,7 +136,7 @@ class LexTypeExtractor:
         return terminals_toks_postags
 
 
-    def write_output(self, contexts, pairs, ts):
+    def write_output(self, contexts, pairs, ts, unknown_pos):
         for d in ['train/','test/','dev/', 'ignore/']:
             for pd in ['simple/','contexts/','true_labels/']:
                 pathlib.Path('./output/' + pd + d).mkdir(parents=True, exist_ok=True)
@@ -165,6 +164,9 @@ class LexTypeExtractor:
                     f.write('\n')
         with open('./output/contexts/' + suf + ts.path.stem, 'w') as f:
             f.write(json.dumps(contexts))
+        with open('./output/' + ts.path.stem, 'w') as f:
+            for pos in unknown_pos:
+                f.write(pos + '\n')
 
     def get_context(self, t, tokens, pos_tags, i, window):
         context = {'w': t, 'pos': pos_tags[i]}
