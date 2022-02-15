@@ -460,7 +460,6 @@ def train(data):
             current_score = acc
             print("Dev: time: %.2fs speed: %.2fst/s; acc: %.4f"%(dev_cost, speed, acc))
             eprint("Dev: time: %.2fs speed: %.2fst/s; acc: %.4f" % (dev_cost, speed, acc))
-        gc.collect()
         if current_score > best_dev:
             no_improve = 0
             if data.seg:
@@ -480,16 +479,16 @@ def train(data):
                 if no_improve == 3:
                     print('Stopping at epoch {}'.format(idx))
                     eprint('Stopping at epoch {}'.format(idx))
+                    ## decode test
+                    speed, acc, p, r, f, _,_ = evaluate(data, model, "test")
+                    test_finish = time.time()
+                    test_cost = test_finish - dev_finish
+                    if data.seg:
+                        print("Test: time: %.2fs, speed: %.2fst/s; acc: %.4f, p: %.4f, r: %.4f, f: %.4f"%(test_cost, speed, acc, p, r, f))
+                    else:
+                        print("Test: time: %.2fs, speed: %.2fst/s; acc: %.4f"%(test_cost, speed, acc))
+                    gc.collect()
                     break
-        # ## decode test
-        # speed, acc, p, r, f, _,_ = evaluate(data, model, "test")
-        # test_finish = time.time()
-        # test_cost = test_finish - dev_finish
-        # if data.seg:
-        #     print("Test: time: %.2fs, speed: %.2fst/s; acc: %.4f, p: %.4f, r: %.4f, f: %.4f"%(test_cost, speed, acc, p, r, f))
-        # else:
-        #     print("Test: time: %.2fs, speed: %.2fst/s; acc: %.4f"%(test_cost, speed, acc))
-        # gc.collect()
 
 
 def load_model_decode(data, name):
