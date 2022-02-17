@@ -29,35 +29,46 @@ class LexTypeExtractor:
     def check_testsuite_sizes(self,path):
         max_sen_length = 0
         max_ts_size = 0
-        for i, tsuite in enumerate(glob.iglob(path + '**')):
+        ts_info = []
+        for i, tsuite in enumerate(sorted(glob.iglob(path + '**'))):
             ts = itsdb.TestSuite(tsuite)
+            ts_info.append({'name':ts.path.stem})
             items = list(ts.processed_items())
+            ts_info[i]['sentences'] = []
             if len(items) > max_ts_size:
                 max_ts_size = len(items)
             for response in items:
                 if len(response['results']) > 0:
                     terminals = response.result(0).derivation().terminals()
+                    ts_info[i]['sentences'].append(len(terminals))
                     if len(terminals) > max_sen_length:
                         max_sen_length = len(terminals)
-        return max_sen_length, max_ts_size, i+1
+        return max_sen_length, max_ts_size, i+1, ts_info
 
     def process_testsuites(self,testsuites,lextypes):
-        max_sen_length, max_ts_size, num_ts = self.check_testsuite_sizes(testsuites)
+        max_sen_length, max_ts_size, num_ts, ts_info = self.check_testsuite_sizes(testsuites)
         autoregress_table = [[{}]*num_ts*max_ts_size for i in range(max_sen_length)]
         with open('./log.txt', 'w') as logf:
-            for i,testsuite in enumerate(glob.iglob(testsuites+'**')):
-                num_items, no_parse, sentence_lens, unk_pos = self.process_testsuite(lextypes, logf,
-                                                                                     testsuite, i+1, autoregress_table)
+            for i,testsuite in enumerate(sorted(glob.iglob(testsuites+'**'))):
+                num_items, no_parse, sentence_lens, unk_pos = self.process_testsuite(
+                    lextypes, logf, testsuite, i+1, autoregress_table, ts_info)
                 self.stats['corpora'][i]['items'] = num_items
                 self.stats['corpora'][i]['noparse'] = no_parse
                 self.stats['corpora'][i]['unk-pos'] = unk_pos
                 all_lengths = sorted(list(sentence_lens),reverse=True)
                 self.stats['corpora'][i]['max-len'] = max(all_lengths)
+        p = self.get_table_portion(ts_info,autoregress_table,1,[0,1],[0,1])
         with open('./output/autoregressive_table', 'wb') as f:
             pickle.dump(autoregress_table, f)
 
 
-    def process_testsuite(self, lextypes, logf, tsuite, ts_num, autoregress_table):
+    def get_table_portion(self, ts_info, table, ts_num, sentence_range, token_range):
+        ts_column = ts_info[ts_num-1]['column']
+        tokens = sum(ts_info[ts_num-1]['sentences'][sentence_range[0]:sentence_range[1]])
+        return table[token_range[0]:token_range[1]][ts_column:ts_column+tokens]
+
+
+    def process_testsuite(self, lextypes, logf, tsuite, ts_num, autoregress_table, ts_info):
         ts = itsdb.TestSuite(tsuite)
         print("Processing " + ts.path.stem)
         logf.write("Processing " + ts.path.stem + '\n')
@@ -105,6 +116,7 @@ class LexTypeExtractor:
                 #print('No parse for item {} out of {}'.format(j,len(items)))
                 logf.write(ts.path.stem + '\t' + str(response['i-id']) + '\t'
                            + response['i-input'] + '\t' + err + '\n')
+        ts_info[ts_num-1]['column'] = ts_num*j
         self.write_output(contexts, pairs, ts, pos_mapper.unknowns)
         return len(items), noparse, sentence_lens, len(pos_mapper.unknowns)
 
