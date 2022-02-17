@@ -1,8 +1,7 @@
 from delphin import tdl, itsdb
 from delphin.tokens import YYTokenLattice
 import glob, sys, pathlib
-import json
-import os
+import json, pickle
 
 import pos_map
 
@@ -27,31 +26,38 @@ class LexTypeExtractor:
                     lextypes[obj.identifier] = obj.supertypes[0]  # assume exactly 1
         self.lextypes = lextypes
 
+    def check_testsuite_sizes(self,path):
+        max_sen_length = 0
+        max_ts_size = 0
+        for i, tsuite in enumerate(glob.iglob(path + '**')):
+            ts = itsdb.TestSuite(tsuite)
+            items = list(ts.processed_items())
+            if len(items) > max_ts_size:
+                max_ts_size = len(items)
+            for response in items:
+                if len(response['results']) > 0:
+                    terminals = response.result(0).derivation().terminals()
+                    if len(terminals) > max_sen_length:
+                        max_sen_length = len(terminals)
+        return max_sen_length, max_ts_size, i+1
+
     def process_testsuites(self,testsuites,lextypes):
-        mwe = {} # only needed to inspect tags in training data
+        max_sen_length, max_ts_size, num_ts = self.check_testsuite_sizes(testsuites)
+        autoregress_table = [[{}]*num_ts*max_ts_size for i in range(max_sen_length)]
         with open('./log.txt', 'w') as logf:
             for i,testsuite in enumerate(glob.iglob(testsuites+'**')):
-                #try:
-                num_items, no_parse, sentence_lens, unk_pos = self.process_testsuite(lextypes, logf, testsuite, mwe)
+                num_items, no_parse, sentence_lens, unk_pos = self.process_testsuite(lextypes, logf,
+                                                                                     testsuite, i+1, autoregress_table)
                 self.stats['corpora'][i]['items'] = num_items
                 self.stats['corpora'][i]['noparse'] = no_parse
                 self.stats['corpora'][i]['unk-pos'] = unk_pos
                 all_lengths = sorted(list(sentence_lens),reverse=True)
                 self.stats['corpora'][i]['max-len'] = max(all_lengths)
-                # except:
-                #     print("ERROR: " + testsuite)
-                #     self.stats['failed corpora'].append({'name':testsuite})
-                #     self.stats['corpora'].append(None)
-                #     logf.write("TESTSUITE ERROR: " + testsuite + '\n')
-        # with open('./mwe.txt', 'w') as f:
-        #     for tag in mwe:
-        #         f.write(tag)
-        #         for form in mwe[tag]:
-        #             f.write('\t' + form)
-        #         f.write('\n')
+        with open('./output/autoregressive_table', 'wb') as f:
+            pickle.dump(autoregress_table, f)
 
 
-    def process_testsuite(self, lextypes, logf, tsuite, mwe):
+    def process_testsuite(self, lextypes, logf, tsuite, ts_num, autoregress_table):
         ts = itsdb.TestSuite(tsuite)
         print("Processing " + ts.path.stem)
         logf.write("Processing " + ts.path.stem + '\n')
@@ -74,8 +80,8 @@ class LexTypeExtractor:
                 p_input = response['p-input']
                 p_tokens = response['p-tokens']
                 terminals_toks_pos_tags = self.map_lattice_to_input(p_input,p_tokens, deriv)
-                tokens,labels,pos_tags = \
-                     self.get_tokens_labels(terminals_toks_pos_tags,CONTEXT_WINDOW, lextypes,mwe,pos_mapper)
+                tokens,labels,pos_tags,autoregress_labels = \
+                     self.get_tokens_labels(terminals_toks_pos_tags,CONTEXT_WINDOW, lextypes,pos_mapper)
                 if response['i-length'] not in sentence_lens:
                     sentence_lens[response['i-length']] = 0
                 sentence_lens[response['i-length']] += 1
@@ -88,6 +94,8 @@ class LexTypeExtractor:
                     pairs.append((t, labels[k]))
                     y.append(labels[k])
                     contexts[j].append(self.get_context(t, tokens, pos_tags, k, CONTEXT_WINDOW))
+                    autoregress_table[k-CONTEXT_WINDOW][ts_num*j] = \
+                        self.get_autoregress_context(tokens,pos_tags,autoregress_labels, k,CONTEXT_WINDOW)
                 pairs.append(('--EOS--','--EOS--')) # sentence separator
                 y.append('\n') # sentence separator
             else:
@@ -182,26 +190,37 @@ class LexTypeExtractor:
             #context['tag-' + str(j)] = prev_tag # this is a bug: can't use gold tags. Need an autoregressive model.
         return context
 
+    def get_autoregress_context(self,tokens,pos_tags,predicted_labels, k,window):
+        context = {'w':tokens[k],'pos':pos_tags[k]}
+        for i in range(1,window+1):
+            context['w-' + str(i)] = tokens[k-i]
+            context['w+' + str(i)] = tokens[k+i]
+            context['tag-' + str(i)] = predicted_labels[k-i] # Will be None or FAKE
+        return context
 
-    def get_tokens_labels(self, terms_and_tokens_tags, context_window, lextypes,mwe, pos_mapper):
+
+    def get_tokens_labels(self, terms_and_tokens_tags, context_window, lextypes,pos_mapper):
         tokens = []
         labels = []
         pos_tags = []
+        predicted_labels = []
         for i,(terminal, toks_tags) in enumerate(terms_and_tokens_tags):
             letype = lextypes.get(terminal.parent.entity, "<UNK>")
             tokens.append(terminal.form)
             labels.append(str(letype))
-            pos_tags.append(self.get_pos_tag(toks_tags, terminal.form,mwe, pos_mapper))
+            pos_tags.append(self.get_pos_tag(toks_tags, terminal.form, pos_mapper))
+            predicted_labels.append(None) # for autoregressive models
         for i in range(1,1+context_window):
             tokens.insert(0, 'FAKE-' + str(i))
             labels.insert(0, 'FAKE-' + str(i))
             pos_tags.insert(0,'FAKE-' + str(i))
+            predicted_labels.insert(0, 'FAKE-' + str(i))
             tokens.append('FAKE+' + str(i))
             labels.append('FAKE+' + str(i))
             pos_tags.append('FAKE+' + str(i))
-        return tokens, labels, pos_tags
+        return tokens, labels, pos_tags, predicted_labels
 
-    def get_pos_tag(self,tokens_tags, form, mwe, pos_mapper):
+    def get_pos_tag(self,tokens_tags, form, pos_mapper):
         tag = ''
         for tt in tokens_tags:
             pos_probs = tt[1]
@@ -210,9 +229,6 @@ class LexTypeExtractor:
                 tag = tag + '+' + pos
         tag = tag.strip('+')
         if '+' in tag:
-            if not tag in mwe:
-                mwe[tag] = set()
-            mwe[tag].add(form)
             tag = pos_mapper.map_tag(tag)
         return tag
 
