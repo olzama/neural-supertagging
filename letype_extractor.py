@@ -27,43 +27,58 @@ class LexTypeExtractor:
                     lextypes[obj.identifier] = obj.supertypes[0]  # assume exactly 1
         self.lextypes = lextypes
 
-    def check_testsuite_sizes(self,path):
+    def read_testsuites(self,path):
         max_sen_length = 0
         corpus_size = 0
-        ts_info = []
+        data = {'train':[],'test':[],'dev':[]}
+        print('Reading test suite files into pydelphin objects...')
         for i, tsuite in enumerate(sorted(glob.iglob(path + '**'))):
+            #print(i)
             ts = itsdb.TestSuite(tsuite)
-            ts_info.append({'name':ts.path.stem})
+            if ts.path.stem in TEST:
+                idx = 'test'
+            elif ts.path.stem in DEV:
+                idx = 'dev'
+            elif ts.path.stem not in IGNORE:
+                idx = 'train'
+            data[idx].append({'name':ts.path.stem})
             items = list(ts.processed_items())
-            ts_info[i]['sentences'] = []
+            data[idx][i]['sentences'] = []
+            data[idx][i]['tokens-tags'] = []
             corpus_size += len(items)
             for response in items:
                 if len(response['results']) > 0:
-                    terminals = response.result(0).derivation().terminals()
-                    ts_info[i]['sentences'].append(len(terminals))
+                    deriv = response.result(0).derivation()
+                    terminals = deriv.terminals()
+                    p_input = response['p-input']
+                    p_tokens = response['p-tokens']
+                    terminals_tok_tags = self.map_lattice_to_input(p_input, p_tokens, deriv)
+                    data[idx][i]['sentences'].append(terminals)
+                    data[idx][i]['tokens-tags'].append(terminals_tok_tags)
                     if len(terminals) > max_sen_length:
                         max_sen_length = len(terminals)
-        return max_sen_length, corpus_size, i+1, ts_info
+        return max_sen_length, corpus_size, i+1, data
 
     def process_testsuites(self,testsuites,lextypes):
-        max_sen_length, corpus_size, num_ts, ts_info = self.check_testsuite_sizes(testsuites)
+        max_sen_length, corpus_size, num_ts, data = self.read_testsuites(testsuites)
         autoregress_table = np.array([[{}]*corpus_size for i in range(max_sen_length)])
         with open('./log.txt', 'w') as logf:
-            start = 0
-            for i,testsuite in enumerate(sorted(glob.iglob(testsuites+'**'))):
-                num_items, no_parse, sentence_lens, unk_pos = self.process_testsuite(
-                    lextypes, logf, testsuite, autoregress_table, start)
-                ts_info[i]['column'] = start
-                start = start + num_items
-                self.stats['corpora'][i]['items'] = num_items
-                self.stats['corpora'][i]['noparse'] = no_parse
-                self.stats['corpora'][i]['unk-pos'] = unk_pos
-                all_lengths = sorted(list(sentence_lens),reverse=True)
-                self.stats['corpora'][i]['max-len'] = max(all_lengths)
-        with open('./output/autoregressive_table', 'wb') as f:
-            pickle.dump(autoregress_table, f)
+            for k in ['train','dev','test']:
+                start = 0
+                for testsuite in data[k]:
+                    self.process_testsuite(lextypes, logf, testsuite, autoregress_table, start)
+                    testsuite['column'] = start
+                    start = start + len(testsuite['sentences'])
+                with open('./output/autoregressive/feature_table-'+k, 'wb') as f:
+                    pickle.dump(autoregress_table, f)
+                with open('./output/data/data-'+k,'wb') as f:
+                    pickle.dump(data[k],f)
 
 
+    '''
+    Assume a numpy table coming in. Get e.g. tokens 2 through 5 in sentences 4 and 5,
+    for the test suite #20 in the data.
+    '''
     def get_table_portion(self, ts_info, table, ts_num, token_range, sentence_range):
         ts_column = ts_info[ts_num]['column']
         tokens = sum(ts_info[ts_num]['sentences'][sentence_range[0]:sentence_range[1]])
@@ -71,55 +86,30 @@ class LexTypeExtractor:
 
 
     def process_testsuite(self, lextypes, logf, tsuite, autoregress_table, start):
-        ts = itsdb.TestSuite(tsuite)
-        print("Processing " + ts.path.stem)
-        logf.write("Processing " + ts.path.stem + '\n')
-        self.stats['corpora'].append({'name': ts.path.stem, 'tokens':0})
+        print("Processing " + tsuite['name'])
+        logf.write("Processing " + tsuite['name'] + '\n')
         pairs = []
         contexts = []
         y = []
-        items = list(ts.processed_items())
-        noparse = 0
-        sentence_lens = {}
+        items = tsuite['sentences']
         pos_mapper = pos_map.Pos_mapper('./pos-map.txt')  # do this for every test suite to count unknowns in each
-        for j, response in enumerate(items):
+        for j, lst_of_terminals in enumerate(items):
             contexts.append([])
-            if len(response['results']) > 0:
-                if j % 100 == 0:
-                    print("Processing item {} out of {}...".format(j, len(items)))
-                result = response.result(0)
-                deriv = result.derivation()
-                self.stats['corpora'][-1]['tokens'] += len(deriv.terminals())
-                p_input = response['p-input']
-                p_tokens = response['p-tokens']
-                terminals_toks_pos_tags = self.map_lattice_to_input(p_input,p_tokens, deriv)
-                tokens,labels,pos_tags,autoregress_labels = \
-                     self.get_tokens_labels(terminals_toks_pos_tags,CONTEXT_WINDOW, lextypes,pos_mapper)
-                if response['i-length'] not in sentence_lens:
-                    sentence_lens[response['i-length']] = 0
-                sentence_lens[response['i-length']] += 1
-                for k, t in enumerate(tokens):
-                    if k < CONTEXT_WINDOW or k >= len(tokens) - CONTEXT_WINDOW:
-                        continue
-                    if not t in self.stats['tokens']:
-                        self.stats['tokens'][t] = 0
-                    self.stats['tokens'][t] += 1
-                    pairs.append((t, labels[k]))
-                    y.append(labels[k])
-                    contexts[j].append(self.get_context(t, tokens, pos_tags, k, CONTEXT_WINDOW))
-                    autoregress_table[k-CONTEXT_WINDOW][start+j] = \
-                        self.get_autoregress_context(tokens,pos_tags,autoregress_labels, k,CONTEXT_WINDOW)
-                pairs.append(('--EOS--','--EOS--')) # sentence separator
-                y.append('\n') # sentence separator
-            else:
-                contexts[j].append('NO PARSE')
-                noparse += 1
-                err = response['error'] if response['error'] else 'None'
-                #print('No parse for item {} out of {}'.format(j,len(items)))
-                logf.write(ts.path.stem + '\t' + str(response['i-id']) + '\t'
-                           + response['i-input'] + '\t' + err + '\n')
-        self.write_output(contexts, pairs, ts, pos_mapper.unknowns)
-        return len(items), noparse, sentence_lens, len(pos_mapper.unknowns)
+            if j % 100 == 0:
+                print("Processing item {} out of {}...".format(j, len(items)))
+            tokens,labels,pos_tags,autoregress_labels = \
+                 self.get_tokens_labels(tsuite['tokens-tags'][j],CONTEXT_WINDOW, lextypes,pos_mapper)
+            for k, t in enumerate(tokens):
+                if k < CONTEXT_WINDOW or k >= len(tokens) - CONTEXT_WINDOW:
+                    continue
+                pairs.append((t, labels[k]))
+                y.append(labels[k])
+                contexts[j].append(self.get_context(t, tokens, pos_tags, k, CONTEXT_WINDOW))
+                autoregress_table[k-CONTEXT_WINDOW][start+j] = \
+                    self.get_autoregress_context(tokens,pos_tags,autoregress_labels, k,CONTEXT_WINDOW)
+            pairs.append(('--EOS--','--EOS--')) # sentence separator
+            y.append('\n') # sentence separator
+        self.write_output(contexts, pairs, tsuite['name'])
 
     def map_lattice_to_input(self, p_input, p_tokens, deriv):
         yy_lattice = YYTokenLattice.from_string(p_tokens)
@@ -157,19 +147,19 @@ class LexTypeExtractor:
         return terminals_toks_postags
 
 
-    def write_output(self, contexts, pairs, ts, unknown_pos):
+    def write_output(self, contexts, pairs, ts_name):
         for d in ['train/','test/','dev/', 'ignore/']:
             for pd in ['simple/','contexts/','true_labels/']:
                 pathlib.Path('./output/' + pd + d).mkdir(parents=True, exist_ok=True)
         true_labels = []
         suf = 'train/'
-        if ts.path.stem in IGNORE:
+        if ts_name in IGNORE:
             suf = 'ignore/'
-        if ts.path.stem in TEST:
+        if ts_name in TEST:
             suf = 'test/'
-        elif ts.path.stem in DEV:
+        elif ts_name in DEV:
             suf = 'dev/'
-        with open('./output/simple/' + suf + ts.path.stem, 'w') as f:
+        with open('./output/simple/' + suf + ts_name, 'w') as f:
             for form, letype in pairs:
                 if not letype=='--EOS--':
                     true_labels.append(str(letype))
@@ -178,16 +168,13 @@ class LexTypeExtractor:
                 else:
                     f.write('\n') # sentence separator
                     true_labels.append('\n') # sentence separator
-        with open('./output/true_labels/' + suf + ts.path.stem, 'w') as f:
+        with open('./output/true_labels/' + suf + ts_name, 'w') as f:
             for tl in true_labels:
                 f.write(tl)
                 if tl != '\n':
                     f.write('\n')
-        with open('./output/contexts/' + suf + ts.path.stem, 'w') as f:
+        with open('./output/contexts/' + suf + ts_name, 'w') as f:
             f.write(json.dumps(contexts))
-        with open('./output/' + ts.path.stem, 'w') as f:
-            for pos in unknown_pos:
-                f.write(pos + '\n')
 
     def get_context(self, t, tokens, pos_tags, i, window):
         context = {'w': t, 'pos': pos_tags[i]}
