@@ -2,6 +2,7 @@ from delphin import tdl, itsdb
 from delphin.tokens import YYTokenLattice
 import glob, sys, pathlib
 import json, pickle
+import numpy as np
 
 import pos_map
 
@@ -28,47 +29,48 @@ class LexTypeExtractor:
 
     def check_testsuite_sizes(self,path):
         max_sen_length = 0
-        max_ts_size = 0
+        corpus_size = 0
         ts_info = []
         for i, tsuite in enumerate(sorted(glob.iglob(path + '**'))):
             ts = itsdb.TestSuite(tsuite)
             ts_info.append({'name':ts.path.stem})
             items = list(ts.processed_items())
             ts_info[i]['sentences'] = []
-            if len(items) > max_ts_size:
-                max_ts_size = len(items)
+            corpus_size += len(items)
             for response in items:
                 if len(response['results']) > 0:
                     terminals = response.result(0).derivation().terminals()
                     ts_info[i]['sentences'].append(len(terminals))
                     if len(terminals) > max_sen_length:
                         max_sen_length = len(terminals)
-        return max_sen_length, max_ts_size, i+1, ts_info
+        return max_sen_length, corpus_size, i+1, ts_info
 
     def process_testsuites(self,testsuites,lextypes):
-        max_sen_length, max_ts_size, num_ts, ts_info = self.check_testsuite_sizes(testsuites)
-        autoregress_table = [[{}]*num_ts*max_ts_size for i in range(max_sen_length)]
+        max_sen_length, corpus_size, num_ts, ts_info = self.check_testsuite_sizes(testsuites)
+        autoregress_table = np.array([[{}]*corpus_size for i in range(max_sen_length)])
         with open('./log.txt', 'w') as logf:
+            start = 0
             for i,testsuite in enumerate(sorted(glob.iglob(testsuites+'**'))):
                 num_items, no_parse, sentence_lens, unk_pos = self.process_testsuite(
-                    lextypes, logf, testsuite, i+1, autoregress_table, ts_info)
+                    lextypes, logf, testsuite, autoregress_table, start)
+                ts_info[i]['column'] = start
+                start = start + num_items
                 self.stats['corpora'][i]['items'] = num_items
                 self.stats['corpora'][i]['noparse'] = no_parse
                 self.stats['corpora'][i]['unk-pos'] = unk_pos
                 all_lengths = sorted(list(sentence_lens),reverse=True)
                 self.stats['corpora'][i]['max-len'] = max(all_lengths)
-        p = self.get_table_portion(ts_info,autoregress_table,1,[0,1],[0,1])
         with open('./output/autoregressive_table', 'wb') as f:
             pickle.dump(autoregress_table, f)
 
 
-    def get_table_portion(self, ts_info, table, ts_num, sentence_range, token_range):
-        ts_column = ts_info[ts_num-1]['column']
-        tokens = sum(ts_info[ts_num-1]['sentences'][sentence_range[0]:sentence_range[1]])
-        return table[token_range[0]:token_range[1]][ts_column:ts_column+tokens]
+    def get_table_portion(self, ts_info, table, ts_num, token_range, sentence_range):
+        ts_column = ts_info[ts_num]['column']
+        tokens = sum(ts_info[ts_num]['sentences'][sentence_range[0]:sentence_range[1]])
+        return table[token_range[0]:token_range[1],ts_column:ts_column+tokens]
 
 
-    def process_testsuite(self, lextypes, logf, tsuite, ts_num, autoregress_table, ts_info):
+    def process_testsuite(self, lextypes, logf, tsuite, autoregress_table, start):
         ts = itsdb.TestSuite(tsuite)
         print("Processing " + ts.path.stem)
         logf.write("Processing " + ts.path.stem + '\n')
@@ -105,7 +107,7 @@ class LexTypeExtractor:
                     pairs.append((t, labels[k]))
                     y.append(labels[k])
                     contexts[j].append(self.get_context(t, tokens, pos_tags, k, CONTEXT_WINDOW))
-                    autoregress_table[k-CONTEXT_WINDOW][ts_num*j] = \
+                    autoregress_table[k-CONTEXT_WINDOW][start+j] = \
                         self.get_autoregress_context(tokens,pos_tags,autoregress_labels, k,CONTEXT_WINDOW)
                 pairs.append(('--EOS--','--EOS--')) # sentence separator
                 y.append('\n') # sentence separator
@@ -116,7 +118,6 @@ class LexTypeExtractor:
                 #print('No parse for item {} out of {}'.format(j,len(items)))
                 logf.write(ts.path.stem + '\t' + str(response['i-id']) + '\t'
                            + response['i-input'] + '\t' + err + '\n')
-        ts_info[ts_num-1]['column'] = ts_num*j
         self.write_output(contexts, pairs, ts, pos_mapper.unknowns)
         return len(items), noparse, sentence_lens, len(pos_mapper.unknowns)
 
@@ -203,11 +204,11 @@ class LexTypeExtractor:
         return context
 
     def get_autoregress_context(self,tokens,pos_tags,predicted_labels, k,window):
-        context = {'w':tokens[k],'pos':pos_tags[k]}
-        for i in range(1,window+1):
-            context['w-' + str(i)] = tokens[k-i]
-            context['w+' + str(i)] = tokens[k+i]
-            context['tag-' + str(i)] = predicted_labels[k-i] # Will be None or FAKE
+        context = {'w':tokens[k]} #,'pos':pos_tags[k]}
+        # for i in range(1,window+1):
+        #     context['w-' + str(i)] = tokens[k-i]
+        #     context['w+' + str(i)] = tokens[k+i]
+        #     context['tag-' + str(i)] = predicted_labels[k-i] # Will be None or FAKE
         return context
 
 
