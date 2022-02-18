@@ -53,7 +53,7 @@ class Alphabet:
                 self.add(instance)
                 return index
             else:
-                return self.instance2index.get(self.UNKNOWN,-1)
+                return self.instance2index[self.UNKNOWN]
 
     def get_instance(self, index):
         if index == 0:
