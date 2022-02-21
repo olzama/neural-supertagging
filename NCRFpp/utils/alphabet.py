@@ -53,7 +53,10 @@ class Alphabet:
                 self.add(instance)
                 return index
             else:
-                return self.instance2index[self.UNKNOWN]
+                idx = self.instance2index.get(self.UNKNOWN, -1)
+                if idx == -1:
+                    print('Could not find {}.'.format(instance))
+                return idx
 
     def get_instance(self, index):
         if index == 0:
