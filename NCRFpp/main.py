@@ -470,6 +470,7 @@ def train(data):
             print("Save current best model in file:", model_name)
             torch.save(model.state_dict(), model_name)
             best_dev = current_score
+            gc.collect()
         else:
             #implement early stopping
             MAX_NO_IMPROVE = 6
@@ -480,15 +481,14 @@ def train(data):
                 if no_improve == MAX_NO_IMPROVE:
                     print('Stopping at epoch {}'.format(idx))
                     eprint('Stopping at epoch {}'.format(idx))
-                    ## decode test
-                    speed, acc, p, r, f, _,_ = evaluate(data, model, "test")
-                    test_finish = time.time()
-                    test_cost = test_finish - dev_finish
-                    if data.seg:
-                        print("Test: time: %.2fs, speed: %.2fst/s; acc: %.4f, p: %.4f, r: %.4f, f: %.4f"%(test_cost, speed, acc, p, r, f))
-                    else:
-                        print("Test: time: %.2fs, speed: %.2fst/s; acc: %.4f"%(test_cost, speed, acc))
-                    gc.collect()
+                    # ## decode test
+                    # speed, acc, p, r, f, _,_ = evaluate(data, model, "test")
+                    # test_finish = time.time()
+                    # test_cost = test_finish - dev_finish
+                    # if data.seg:
+                    #     print("Test: time: %.2fs, speed: %.2fst/s; acc: %.4f, p: %.4f, r: %.4f, f: %.4f"%(test_cost, speed, acc, p, r, f))
+                    # else:
+                    #     print("Test: time: %.2fs, speed: %.2fst/s; acc: %.4f"%(test_cost, speed, acc))
                     break
 
 
