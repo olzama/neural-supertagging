@@ -61,16 +61,21 @@ class LexTypeExtractor:
 
     def process_testsuites(self,testsuites,lextypes):
         max_sen_length, corpus_size, num_ts, data = self.read_testsuites(testsuites)
-        autoregress_table = np.array([[{}]*corpus_size for i in range(max_sen_length)])
         with open('./log.txt', 'w') as logf:
             for k in ['train','dev','test']:
                 start = 0
+                autoregress_table = np.array([[{}] * corpus_size for i in range(max_sen_length)])
+                labels_table = np.array([[{}] * corpus_size for i in range(max_sen_length)])
                 for testsuite in data[k]:
-                    self.process_testsuite(lextypes, logf, testsuite, autoregress_table, start)
+                    true_labels = self.process_testsuite(
+                        lextypes, logf, testsuite, autoregress_table, labels_table, start)
                     testsuite['column'] = start
+                    testsuite['true labels'] = true_labels
                     start = start + len(testsuite['sentences'])
                 with open('./output/autoregressive/feature_table-'+k, 'wb') as f:
                     pickle.dump(autoregress_table, f)
+                with open('./output/autoregressive/labels_table-'+k, 'wb') as f:
+                    pickle.dump(labels_table, f)
                 with open('./output/data/data-'+k,'wb') as f:
                     pickle.dump(data[k],f)
 
@@ -85,12 +90,13 @@ class LexTypeExtractor:
         return table[token_range[0]:token_range[1],ts_column:ts_column+tokens]
 
 
-    def process_testsuite(self, lextypes, logf, tsuite, autoregress_table, start):
+    def process_testsuite(self, lextypes, logf, tsuite, autoregress_table, labels_table, start):
         print("Processing " + tsuite['name'])
         logf.write("Processing " + tsuite['name'] + '\n')
         pairs = []
         contexts = []
         y = []
+        ys = []
         items = tsuite['sentences']
         pos_mapper = pos_map.Pos_mapper('./pos-map.txt')  # do this for every test suite to count unknowns in each
         for j, lst_of_terminals in enumerate(items):
@@ -99,6 +105,7 @@ class LexTypeExtractor:
                 print("Processing item {} out of {}...".format(j, len(items)))
             tokens,labels,pos_tags,autoregress_labels = \
                  self.get_tokens_labels(tsuite['tokens-tags'][j],CONTEXT_WINDOW, lextypes,pos_mapper)
+            ys.append(labels[CONTEXT_WINDOW:CONTEXT_WINDOW*-1])
             for k, t in enumerate(tokens):
                 if k < CONTEXT_WINDOW or k >= len(tokens) - CONTEXT_WINDOW:
                     continue
@@ -107,9 +114,11 @@ class LexTypeExtractor:
                 contexts[j].append(self.get_context(t, tokens, pos_tags, k, CONTEXT_WINDOW))
                 autoregress_table[k-CONTEXT_WINDOW][start+j] = \
                     self.get_autoregress_context(tokens,pos_tags,autoregress_labels, k,CONTEXT_WINDOW)
+                labels_table[k-CONTEXT_WINDOW][start+j] = labels[k]
             pairs.append(('--EOS--','--EOS--')) # sentence separator
             y.append('\n') # sentence separator
         self.write_output(contexts, pairs, tsuite['name'])
+        return ys
 
     def map_lattice_to_input(self, p_input, p_tokens, deriv):
         yy_lattice = YYTokenLattice.from_string(p_tokens)
@@ -192,10 +201,10 @@ class LexTypeExtractor:
 
     def get_autoregress_context(self,tokens,pos_tags,predicted_labels, k,window):
         context = {'w':tokens[k]} #,'pos':pos_tags[k]}
-        # for i in range(1,window+1):
-        #     context['w-' + str(i)] = tokens[k-i]
-        #     context['w+' + str(i)] = tokens[k+i]
-        #     context['tag-' + str(i)] = predicted_labels[k-i] # Will be None or FAKE
+        for i in range(1,window+1):
+            #context['w-' + str(i)] = tokens[k-i]
+            #context['w+' + str(i)] = tokens[k+i]
+            context['tag-' + str(i)] = predicted_labels[k-i] # Will be None or FAKE
         return context
 
 

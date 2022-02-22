@@ -64,6 +64,42 @@ def vectorize_test_data(word_feature_dicts, word_labels, vec, le_dict):
     return vectors, labels, unknowns
 
 
+def vectorize_autoreg(fp):
+    vec = DictVectorizer()
+    le = LabelEncoder()
+    flat_X = []
+    flat_Y = []
+    with open(fp + 'feature_table-train', 'rb') as f:
+        feature_table = pickle.load(f)
+    with open(fp + 'labels_table-train', 'rb') as f:
+        labels_table = pickle.load(f)
+    for i, row in enumerate(feature_table):
+        for obs in row:
+            flat_X.append(obs)
+    for i,labels in enumerate(labels_table):
+        for lbl in labels:
+            if lbl:
+                flat_Y.append(lbl)
+            #else:
+            #    flat_Y.append('EMPTY')
+    vec.fit_transform(flat_X)
+    le.fit(flat_Y)
+    le.transform(flat_Y)
+    le_dict = dict(zip(le.classes_, le.transform(le.classes_)))
+    X = []
+    ys = []
+    for row in feature_table:
+        X.append(vec.transform(row))
+    for i,labels in enumerate(labels_table):
+        ys.append([])
+        for lbl in labels:
+            if lbl:
+                ys[i].append(le_dict[lbl])
+            else:
+                ys[i].append(None)
+    return X, ys, vec, le_dict
+
+
 def pickle_vectors(path,X, Y, suf):
     with open(path + 'X_'+suf, 'wb') as xf:
         pickle.dump(X, xf)
@@ -75,8 +111,12 @@ if __name__ == "__main__":
     # See sample data for the expected format.
     # The paths must end with '/' (be directories)
     if sys.argv[3]=='train':
-        feature_dicts, true_labels, sen_lengths = read_data(sys.argv[1], sys.argv[2])
-        X, Y, vectorizer, label_dict = vectorize_train_data(feature_dicts,true_labels)
+        autoregressive = sys.argv[5] == 'autoreg'
+        if not autoregressive:
+            feature_dicts, true_labels, sen_lengths = read_data(sys.argv[1], sys.argv[2])
+            X, Y, vectorizer, label_dict = vectorize_train_data(feature_dicts,true_labels)
+        else:
+            X, Y, vectorizer, label_dict = vectorize_autoreg(sys.argv[2])
         with open(sys.argv[4]+'vectorizer', 'wb') as f:
             pickle.dump(vectorizer,f)
         with open(sys.argv[4]+'label-dict','wb') as f:
