@@ -439,12 +439,17 @@ def train(data):
             model.zero_grad()
         temp_time = time.time()
         temp_cost = temp_time - temp_start
-        print("     Instance: %s; Time: %.2fs; loss: %.4f; acc: %s/%s=%.4f"%(end, temp_cost, sample_loss, right_token, whole_token,(right_token+0.)/whole_token))
-
+        #print("     Instance: %s; Time: %.2fs; loss: %.4f; acc: %s/%s=%.4f"%(end, temp_cost, sample_loss, right_token, whole_token,(right_token+0.)/whole_token))
+        # Commented out times, to be able to better diff
+        print("     Instance: %s; acc: %s/%s=%.4f" % (
+        end, right_token, whole_token, (right_token + 0.) / whole_token))
         epoch_finish = time.time()
         epoch_cost = epoch_finish - epoch_start
-        print("Epoch: %s training finished. Time: %.2fs, speed: %.2fst/s,  total loss: %s"%(idx, epoch_cost, train_num/epoch_cost, total_loss))
-        print("totalloss:", total_loss)
+        # Commented out times, to be able to better diff
+        #print("Epoch: %s training finished. Time: %.2fs, speed: %.2fst/s,  total loss: %s"%(idx, epoch_cost, train_num/epoch_cost, total_loss))
+        print("Epoch: %s training finished. total loss: %s" % (
+        idx, total_loss))
+        #print("totalloss:", total_loss)
         if total_loss > 1e8 or str(total_loss) == "nan":
             print("ERROR: LOSS EXPLOSION (>1e8) ! PLEASE SET PROPER PARAMETERS AND STRUCTURE! EXIT....")
             exit(1)
@@ -454,10 +459,14 @@ def train(data):
         dev_cost = dev_finish - epoch_finish
         if data.seg:
             current_score = f
-            print("Dev: time: %.2fs, speed: %.2fst/s; acc: %.4f, p: %.4f, r: %.4f, f: %.4f"%(dev_cost, speed, acc, p, r, f))
+            # Commented out times, to be able to better diff
+            #print("Dev: time: %.2fs, speed: %.2fst/s; acc: %.4f, p: %.4f, r: %.4f, f: %.4f"%(dev_cost, speed, acc, p, r, f))
+            print("Dev:acc: %.4f, p: %.4f, r: %.4f, f: %.4f"%(acc, p, r, f))
         else:
             current_score = acc
-            print("Dev: time: %.2fs speed: %.2fst/s; acc: %.4f"%(dev_cost, speed, acc))
+            # Commented out times, to be able to better diff
+            #print("Dev: time: %.2fs speed: %.2fst/s; acc: %.4f"%(dev_cost, speed, acc))
+            print("Dev:  acc: %.4f" % (acc))
             eprint("Dev: time: %.2fs speed: %.2fst/s; acc: %.4f" % (dev_cost, speed, acc))
         gc.collect()
         if current_score > best_dev:
