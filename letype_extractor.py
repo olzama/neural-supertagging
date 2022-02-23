@@ -3,7 +3,7 @@ from delphin.tokens import YYTokenLattice
 import glob, sys, pathlib
 import json, pickle
 import numpy as np
-
+from collections import OrderedDict
 import pos_map
 
 CONTEXT_WINDOW = 2
@@ -30,10 +30,11 @@ class LexTypeExtractor:
     def read_testsuites(self,path):
         max_sen_length = 0
         corpus_size = 0
-        data = {'train':[],'test':[],'dev':[]}
+        data = {'train':{'by corpus':[], 'all':OrderedDict()},
+                'test':{'by corpus':[], 'all':OrderedDict()},
+                'dev':{'by corpus':[], 'all':OrderedDict()}}
         print('Reading test suite files into pydelphin objects...')
         for i, tsuite in enumerate(sorted(glob.iglob(path + '**'))):
-            #print(i)
             ts = itsdb.TestSuite(tsuite)
             if ts.path.stem in TEST:
                 idx = 'test'
@@ -41,10 +42,10 @@ class LexTypeExtractor:
                 idx = 'dev'
             elif ts.path.stem not in IGNORE:
                 idx = 'train'
-            data[idx].append({'name':ts.path.stem})
+            data[idx]['by corpus'].append({'name':ts.path.stem})
             items = list(ts.processed_items())
-            data[idx][i]['sentences'] = []
-            data[idx][i]['tokens-tags'] = []
+            data[idx]['by corpus'][i]['sentences'] = {}
+            data[idx]['by corpus'][i]['tokens-tags'] = []
             corpus_size += len(items)
             for response in items:
                 if len(response['results']) > 0:
@@ -53,10 +54,16 @@ class LexTypeExtractor:
                     p_input = response['p-input']
                     p_tokens = response['p-tokens']
                     terminals_tok_tags = self.map_lattice_to_input(p_input, p_tokens, deriv)
-                    data[idx][i]['sentences'].append(terminals)
-                    data[idx][i]['tokens-tags'].append(terminals_tok_tags)
+                    if len(terminals) not in data[idx]['by corpus'][i]['sentences']:
+                        data[idx]['by corpus'][i]['sentences'][len(terminals)] = []
+                    data[idx]['by corpus'][i]['sentences'][len(terminals)].append(terminals)
+                    data[idx]['by corpus'][i]['tokens-tags'].append(terminals_tok_tags)
                     if len(terminals) > max_sen_length:
                         max_sen_length = len(terminals)
+        all_train_sentences = {}
+        for ts in data['train']['by corpus']:
+            all_train_sentences.update(ts['sentences'])
+        data['train']['all'] = OrderedDict(sorted(all_train_sentences.items()))
         return max_sen_length, corpus_size, i+1, data
 
     def process_testsuites(self,testsuites,lextypes):
@@ -97,26 +104,27 @@ class LexTypeExtractor:
         contexts = []
         y = []
         ys = []
-        items = tsuite['sentences']
         pos_mapper = pos_map.Pos_mapper('./pos-map.txt')  # do this for every test suite to count unknowns in each
-        for j, lst_of_terminals in enumerate(items):
-            contexts.append([])
-            if j % 100 == 0:
-                print("Processing item {} out of {}...".format(j, len(items)))
-            tokens,labels,pos_tags,autoregress_labels = \
-                 self.get_tokens_labels(tsuite['tokens-tags'][j],CONTEXT_WINDOW, lextypes,pos_mapper)
-            ys.append(labels[CONTEXT_WINDOW:CONTEXT_WINDOW*-1])
-            for k, t in enumerate(tokens):
-                if k < CONTEXT_WINDOW or k >= len(tokens) - CONTEXT_WINDOW:
-                    continue
-                pairs.append((t, labels[k]))
-                y.append(labels[k])
-                contexts[j].append(self.get_context(t, tokens, pos_tags, k, CONTEXT_WINDOW))
-                autoregress_table[k-CONTEXT_WINDOW][start+j] = \
-                    self.get_autoregress_context(tokens,pos_tags,autoregress_labels, k,CONTEXT_WINDOW)
-                labels_table[k-CONTEXT_WINDOW][start+j] = labels[k]
-            pairs.append(('--EOS--','--EOS--')) # sentence separator
-            y.append('\n') # sentence separator
+        for sentence_len in tsuite['sentences']:
+            items = tsuite['sentences'][sentence_len]
+            for j, lst_of_terminals in enumerate(items):
+                contexts.append([])
+                if j % 100 == 0:
+                    print("Processing item {} out of {}...".format(j, len(items)))
+                tokens,labels,pos_tags,autoregress_labels = \
+                     self.get_tokens_labels(tsuite['tokens-tags'][j],CONTEXT_WINDOW, lextypes,pos_mapper)
+                ys.append(labels[CONTEXT_WINDOW:CONTEXT_WINDOW*-1])
+                for k, t in enumerate(tokens):
+                    if k < CONTEXT_WINDOW or k >= len(tokens) - CONTEXT_WINDOW:
+                        continue
+                    pairs.append((t, labels[k]))
+                    y.append(labels[k])
+                    contexts[j].append(self.get_context(t, tokens, pos_tags, k, CONTEXT_WINDOW))
+                    autoregress_table[k-CONTEXT_WINDOW][start+j] = \
+                        self.get_autoregress_context(tokens,pos_tags,autoregress_labels, k,CONTEXT_WINDOW)
+                    labels_table[k-CONTEXT_WINDOW][start+j] = labels[k]
+                pairs.append(('--EOS--','--EOS--')) # sentence separator
+                y.append('\n') # sentence separator
         self.write_output(contexts, pairs, tsuite['name'])
         return ys
 

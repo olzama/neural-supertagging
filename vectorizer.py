@@ -80,8 +80,6 @@ def vectorize_autoreg(fp):
         for lbl in labels:
             if lbl:
                 flat_Y.append(lbl)
-            #else:
-            #    flat_Y.append('EMPTY')
     vec.fit_transform(flat_X)
     le.fit(flat_Y)
     le.transform(flat_Y)
