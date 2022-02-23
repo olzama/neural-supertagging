@@ -434,7 +434,9 @@ def train(data):
                     exit(1)
                 sys.stdout.flush()
                 sample_loss = 0
+            torch.use_deterministic_algorithms(False)
             loss.backward()
+            torch.use_deterministic_algorithms(True)
             optimizer.step()
             model.zero_grad()
         temp_time = time.time()
