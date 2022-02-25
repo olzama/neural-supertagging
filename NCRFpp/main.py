@@ -483,7 +483,7 @@ def train(data):
             best_dev = current_score
         else:
             #implement early stopping
-            MAX_NO_IMPROVE = 6
+            MAX_NO_IMPROVE = 10
             if no_improve <= MAX_NO_IMPROVE:
                 no_improve += 1
                 print('No improvement for the last {} epochs'.format(no_improve))
