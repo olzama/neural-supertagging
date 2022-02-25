@@ -434,9 +434,9 @@ def train(data):
                     exit(1)
                 sys.stdout.flush()
                 sample_loss = 0
-            torch.use_deterministic_algorithms(False)
+            #torch.use_deterministic_algorithms(False)
             loss.backward()
-            torch.use_deterministic_algorithms(True)
+            #torch.use_deterministic_algorithms(True)
             optimizer.step()
             model.zero_grad()
         temp_time = time.time()
@@ -535,7 +535,7 @@ def load_model_decode(data, name):
 
 if __name__ == '__main__':
 
-    torch.use_deterministic_algorithms(True)
+    #torch.use_deterministic_algorithms(True)
 
     parser = argparse.ArgumentParser(description='Tuning with NCRF++')
     # parser.add_argument('--status', choices=['train', 'decode'], help='update algorithm', default='train')
