@@ -30,9 +30,9 @@ class LexTypeExtractor:
     def read_testsuites(self,path):
         max_sen_length = 0
         corpus_size = 0
-        data = {'train':{'by corpus':[], 'all':OrderedDict()},
-                'test':{'by corpus':[], 'all':OrderedDict()},
-                'dev':{'by corpus':[], 'all':OrderedDict()}}
+        data = {'train':{'by corpus':[], 'by length':OrderedDict()},
+                'test':{'by corpus':[], 'by length':OrderedDict()},
+                'dev':{'by corpus':[], 'by length':OrderedDict()}}
         print('Reading test suite files into pydelphin objects...')
         for i, tsuite in enumerate(sorted(glob.iglob(path + '**'))):
             ts = itsdb.TestSuite(tsuite)
@@ -56,35 +56,48 @@ class LexTypeExtractor:
                     terminals_tok_tags = self.map_lattice_to_input(p_input, p_tokens, deriv)
                     if len(terminals) not in data[idx]['by corpus'][i]['sentences']:
                         data[idx]['by corpus'][i]['sentences'][len(terminals)] = []
-                    data[idx]['by corpus'][i]['sentences'][len(terminals)].append(terminals)
+                    data[idx]['by corpus'][i]['sentences'][len(terminals)].append(terminals_tok_tags)
                     data[idx]['by corpus'][i]['tokens-tags'].append(terminals_tok_tags)
                     if len(terminals) > max_sen_length:
                         max_sen_length = len(terminals)
         all_train_sentences = {}
         for ts in data['train']['by corpus']:
             all_train_sentences.update(ts['sentences'])
-        data['train']['all'] = OrderedDict(sorted(all_train_sentences.items()))
+        data['train']['by length'] = OrderedDict(sorted(all_train_sentences.items()))
         return max_sen_length, corpus_size, i+1, data
 
     def process_testsuites(self,testsuites,lextypes):
         max_sen_length, corpus_size, num_ts, data = self.read_testsuites(testsuites)
+        train_tables_by_len = {}
         with open('./log.txt', 'w') as logf:
             for k in ['train','dev','test']:
                 start = 0
                 autoregress_table = np.array([[{}] * corpus_size for i in range(max_sen_length)])
                 labels_table = np.array([[{}] * corpus_size for i in range(max_sen_length)])
-                for testsuite in data[k]:
+                for testsuite in data[k]['by corpus']:
                     true_labels = self.process_testsuite(
                         lextypes, logf, testsuite, autoregress_table, labels_table, start)
                     testsuite['column'] = start
                     testsuite['true labels'] = true_labels
                     start = start + len(testsuite['sentences'])
-                with open('./output/autoregressive/feature_table-'+k, 'wb') as f:
+                with open('./output/by-corpus/autoregressive/feature_table-'+k, 'wb') as f:
                     pickle.dump(autoregress_table, f)
-                with open('./output/autoregressive/labels_table-'+k, 'wb') as f:
+                with open('./output/by-corpus/autoregressive/labels_table-'+k, 'wb') as f:
                     pickle.dump(labels_table, f)
-                with open('./output/data/data-'+k,'wb') as f:
-                    pickle.dump(data[k],f)
+                with open('./output/by-corpus/data/data-'+k,'wb') as f:
+                    pickle.dump(data[k]['by corpus'],f)
+                for sen_len in data['train']['by length']:
+                    train_tables_by_len[sen_len] = {}
+                    autoregress_table = np.array([[{}] * len(data['train']['by length'][sen_len])
+                                                  for i in range(sen_len)])
+                    labels_table = np.array([[{}] * len(data['train']['by length'][sen_len]) for i in range(sen_len)])
+                    print("Processing sentences of length {}".format(sen_len))
+                    logf.write("Processing sentences of length {}\n".format(sen_len))
+                    true_labels = self.process_length(lextypes, data['train']['by length'][sen_len],
+                                                      autoregress_table,labels_table)
+                    train_tables_by_len[sen_len]['ft'] = autoregress_table
+                    train_tables_by_len[sen_len]['lt'] = labels_table
+            return train_tables_by_len
 
 
     '''
@@ -128,6 +141,26 @@ class LexTypeExtractor:
         self.write_output(contexts, pairs, tsuite['name'])
         return ys
 
+    def process_length(self, lextypes, items, autoregress_table, labels_table):
+        y = []
+        ys = []
+        pos_mapper = pos_map.Pos_mapper('./pos-map.txt')  # do this for every test suite to count unknowns in each
+        for j, lst_of_terminals in enumerate(items):
+            if j % 100 == 0:
+                print("Processing item {} out of {}...".format(j, len(items)))
+            tokens,labels,pos_tags,autoregress_labels = \
+                 self.get_tokens_labels(lst_of_terminals,CONTEXT_WINDOW, lextypes,pos_mapper)
+            ys.append(labels[CONTEXT_WINDOW:CONTEXT_WINDOW*-1])
+            for k, t in enumerate(tokens):
+                if k < CONTEXT_WINDOW or k >= len(tokens) - CONTEXT_WINDOW:
+                    continue
+                y.append(labels[k])
+                autoregress_table[k-CONTEXT_WINDOW][j] = \
+                    self.get_autoregress_context(tokens,pos_tags,autoregress_labels, k,CONTEXT_WINDOW)
+                labels_table[k-CONTEXT_WINDOW][j] = labels[k]
+            y.append('\n') # sentence separator
+        return ys
+
     def map_lattice_to_input(self, p_input, p_tokens, deriv):
         yy_lattice = YYTokenLattice.from_string(p_tokens)
         yy_input = YYTokenLattice.from_string(p_input)
@@ -163,10 +196,9 @@ class LexTypeExtractor:
             terminals_toks_postags.append((t,toks_pos_tags))
         return terminals_toks_postags
 
-
     def write_output(self, contexts, pairs, ts_name):
         for d in ['train/','test/','dev/', 'ignore/']:
-            for pd in ['simple/','contexts/','true_labels/']:
+            for pd in ['simple/','by-corpus/contexts/','by-corpus/true_labels/']:
                 pathlib.Path('./output/' + pd + d).mkdir(parents=True, exist_ok=True)
         true_labels = []
         suf = 'train/'
@@ -185,12 +217,12 @@ class LexTypeExtractor:
                 else:
                     f.write('\n') # sentence separator
                     true_labels.append('\n') # sentence separator
-        with open('./output/true_labels/' + suf + ts_name, 'w') as f:
+        with open('./output/by-corpus/true_labels/' + suf + ts_name, 'w') as f:
             for tl in true_labels:
                 f.write(tl)
                 if tl != '\n':
                     f.write('\n')
-        with open('./output/contexts/' + suf + ts_name, 'w') as f:
+        with open('./output/by-corpus/contexts/' + suf + ts_name, 'w') as f:
             f.write(json.dumps(contexts))
 
     def get_context(self, t, tokens, pos_tags, i, window):
@@ -237,37 +269,23 @@ class LexTypeExtractor:
             pos_tags.append('FAKE+' + str(i))
         return tokens, labels, pos_tags, predicted_labels
 
-    def get_pos_tag(self,tokens_tags, form, pos_mapper):
+    def get_pos_tag(self,tokens_tags, pos_mapper):
         tag = ''
         for tt in tokens_tags:
             pos_probs = tt[1]
             for pos in pos_probs:
-                #print(form + '\t' + pos + '\t')
                 tag = tag + '+' + pos
         tag = tag.strip('+')
         if '+' in tag:
             tag = pos_mapper.map_tag(tag)
         return tag
 
-    def map_tag_sequence(self,seq):
-        pass
-
 if __name__ == "__main__":
     args = sys.argv[1:]
     le = LexTypeExtractor()
     le.parse_lexicons(args[0])
     le.stats['total lextypes'] = len(le.lextypes)
-    le.process_testsuites(args[1],le.lextypes)
-    with open('stats.txt','w') as f:
-        for c in le.stats['corpora']:
-            # This will print out the name of the corpus if the corpus was successfully loaded
-            if c:
-                for item in c:
-                    f.write(str(item) + ': ' + str(c[item]) + '\n')
-        f.write('Failed to load corpora:' + str(len(le.stats['failed corpora'])) + '\n')
-        for fc in le.stats['failed corpora']:
-            f.write(fc['name'] + '\n')
-        f.write('Total tokens in all corpora: ' + str(sum(le.stats['tokens'].values())) + '\n')
-        f.write('Total unique tokens: ' + str(len(le.stats['tokens'])) + '\n')
-        f.write('Total lextypes: ' + str(le.stats['total lextypes']) + '\n')
+    train_tables = le.process_testsuites(args[1],le.lextypes)
+    with open('./output/by-length/tables_by_length', 'wb') as f:
+        pickle.dump(train_tables,f)
 

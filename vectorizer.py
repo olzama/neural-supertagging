@@ -84,9 +84,13 @@ def vectorize_autoreg(fp):
     le.fit(flat_Y)
     le.transform(flat_Y)
     le_dict = dict(zip(le.classes_, le.transform(le.classes_)))
+    le_inv_dict = {v: k for k, v in le_dict.items()}
     X = []
     ys = []
     for row in feature_table:
+        # for obs in row:
+        #     print(obs)
+        #     print(vec.transform(obs))
         X.append(vec.transform(row))
     for i,labels in enumerate(labels_table):
         ys.append([])
@@ -95,7 +99,7 @@ def vectorize_autoreg(fp):
                 ys[i].append(le_dict[lbl])
             else:
                 ys[i].append(None)
-    return X, ys, vec, le_dict
+    return X, ys, vec, le_dict, le_inv_dict
 
 
 def pickle_vectors(path,X, Y, suf):
@@ -114,18 +118,20 @@ if __name__ == "__main__":
             feature_dicts, true_labels, sen_lengths = read_data(sys.argv[1], sys.argv[2])
             X, Y, vectorizer, label_dict = vectorize_train_data(feature_dicts,true_labels)
         else:
-            X, Y, vectorizer, label_dict = vectorize_autoreg(sys.argv[2])
+            X, Y, vectorizer, label_dict, inv_label_dict = vectorize_autoreg(sys.argv[2])
         with open(sys.argv[4]+'vectorizer', 'wb') as f:
             pickle.dump(vectorizer,f)
         with open(sys.argv[4]+'label-dict','wb') as f:
             pickle.dump(label_dict,f)
+        with open(sys.argv[4]+'label-inv-dict','wb') as f:
+            pickle.dump(inv_label_dict,f)
         pickle_vectors(sys.argv[4], X, Y, 'train')
     if sys.argv[3]=='test':
         with open(sys.argv[4]+'vectorizer', 'rb') as f:
             vec = pickle.load(f)
         with open(sys.argv[4]+'label-dict', 'rb') as f:
             ld = pickle.load(f)
-            testcorpora_with_labels = zip(sorted(glob.iglob(sys.argv[1] + '*')),sorted(glob.iglob(sys.argv[2] + '*')))
+        testcorpora_with_labels = zip(sorted(glob.iglob(sys.argv[1] + '*')),sorted(glob.iglob(sys.argv[2] + '*')))
         for testcorpus, labels in testcorpora_with_labels:
             feature_dicts, true_labels, sen_lengths = read_data(testcorpus, labels)
             X,Y, unk = vectorize_test_data(feature_dicts,true_labels, vec, ld)
