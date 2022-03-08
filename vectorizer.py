@@ -67,38 +67,34 @@ def vectorize_test_data(word_feature_dicts, word_labels, vec, le_dict):
 def vectorize_autoreg(fp):
     vec = DictVectorizer()
     le = LabelEncoder()
-    flat_X = []
-    flat_Y = []
-    with open(fp + 'feature_table-train', 'rb') as f:
-        feature_table = pickle.load(f)
-    with open(fp + 'labels_table-train', 'rb') as f:
-        labels_table = pickle.load(f)
-    for i, row in enumerate(feature_table):
-        for obs in row:
-            flat_X.append(obs)
-    for i,labels in enumerate(labels_table):
-        for lbl in labels:
-            if lbl:
-                flat_Y.append(lbl)
-    vec.fit_transform(flat_X)
-    le.fit(flat_Y)
-    le.transform(flat_Y)
+    with open('./output/lextypes', 'wb') as f:
+        lextypes = pickle.load(f)
+    with open(fp + 'tables_by_length', 'rb') as f:
+        table = pickle.load(f)
+    for length in table:
+        for row in table[length]['lt']
+        for i, row in enumerate(table[length]['ft']):
+            vec.fit_transform(row)
+            le.fit(table[length]['lt'][i])
+            le.transform(table[length]['lt'][i])
     le_dict = dict(zip(le.classes_, le.transform(le.classes_)))
     le_inv_dict = {v: k for k, v in le_dict.items()}
     X = []
     ys = []
-    for row in feature_table:
-        # for obs in row:
-        #     print(obs)
-        #     print(vec.transform(obs))
-        X.append(vec.transform(row))
-    for i,labels in enumerate(labels_table):
-        ys.append([])
-        for lbl in labels:
-            if lbl:
-                ys[i].append(le_dict[lbl])
-            else:
-                ys[i].append(None)
+    # for j, length in enumerate(table):
+    #     lt = table[j]
+    #     for row in ft:
+    #         # for obs in row:
+    #         #     print(obs)
+    #         #     print(vec.transform(obs))
+    #         X.append(vec.transform(row))
+    #     for i,labels in enumerate(lt):
+    #         ys.append([])
+    #         for lbl in labels:
+    #             if lbl:
+    #                 ys[i].append(le_dict[lbl])
+    #             else:
+    #                 ys[i].append(None)
     return X, ys, vec, le_dict, le_inv_dict
 
 
