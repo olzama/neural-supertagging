@@ -289,5 +289,6 @@ if __name__ == "__main__":
     with open('./output/by-length/tables_by_length', 'wb') as f:
         pickle.dump(train_tables,f)
     with open('./output/lextypes','wb') as f:
-        pickle.dump(set([str(v) for v in list(le.lextypes.values())]),f)
+        lextypes = set([str(v) for v in list(le.lextypes.values())])
+        pickle.dump(lextypes,f)
 

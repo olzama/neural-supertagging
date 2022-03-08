@@ -63,41 +63,6 @@ def vectorize_test_data(word_feature_dicts, word_labels, vec, le_dict):
         labels.append(tl) # Return -1 is unknown value
     return vectors, labels, unknowns
 
-
-def vectorize_autoreg(fp):
-    vec = DictVectorizer()
-    le = LabelEncoder()
-    with open('./output/lextypes', 'wb') as f:
-        lextypes = pickle.load(f)
-    with open(fp + 'tables_by_length', 'rb') as f:
-        table = pickle.load(f)
-    for length in table:
-        for row in table[length]['lt']
-        for i, row in enumerate(table[length]['ft']):
-            vec.fit_transform(row)
-            le.fit(table[length]['lt'][i])
-            le.transform(table[length]['lt'][i])
-    le_dict = dict(zip(le.classes_, le.transform(le.classes_)))
-    le_inv_dict = {v: k for k, v in le_dict.items()}
-    X = []
-    ys = []
-    # for j, length in enumerate(table):
-    #     lt = table[j]
-    #     for row in ft:
-    #         # for obs in row:
-    #         #     print(obs)
-    #         #     print(vec.transform(obs))
-    #         X.append(vec.transform(row))
-    #     for i,labels in enumerate(lt):
-    #         ys.append([])
-    #         for lbl in labels:
-    #             if lbl:
-    #                 ys[i].append(le_dict[lbl])
-    #             else:
-    #                 ys[i].append(None)
-    return X, ys, vec, le_dict, le_inv_dict
-
-
 def pickle_vectors(path,X, Y, suf):
     with open(path + 'X_'+suf, 'wb') as xf:
         pickle.dump(X, xf)
