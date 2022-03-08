@@ -257,7 +257,7 @@ class LexTypeExtractor:
             letype = lextypes.get(terminal.parent.entity, "<UNK>")
             tokens.append(terminal.form)
             labels.append(str(letype))
-            pos_tags.append(self.get_pos_tag(toks_tags, terminal.form, pos_mapper))
+            pos_tags.append(self.get_pos_tag(toks_tags, pos_mapper))
             predicted_labels.append(None) # for autoregressive models
         for i in range(1,1+context_window):
             tokens.insert(0, 'FAKE-' + str(i))
@@ -288,4 +288,6 @@ if __name__ == "__main__":
     train_tables = le.process_testsuites(args[1],le.lextypes)
     with open('./output/by-length/tables_by_length', 'wb') as f:
         pickle.dump(train_tables,f)
+    with open('./output/lextypes','wb') as f:
+        pickle.dump(set([str(v) for v in list(le.lextypes.values())]),f)
 
