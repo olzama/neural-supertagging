@@ -148,29 +148,40 @@ def fit_serialize_autoreg(clf, name,vec,lbl_enc):
     with open('./output/by-length/tables_by_length', 'rb') as f:
         table = pickle.load(f)
     all_obs = []
+    all_predictions = []
     for length in table:
         for i, row in enumerate(table[length]['ft']):
-            all_obs += list(row)
+            updated_row = update_row(list(row), all_predictions,i)
+            all_obs += updated_row
             vec.fit_transform(all_obs)
-            x_i = vec.transform(row)
+            x_i = vec.transform(updated_row)
             y_i = table[length]['lt'][i]
             clf.fit(x_i, y_i)
             y_train_i = clf.predict(x_i)
-            train_acc_i = np.sum(np.array(y_i) == np.array(y_train_i)) / len(y_i)
+            train_acc_i = np.sum(y_i == np.array(y_train_i)) / len(y_i)
             print('Processed row {}; accuracy {}'.format(i,train_acc_i))
-            update_row(row, y_train_i,vec,lbl_enc)
+            all_predictions.append(y_train_i)
     train_time = timeit.default_timer() - t1
     print('Training time of {}: {}'.format(name, train_time))
     with open('models/' + name + '.model', 'wb') as f:
         pickle.dump(clf, f)
 
-def update_row(row,y_i,vec,lbl_enc):
-    for obs in row:
-        print(vec.inverse_transform(obs))
-        y_pred = lbl_enc[y_i]
-        for f in obs:
-            print(f)
-
+def update_row(row,ys,i):
+    new_row = []
+    if i > 0:
+        for j,obs in enumerate(row):
+            new_obs = {}
+            for f in obs:
+                if f == 'tag-1':
+                    new_obs[f] = ys[i-1][j]
+                elif f == 'tag-2' and i > 1:
+                    new_obs[f] = ys[i-2][j]
+                else:
+                    new_obs[f] = obs[f]
+            new_row.append(new_obs)
+        return new_row
+    else:
+        return row
 
 def test_model(clf, X_test, Y_test, num_sentences):
     t1 = timeit.default_timer()
