@@ -65,38 +65,23 @@ class LexTypeExtractor:
 
     def process_testsuites(self,testsuites,lextypes):
         max_sen_length, corpus_size, num_ts, data = self.read_testsuites(testsuites)
-        tables_by_len = {}
         with open('./log.txt', 'w') as logf:
-            for k in ['train']:
-                start = 0
-                autoregress_table = np.array([[{}] * corpus_size for i in range(max_sen_length)])
-                labels_table = np.array([[{}] * corpus_size for i in range(max_sen_length)])
-                for testsuite in data[k]['by corpus']:
-                    true_labels = self.process_testsuite(
-                        lextypes, logf, testsuite, autoregress_table, labels_table, start)
-                    testsuite['column'] = start
-                    testsuite['true labels'] = true_labels
-                    start = start + len(testsuite['sentences'])
-                with open('./output/by-corpus/autoregressive/feature_table-'+k, 'wb') as f:
-                    pickle.dump(autoregress_table, f)
-                with open('./output/by-corpus/autoregressive/labels_table-'+k, 'wb') as f:
-                    pickle.dump(labels_table, f)
-                with open('./output/by-corpus/data/data-'+k,'wb') as f:
-                    pickle.dump(data[k]['by corpus'],f)
-            for k in ['dev','test']:
+            tables_by_len = {'train':{},'dev':{},'test':{}}
+            for k in ['train','dev','test']:
+                test = k in ['dev','test']
                 for sen_len in data[k]['by length']:
-                    tables_by_len[sen_len] = {}
-                    autoregress_table = np.array([[{}] * len(data['train']['by length'][sen_len])
+                    tables_by_len[k][sen_len] = {}
+                    autoregress_table = np.array([[{}] * len(data[k]['by length'][sen_len])
                                                   for i in range(sen_len)])
-                    labels_table = np.array([[{}] * len(data['train']['by length'][sen_len]) for i in range(sen_len)])
+                    labels_table = np.array([[{}] * len(data[k]['by length'][sen_len]) for i in range(sen_len)])
                     print("Processing sentences of length {}".format(sen_len))
                     logf.write("Processing sentences of length {}\n".format(sen_len))
-                    self.process_length(lextypes, data['train']['by length'][sen_len],
-                                                      autoregress_table,labels_table)
-                    tables_by_len[sen_len]['ft'] = autoregress_table
-                    tables_by_len[sen_len]['lt'] = labels_table
+                    self.process_length(lextypes, data[k]['by length'][sen_len],
+                                                      autoregress_table,labels_table,test=test)
+                    tables_by_len[k][sen_len]['ft'] = autoregress_table
+                    tables_by_len[k][sen_len]['lt'] = labels_table
                 with open('./output/by-length/'+k, 'wb') as f:
-                    pickle.dump(tables_by_len, f)
+                    pickle.dump(tables_by_len[k], f)
 
     '''
     Assume a numpy table coming in. Get e.g. tokens 2 through 5 in sentences 4 and 5,
@@ -138,7 +123,7 @@ class LexTypeExtractor:
         self.write_output(contexts, pairs, tsuite['name'])
         return ys
 
-    def process_length(self, lextypes, items, autoregress_table, labels_table):
+    def process_length(self, lextypes, items, autoregress_table, labels_table,test):
         y = []
         ys = []
         pos_mapper = pos_map.Pos_mapper('./pos-map.txt')  # do this for every test suite to count unknowns in each
@@ -146,7 +131,7 @@ class LexTypeExtractor:
             if j % 100 == 0:
                 print("Processing item {} out of {}...".format(j, len(items)))
             tokens,labels,pos_tags,autoregress_labels = \
-                 self.get_tokens_labels(lst_of_terminals,CONTEXT_WINDOW, lextypes,pos_mapper)
+                 self.get_tokens_labels(lst_of_terminals,CONTEXT_WINDOW, lextypes,pos_mapper,test)
             ys.append(labels[CONTEXT_WINDOW:CONTEXT_WINDOW*-1])
             for k, t in enumerate(tokens):
                 if k < CONTEXT_WINDOW or k >= len(tokens) - CONTEXT_WINDOW:
@@ -240,20 +225,23 @@ class LexTypeExtractor:
         for i in range(1,window+1):
             #context['w-' + str(i)] = tokens[k-i]
             #context['w+' + str(i)] = tokens[k+i]
-            context['tag-' + str(i)] = predicted_labels[k-i] # Will be None or FAKE
+            context['tag-' + str(i)] = predicted_labels[k-i] # Will be None or FAKE in test mode
         return context
 
-    def get_tokens_labels(self, terms_and_tokens_tags, context_window, lextypes,pos_mapper, test=False):
+    def get_tokens_labels(self, terms_and_tokens_tags, context_window, lextypes,pos_mapper, test):
         tokens = []
         labels = []
         pos_tags = []
         previous_tags = []
         for i,(terminal, toks_tags) in enumerate(terms_and_tokens_tags):
-            letype = lextypes.get(terminal.parent.entity, "<UNK>")
+            letype = str(lextypes.get(terminal.parent.entity, "<UNK>"))
             tokens.append(terminal.form)
-            labels.append(str(letype))
+            labels.append(letype)
             pos_tags.append(self.get_pos_tag(toks_tags, pos_mapper))
-            previous_tags.append(None)
+            if test:
+                previous_tags.append(None)
+            else:
+                previous_tags.append(letype)
         for i in range(1,1+context_window):
             tokens.insert(0, 'FAKE-' + str(i))
             labels.insert(0, 'FAKE-' + str(i))
