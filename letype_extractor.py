@@ -34,44 +34,40 @@ class LexTypeExtractor:
                 'test':{'by corpus':[], 'by length':OrderedDict()},
                 'dev':{'by corpus':[], 'by length':OrderedDict()}}
         print('Reading test suite files into pydelphin objects...')
-        for i, tsuite in enumerate(sorted(glob.iglob(path + '**'))):
-            ts = itsdb.TestSuite(tsuite)
-            if ts.path.stem in TEST:
-                idx = 'test'
-            elif ts.path.stem in DEV:
-                idx = 'dev'
-            elif ts.path.stem not in IGNORE:
-                idx = 'train'
-            data[idx]['by corpus'].append({'name':ts.path.stem})
-            items = list(ts.processed_items())
-            data[idx]['by corpus'][i]['sentences'] = {}
-            data[idx]['by corpus'][i]['tokens-tags'] = []
-            corpus_size += len(items)
-            for response in items:
-                if len(response['results']) > 0:
-                    deriv = response.result(0).derivation()
-                    terminals = deriv.terminals()
-                    p_input = response['p-input']
-                    p_tokens = response['p-tokens']
-                    terminals_tok_tags = self.map_lattice_to_input(p_input, p_tokens, deriv)
-                    if len(terminals) not in data[idx]['by corpus'][i]['sentences']:
-                        data[idx]['by corpus'][i]['sentences'][len(terminals)] = []
-                    data[idx]['by corpus'][i]['sentences'][len(terminals)].append(terminals_tok_tags)
-                    data[idx]['by corpus'][i]['tokens-tags'].append(terminals_tok_tags)
-                    if len(terminals) > max_sen_length:
-                        max_sen_length = len(terminals)
-        all_train_sentences = {}
-        for ts in data['train']['by corpus']:
-            all_train_sentences.update(ts['sentences'])
-        data['train']['by length'] = OrderedDict(sorted(all_train_sentences.items()))
-        return max_sen_length, corpus_size, i+1, data
+        n = 0
+        for idx in ['train','dev','test']:
+            for i, tsuite in enumerate(sorted(glob.iglob(path + idx + '/**'))):
+                n += 1
+                ts = itsdb.TestSuite(tsuite)
+                data[idx]['by corpus'].append({'name':ts.path.stem})
+                items = list(ts.processed_items())
+                data[idx]['by corpus'][i]['sentences'] = {}
+                data[idx]['by corpus'][i]['tokens-tags'] = []
+                corpus_size += len(items)
+                for response in items:
+                    if len(response['results']) > 0:
+                        deriv = response.result(0).derivation()
+                        terminals = deriv.terminals()
+                        p_input = response['p-input']
+                        p_tokens = response['p-tokens']
+                        terminals_tok_tags = self.map_lattice_to_input(p_input, p_tokens, deriv)
+                        if len(terminals) not in data[idx]['by corpus'][i]['sentences']:
+                            data[idx]['by corpus'][i]['sentences'][len(terminals)] = []
+                        data[idx]['by corpus'][i]['sentences'][len(terminals)].append(terminals_tok_tags)
+                        data[idx]['by corpus'][i]['tokens-tags'].append(terminals_tok_tags)
+                        if len(terminals) > max_sen_length:
+                            max_sen_length = len(terminals)
+            all_sentences = {}
+            for ts in data[idx]['by corpus']:
+                all_sentences.update(ts['sentences'])
+            data[idx]['by length'] = OrderedDict(sorted(all_sentences.items()))
+        return max_sen_length, corpus_size, n+1, data
 
-    def process_testsuites(self,testsuites,lextypes,test):
+    def process_testsuites(self,testsuites,lextypes):
         max_sen_length, corpus_size, num_ts, data = self.read_testsuites(testsuites)
-        train_tables = {}
-        test_tables_by_len = {}
+        tables_by_len = {}
         with open('./log.txt', 'w') as logf:
-            for k in ['train','dev','test']:
+            for k in ['train']:
                 start = 0
                 autoregress_table = np.array([[{}] * corpus_size for i in range(max_sen_length)])
                 labels_table = np.array([[{}] * corpus_size for i in range(max_sen_length)])
@@ -87,19 +83,20 @@ class LexTypeExtractor:
                     pickle.dump(labels_table, f)
                 with open('./output/by-corpus/data/data-'+k,'wb') as f:
                     pickle.dump(data[k]['by corpus'],f)
-                for sen_len in data['train']['by length']:
-                    train_tables_by_len[sen_len] = {}
+            for k in ['dev','test']:
+                for sen_len in data[k]['by length']:
+                    tables_by_len[sen_len] = {}
                     autoregress_table = np.array([[{}] * len(data['train']['by length'][sen_len])
                                                   for i in range(sen_len)])
                     labels_table = np.array([[{}] * len(data['train']['by length'][sen_len]) for i in range(sen_len)])
                     print("Processing sentences of length {}".format(sen_len))
                     logf.write("Processing sentences of length {}\n".format(sen_len))
-                    true_labels = self.process_length(lextypes, data['train']['by length'][sen_len],
+                    self.process_length(lextypes, data['train']['by length'][sen_len],
                                                       autoregress_table,labels_table)
-                    train_tables_by_len[sen_len]['ft'] = autoregress_table
-                    train_tables_by_len[sen_len]['lt'] = labels_table
-            return train_tables_by_len
-
+                    tables_by_len[sen_len]['ft'] = autoregress_table
+                    tables_by_len[sen_len]['lt'] = labels_table
+                with open('./output/by-length/'+k, 'wb') as f:
+                    pickle.dump(tables_by_len, f)
 
     '''
     Assume a numpy table coming in. Get e.g. tokens 2 through 5 in sentences 4 and 5,
@@ -109,7 +106,6 @@ class LexTypeExtractor:
         ts_column = ts_info[ts_num]['column']
         tokens = sum(ts_info[ts_num]['sentences'][sentence_range[0]:sentence_range[1]])
         return table[token_range[0]:token_range[1],ts_column:ts_column+tokens]
-
 
     def process_testsuite(self, lextypes, logf, tsuite, autoregress_table, labels_table, start):
         print("Processing " + tsuite['name'])
@@ -126,7 +122,7 @@ class LexTypeExtractor:
                 if j % 100 == 0:
                     print("Processing item {} out of {}...".format(j, len(items)))
                 tokens,labels,pos_tags,autoregress_labels = \
-                     self.get_tokens_labels(tsuite['tokens-tags'][j],CONTEXT_WINDOW, lextypes,pos_mapper)
+                     self.get_tokens_labels(tsuite['tokens-tags'][j],CONTEXT_WINDOW, lextypes,pos_mapper,test=False)
                 ys.append(labels[CONTEXT_WINDOW:CONTEXT_WINDOW*-1])
                 for k, t in enumerate(tokens):
                     if k < CONTEXT_WINDOW or k >= len(tokens) - CONTEXT_WINDOW:
@@ -160,7 +156,6 @@ class LexTypeExtractor:
                     self.get_autoregress_context(tokens,pos_tags,autoregress_labels, k,CONTEXT_WINDOW)
                 labels_table[k-CONTEXT_WINDOW][j] = labels[k]
             y.append('\n') # sentence separator
-        return ys
 
     def map_lattice_to_input(self, p_input, p_tokens, deriv):
         yy_lattice = YYTokenLattice.from_string(p_tokens)
@@ -248,28 +243,26 @@ class LexTypeExtractor:
             context['tag-' + str(i)] = predicted_labels[k-i] # Will be None or FAKE
         return context
 
-
     def get_tokens_labels(self, terms_and_tokens_tags, context_window, lextypes,pos_mapper, test=False):
         tokens = []
         labels = []
         pos_tags = []
-        predicted_labels = []
+        previous_tags = []
         for i,(terminal, toks_tags) in enumerate(terms_and_tokens_tags):
             letype = lextypes.get(terminal.parent.entity, "<UNK>")
             tokens.append(terminal.form)
             labels.append(str(letype))
             pos_tags.append(self.get_pos_tag(toks_tags, pos_mapper))
-            if test:
-                predicted_labels.append(None) # for autoregressive models
+            previous_tags.append(None)
         for i in range(1,1+context_window):
             tokens.insert(0, 'FAKE-' + str(i))
             labels.insert(0, 'FAKE-' + str(i))
             pos_tags.insert(0,'FAKE-' + str(i))
-            predicted_labels.insert(0, 'FAKE-' + str(i))
+            previous_tags.insert(0, 'FAKE-' + str(i))
             tokens.append('FAKE+' + str(i))
             labels.append('FAKE+' + str(i))
             pos_tags.append('FAKE+' + str(i))
-        return tokens, labels, pos_tags, predicted_labels
+        return tokens, labels, pos_tags, previous_tags
 
     def get_pos_tag(self,tokens_tags, pos_mapper):
         tag = ''
@@ -287,10 +280,7 @@ if __name__ == "__main__":
     le = LexTypeExtractor()
     le.parse_lexicons(args[0])
     le.stats['total lextypes'] = len(le.lextypes)
-    train_tables = le.process_testsuites(args[1],le.lextypes, test=False)
-    test_tables = le.process_testsuites(args[1],le.lextypes, test=True)
-    with open('./output/by-length/tables_by_length', 'wb') as f:
-        pickle.dump(train_tables,f)
+    le.process_testsuites(args[1],le.lextypes)
     with open('./output/lextypes','wb') as f:
         lextypes = set([str(v) for v in list(le.lextypes.values())])
         pickle.dump(lextypes,f)
