@@ -66,9 +66,10 @@ class LexTypeExtractor:
         data['train']['by length'] = OrderedDict(sorted(all_train_sentences.items()))
         return max_sen_length, corpus_size, i+1, data
 
-    def process_testsuites(self,testsuites,lextypes):
+    def process_testsuites(self,testsuites,lextypes,test):
         max_sen_length, corpus_size, num_ts, data = self.read_testsuites(testsuites)
-        train_tables_by_len = {}
+        train_tables = {}
+        test_tables_by_len = {}
         with open('./log.txt', 'w') as logf:
             for k in ['train','dev','test']:
                 start = 0
@@ -248,7 +249,7 @@ class LexTypeExtractor:
         return context
 
 
-    def get_tokens_labels(self, terms_and_tokens_tags, context_window, lextypes,pos_mapper):
+    def get_tokens_labels(self, terms_and_tokens_tags, context_window, lextypes,pos_mapper, test=False):
         tokens = []
         labels = []
         pos_tags = []
@@ -258,7 +259,8 @@ class LexTypeExtractor:
             tokens.append(terminal.form)
             labels.append(str(letype))
             pos_tags.append(self.get_pos_tag(toks_tags, pos_mapper))
-            predicted_labels.append(None) # for autoregressive models
+            if test:
+                predicted_labels.append(None) # for autoregressive models
         for i in range(1,1+context_window):
             tokens.insert(0, 'FAKE-' + str(i))
             labels.insert(0, 'FAKE-' + str(i))
@@ -285,7 +287,8 @@ if __name__ == "__main__":
     le = LexTypeExtractor()
     le.parse_lexicons(args[0])
     le.stats['total lextypes'] = len(le.lextypes)
-    train_tables = le.process_testsuites(args[1],le.lextypes)
+    train_tables = le.process_testsuites(args[1],le.lextypes, test=False)
+    test_tables = le.process_testsuites(args[1],le.lextypes, test=True)
     with open('./output/by-length/tables_by_length', 'wb') as f:
         pickle.dump(train_tables,f)
     with open('./output/lextypes','wb') as f:
