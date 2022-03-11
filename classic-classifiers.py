@@ -27,12 +27,12 @@ def train_SVM(X, Y):
 
 def train_MaxEnt(X, Y, all=False):
     solver = "sag" # Another option is "sag"; it was also tried in development
-    # train_samples, n_features = X.shape
-    # n_classes = np.unique(Y).shape[0]
-    # print(
-    #     "Dataset ERG treebanks, train_samples=%i, n_features=%i, n_classes=%i"
-    #     % (train_samples, n_features, n_classes)
-    # )
+    train_samples, n_features = X.shape
+    n_classes = np.unique(Y).shape[0]
+    print(
+        "Dataset ERG treebanks, train_samples=%i, n_features=%i, n_classes=%i"
+        % (train_samples, n_features, n_classes)
+    )
 
     if all:
         # All MaxEnt models tried in development:
@@ -159,10 +159,10 @@ if __name__ == "__main__":
                         with open(model, 'rb') as f:
                             clf = pickle.load(f)
                         acc = test_model(clf,corpus.X,corpus.Y,len(corpus.sen_lengths))
-            else:
-                with open(sys.argv[3]+'/vectorizer','rb') as f:
-                    vec = pickle.load(f)
-                with open(sys.argv[3]+'/label-dict', 'rb') as f:
-                    le_dict = pickle.load(f)
-                with open(sys.argv[3] + '/label-inv-dict', 'rb') as f:
-                    inv_le_dict = pickle.load(f)
+        else:
+            with open(sys.argv[3]+'/vectorizer','rb') as f:
+                vec = pickle.load(f)
+            with open(sys.argv[3]+'/label-dict', 'rb') as f:
+                le_dict = pickle.load(f)
+            with open(sys.argv[3] + '/label-inv-dict', 'rb') as f:
+                inv_le_dict = pickle.load(f)
