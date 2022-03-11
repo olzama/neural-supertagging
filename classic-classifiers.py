@@ -26,7 +26,7 @@ def train_SVM(X, Y):
     fit_serialize(X,Y,clf,name) # for models over 4GB, need to add protocol=4
 
 def train_MaxEnt(X, Y, all=False):
-    solver = "saga" # Another option is "sag"; it was also tried in development
+    solver = "sag" # Another option is "sag"; it was also tried in development
     # train_samples, n_features = X.shape
     # n_classes = np.unique(Y).shape[0]
     # print(
@@ -37,11 +37,11 @@ def train_MaxEnt(X, Y, all=False):
     if all:
         # All MaxEnt models tried in development:
         models = {
-            'l1': {"multinomial": {"name": "Multinomial-L1", "iters": [100]},
-                  "ovr": {"name": "One versus Rest-L1", "iters": [100]}},
+            # 'l1': {"multinomial": {"name": "Multinomial-L1", "iters": [100]},
+            #       "ovr": {"name": "One versus Rest-L1", "iters": [100]}},
             'l2': {"multinomial": {"name": "Multinomial-L2", "iters": [100]},
-                  "ovr": {"name": "One versus Rest-L2", "iters": [100]}},
-            'elasticnet': {"multinomial": {"name": "Multinomial-ENet", "iters": [100]}},
+                  "ovr": {"name": "One versus Rest-L2", "iters": [100]}}#,
+            #'elasticnet': {"multinomial": {"name": "Multinomial-ENet", "iters": [100]}},
         }
     else:
         solver = "saga"
