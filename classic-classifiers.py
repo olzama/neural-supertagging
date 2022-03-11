@@ -40,10 +40,11 @@ def train_MaxEnt(X, Y, all=False):
             'l1': {"multinomial": {"name": "Multinomial-L1", "iters": [100]},
                   "ovr": {"name": "One versus Rest-L1", "iters": [100]}},
             'l2': {"multinomial": {"name": "Multinomial-L2", "iters": [100]},
-                  "ovr": {"name": "One versus Rest-L2", "iters": [100]}}#,
-            #'elasticnet': {"multinomial": {"name": "Multinomial-ENet", "iters": [100]}},
+                  "ovr": {"name": "One versus Rest-L2", "iters": [100]}},
+            'elasticnet': {"multinomial": {"name": "Multinomial-ENet", "iters": [100]}},
         }
     else:
+        solver = "saga"
         models = {
             'l2': {"multinomial": {"name": "Multinomial-L2", "iters": [1]}}
         }
@@ -67,34 +68,6 @@ def train_MaxEnt(X, Y, all=False):
                 model_name = models[penalty][model]["name"] + '-' + solver
                 fit_serialize(X, Y, clf, model_name)
 
-def train_autoreg_MaxEnt():
-    solver = "saga"
-    models = {
-            'l2': {"multinomial": {"name": "Multinomial-L2", "iters": [1]}}
-    }
-
-    for penalty in models:
-        for model in models[penalty]:
-            model_params = models[penalty][model]
-            for this_max_iter in model_params["iters"]:
-                print(
-                    "[model=%s, solver=%s] Number of epochs: %s"
-                    % (model_params["name"], solver, this_max_iter)
-                )
-                clf = LogisticRegression(
-                    solver=solver,
-                    multi_class=model,
-                    penalty=penalty,
-                    max_iter=this_max_iter,
-                    random_state=42,
-                    l1_ratio=0.5 # only for elastic-net
-                )
-                model_name = models[penalty][model]["name"] + '-' + solver
-                vec = DictVectorizer()
-                le = LabelEncoder()
-                fit_serialize_autoreg(clf,model_name,vec,le)
-
-
 def fit_serialize(X, Y, clf, name):
     t1 = timeit.default_timer()
     clf.fit(X, Y)
@@ -103,43 +76,8 @@ def fit_serialize(X, Y, clf, name):
     with open('models/' + name + '.model', 'wb') as f:
         pickle.dump(clf, f)
 
-def vectorize_autoreg(fp):
-    vec = DictVectorizer()
-    le = LabelEncoder()
-    all_obs = []
-    all_labels = []
-    with open('./output/lextypes', 'rb') as f:
-        lextypes = pickle.load(f)
-    with open(fp + 'tables_by_length', 'rb') as f:
-        table = pickle.load(f)
-    for length in table:
-        for i, row in enumerate(table[length]['ft']):
-            all_obs.append(row)
-            le.fit(table[length]['lt'][i])
-            le.transform(table[length]['lt'][i])
-    for lt in list(lextypes):
-        vec.feature_names_.update({'tag-1':lt,'tag-2':lt})
-    le_dict = dict(zip(le.classes_, le.transform(le.classes_)))
-    le_inv_dict = {v: k for k, v in le_dict.items()}
-    X = []
-    ys = []
-    # for j, length in enumerate(table):
-    #     lt = table[j]
-    #     for row in ft:
-    #         # for obs in row:
-    #         #     print(obs)
-    #         #     print(vec.transform(obs))
-    #         X.append(vec.transform(row))
-    #     for i,labels in enumerate(lt):
-    #         ys.append([])
-    #         for lbl in labels:
-    #             if lbl:
-    #                 ys[i].append(le_dict[lbl])
-    #             else:
-    #                 ys[i].append(None)
-    return X, ys, vec, le_dict, le_inv_dict
 
-def fit_serialize_autoreg(clf, name,vec,lbl_enc):
+def test_autoreg(clf, name,vec,lbl_enc):
     t1 = timeit.default_timer()
     all_obs = []
     all_labels = []
@@ -202,21 +140,29 @@ def load_vectors(path_to_vecs, path_to_labels):
 
 if __name__ == "__main__":
     if sys.argv[1] == 'train':
-        autoregressive = sys.argv[4] == 'autoreg'
-        #X, Y = load_vectors(sys.argv[2], sys.argv[3])
-        #train_SVM(X,Y)
-        train_autoreg_MaxEnt()
+        X, Y = load_vectors(sys.argv[2], sys.argv[3])
+        train_SVM(X,Y)
+        train_MaxEnt(X,Y,all=True)
     elif sys.argv[1] == 'test':
+        autoregressive = sys.argv[4] == 'autoreg'
         corpora = []
         if os.path.isdir(sys.argv[2]):
             corpora = sorted(glob.iglob(sys.argv[2] + '/*'))
         elif os.path.isfile(sys.argv[2]):
             corpora = glob.glob(sys.argv[2])
-        for c in corpora:
-            with open(c, 'rb') as cf:
-                corpus = pickle.load(cf)
-            print('Testing corpus {} which has {} unknown labels'.format(corpus.name, corpus.unk))
-            for model in glob.iglob('models/' + '*'):
-                with open(model, 'rb') as f:
-                    clf = pickle.load(f)
-                acc = test_model(clf,corpus.X,corpus.Y,len(corpus.sen_lengths))
+        if not autoregressive:
+            for c in corpora:
+                    with open(c, 'rb') as cf:
+                        corpus = pickle.load(cf)
+                    print('Testing corpus {} which has {} unknown labels'.format(corpus.name, corpus.unk))
+                    for model in glob.iglob('models/' + '*'):
+                        with open(model, 'rb') as f:
+                            clf = pickle.load(f)
+                        acc = test_model(clf,corpus.X,corpus.Y,len(corpus.sen_lengths))
+            else:
+                with open(sys.argv[3]+'/vectorizer','rb') as f:
+                    vec = pickle.load(f)
+                with open(sys.argv[3]+'/label-dict', 'rb') as f:
+                    le_dict = pickle.load(f)
+                with open(sys.argv[3] + '/label-inv-dict', 'rb') as f:
+                    inv_le_dict = pickle.load(f)
