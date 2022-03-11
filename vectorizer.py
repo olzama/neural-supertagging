@@ -69,6 +69,23 @@ def pickle_vectors(path,X, Y, suf):
     with open(path + 'Y_'+suf, 'wb') as yf:
         pickle.dump(Y, yf)
 
+def vectorize_autoreg(fp):
+    vec = DictVectorizer()
+    le = LabelEncoder()
+    X = []
+    Y = []
+    with open(fp,'rb') as f:
+        table = pickle.load(f)
+    for len in table:
+        for i,row in enumerate(table[len]['ft']):
+            X += list(row)
+            Y += list(table[len]['lt'][i])
+    vectors = vec.fit_transform(X)
+    le.fit(Y)
+    labels = le.transform(Y)
+    le_dict = dict(zip(le.classes_, le.transform(le.classes_)))
+    inv_le_dict = {v: k for k, v in le_dict.items()}
+    return vectors,labels,vec,le_dict, inv_le_dict
 
 if __name__ == "__main__":
     # See sample data for the expected format.
@@ -79,7 +96,7 @@ if __name__ == "__main__":
             feature_dicts, true_labels, sen_lengths = read_data(sys.argv[1], sys.argv[2])
             X, Y, vectorizer, label_dict = vectorize_train_data(feature_dicts,true_labels)
         else:
-            X, Y, vectorizer, label_dict, inv_label_dict = vectorize_autoreg(sys.argv[2])
+            X, Y, vectorizer, label_dict, inv_label_dict = vectorize_autoreg(sys.argv[1])
         with open(sys.argv[4]+'vectorizer', 'wb') as f:
             pickle.dump(vectorizer,f)
         with open(sys.argv[4]+'label-dict','wb') as f:
