@@ -77,21 +77,16 @@ def fit_serialize(X, Y, clf, name):
         pickle.dump(clf, f)
 
 
-def test_autoreg(clf, name,vec,lbl_enc):
+def test_autoreg(clf, name,vec,le_dict,le_inv_dict):
     t1 = timeit.default_timer()
-    all_obs = []
-    all_labels = []
     with open('./output/lextypes', 'rb') as f:
         lextypes = pickle.load(f)
-    with open('./output/by-length/tables_by_length', 'rb') as f:
+    with open('./output/by-length/dev', 'rb') as f:
         table = pickle.load(f)
-    all_obs = []
     all_predictions = []
     for length in table:
         for i, row in enumerate(table[length]['ft']):
             updated_row = update_row(list(row), all_predictions,i)
-            all_obs += updated_row
-            vec.fit_transform(all_obs)
             x_i = vec.transform(updated_row)
             y_i = table[length]['lt'][i]
             clf.fit(x_i, y_i)
@@ -142,7 +137,7 @@ if __name__ == "__main__":
     if sys.argv[1] == 'train':
         X, Y = load_vectors(sys.argv[2], sys.argv[3])
         #train_SVM(X,Y)
-        train_MaxEnt(X,Y,all=True)
+        train_MaxEnt(X,Y,all=False)
     elif sys.argv[1] == 'test':
         autoregressive = sys.argv[4] == 'autoreg'
         corpora = []
