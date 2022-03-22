@@ -36,6 +36,7 @@ class LexTypeExtractor:
         print('Reading test suite files into pydelphin objects...')
         n = 0
         for idx in ['train','dev','test']:
+            t = 0
             for i, tsuite in enumerate(sorted(glob.iglob(path + idx + '/**'))):
                 n += 1
                 ts = itsdb.TestSuite(tsuite)
@@ -48,6 +49,7 @@ class LexTypeExtractor:
                     if len(response['results']) > 0:
                         deriv = response.result(0).derivation()
                         terminals = deriv.terminals()
+                        t += len(terminals)
                         p_input = response['p-input']
                         p_tokens = response['p-tokens']
                         terminals_tok_tags = self.map_lattice_to_input(p_input, p_tokens, deriv)
@@ -57,9 +59,20 @@ class LexTypeExtractor:
                         data[idx]['by corpus'][i]['tokens-tags'].append(terminals_tok_tags)
                         if len(terminals) > max_sen_length:
                             max_sen_length = len(terminals)
+            print('All raw {} tokens: {}'.format(idx,t))
             all_sentences = {}
+            t1 = 0
+            t2 = 0
             for ts in data[idx]['by corpus']:
+                for l in ts['sentences']:
+                    for s in ts['sentences'][l]:
+                        t1 += len(s)
                 all_sentences.update(ts['sentences'])
+                for l in all_sentences:
+                    for s in all_sentences[l]:
+                        t2 += len(s)
+            print('Added {} {} tokens to the by-corpus table'.format(t1,idx))
+            print('Added {} {} tokens to the by-length table'.format(t2,idx))
             data[idx]['by length'] = OrderedDict(sorted(all_sentences.items()))
         return max_sen_length, corpus_size, n+1, data
 
@@ -68,18 +81,20 @@ class LexTypeExtractor:
         with open('./log.txt', 'w') as logf:
             tables_by_len = {'train':{},'dev':{},'test':{}}
             for k in ['train','dev','test']:
+                all_tokens = 0
                 test = k in ['dev','test']
                 for sen_len in data[k]['by length']:
                     tables_by_len[k][sen_len] = {}
                     autoregress_table = np.array([[{}] * len(data[k]['by length'][sen_len])
                                                   for i in range(sen_len)])
                     labels_table = np.array([[{}] * len(data[k]['by length'][sen_len]) for i in range(sen_len)])
-                    print("Processing sentences of length {}".format(sen_len))
+                    #print("Processing sentences of length {}".format(sen_len))
                     logf.write("Processing sentences of length {}\n".format(sen_len))
-                    self.process_length(lextypes, data[k]['by length'][sen_len],
+                    all_tokens += self.process_length(lextypes, data[k]['by length'][sen_len],
                                                       autoregress_table,labels_table,test=test)
                     tables_by_len[k][sen_len]['ft'] = autoregress_table
                     tables_by_len[k][sen_len]['lt'] = labels_table
+                print('Total PROCESSED {} tokens: {}'.format(k, all_tokens))
                 with open('./output/by-length/'+k, 'wb') as f:
                     pickle.dump(tables_by_len[k], f)
 
@@ -104,8 +119,8 @@ class LexTypeExtractor:
             items = tsuite['sentences'][sentence_len]
             for j, lst_of_terminals in enumerate(items):
                 contexts.append([])
-                if j % 100 == 0:
-                    print("Processing item {} out of {}...".format(j, len(items)))
+                #if j % 100 == 0:
+                #    print("Processing item {} out of {}...".format(j, len(items)))
                 tokens,labels,pos_tags,autoregress_labels = \
                      self.get_tokens_labels(tsuite['tokens-tags'][j],CONTEXT_WINDOW, lextypes,pos_mapper,test=False)
                 ys.append(labels[CONTEXT_WINDOW:CONTEXT_WINDOW*-1])
@@ -126,12 +141,14 @@ class LexTypeExtractor:
     def process_length(self, lextypes, items, autoregress_table, labels_table,test):
         y = []
         ys = []
+        all_tokens = 0
         pos_mapper = pos_map.Pos_mapper('./pos-map.txt')  # do this for every test suite to count unknowns in each
         for j, lst_of_terminals in enumerate(items):
-            if j % 100 == 0:
-                print("Processing item {} out of {}...".format(j, len(items)))
+            #if j % 100 == 0:
+            #    print("Processing item {} out of {}...".format(j, len(items)))
             tokens,labels,pos_tags,autoregress_labels = \
                  self.get_tokens_labels(lst_of_terminals,CONTEXT_WINDOW, lextypes,pos_mapper,test)
+            all_tokens += len(tokens)
             ys.append(labels[CONTEXT_WINDOW:CONTEXT_WINDOW*-1])
             for k, t in enumerate(tokens):
                 if k < CONTEXT_WINDOW or k >= len(tokens) - CONTEXT_WINDOW:
@@ -141,6 +158,7 @@ class LexTypeExtractor:
                     self.get_autoregress_context(tokens,pos_tags,autoregress_labels, k,CONTEXT_WINDOW)
                 labels_table[k-CONTEXT_WINDOW][j] = labels[k]
             y.append('\n') # sentence separator
+        return all_tokens
 
     def map_lattice_to_input(self, p_input, p_tokens, deriv):
         yy_lattice = YYTokenLattice.from_string(p_tokens)
@@ -217,15 +235,14 @@ class LexTypeExtractor:
             context['w+' + str(j)] = next_tok
             context['pos-' + str(j)] = prev_pos
             context['pos+' + str(j)] = next_pos
-            #context['tag-' + str(j)] = prev_tag # this is a bug: can't use gold tags. Need an autoregressive model.
         return context
 
     def get_autoregress_context(self,tokens,pos_tags,predicted_labels, k,window):
-        context = {'w':tokens[k]} #,'pos':pos_tags[k]}
-        for i in range(1,window+1):
-            #context['w-' + str(i)] = tokens[k-i]
-            #context['w+' + str(i)] = tokens[k+i]
-            context['tag-' + str(i)] = predicted_labels[k-i] # Will be None or FAKE in test mode
+        context = {'w':tokens[k]}#,'pos':pos_tags[k]}
+        # for i in range(1,window+1):
+        #     context['w-' + str(i)] = tokens[k-i]
+        #     context['w+' + str(i)] = tokens[k+i]
+        #     context['tag-' + str(i)] = predicted_labels[k-i] # Will be None or FAKE in test mode
         return context
 
     def get_tokens_labels(self, terms_and_tokens_tags, context_window, lextypes,pos_mapper, test):
