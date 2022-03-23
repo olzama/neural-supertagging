@@ -67,10 +67,12 @@ class LexTypeExtractor:
                 for l in ts['sentences']:
                     for s in ts['sentences'][l]:
                         t1 += len(s)
-                all_sentences.update(ts['sentences'])
-                for l in all_sentences:
-                    for s in all_sentences[l]:
-                        t2 += len(s)
+                    if l not in all_sentences:
+                        all_sentences[l] = []
+                    all_sentences[l] += ts['sentences'][l]
+            for l in all_sentences:
+                for s in all_sentences[l]:
+                    t2 += len(s)
             print('Added {} {} tokens to the by-corpus table'.format(t1,idx))
             print('Added {} {} tokens to the by-length table'.format(t2,idx))
             data[idx]['by length'] = OrderedDict(sorted(all_sentences.items()))
@@ -148,7 +150,6 @@ class LexTypeExtractor:
             #    print("Processing item {} out of {}...".format(j, len(items)))
             tokens,labels,pos_tags,autoregress_labels = \
                  self.get_tokens_labels(lst_of_terminals,CONTEXT_WINDOW, lextypes,pos_mapper,test)
-            all_tokens += len(tokens)
             ys.append(labels[CONTEXT_WINDOW:CONTEXT_WINDOW*-1])
             for k, t in enumerate(tokens):
                 if k < CONTEXT_WINDOW or k >= len(tokens) - CONTEXT_WINDOW:
@@ -157,6 +158,7 @@ class LexTypeExtractor:
                 autoregress_table[k-CONTEXT_WINDOW][j] = \
                     self.get_autoregress_context(tokens,pos_tags,autoregress_labels, k,CONTEXT_WINDOW)
                 labels_table[k-CONTEXT_WINDOW][j] = labels[k]
+                all_tokens += 1
             y.append('\n') # sentence separator
         return all_tokens
 
@@ -238,11 +240,11 @@ class LexTypeExtractor:
         return context
 
     def get_autoregress_context(self,tokens,pos_tags,predicted_labels, k,window):
-        context = {'w':tokens[k]}#,'pos':pos_tags[k]}
-        # for i in range(1,window+1):
-        #     context['w-' + str(i)] = tokens[k-i]
-        #     context['w+' + str(i)] = tokens[k+i]
-        #     context['tag-' + str(i)] = predicted_labels[k-i] # Will be None or FAKE in test mode
+        context = {'w':tokens[k],'pos':pos_tags[k]}
+        for i in range(1,window+1):
+            context['w-' + str(i)] = tokens[k-i]
+            context['w+' + str(i)] = tokens[k+i]
+            context['tag-' + str(i)] = predicted_labels[k-i] # Will be None or FAKE in test mode
         return context
 
     def get_tokens_labels(self, terms_and_tokens_tags, context_window, lextypes,pos_mapper, test):
