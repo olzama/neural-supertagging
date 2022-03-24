@@ -35,14 +35,14 @@ def train_MaxEnt(X, Y, all=False):
 
     if all:
         # All MaxEnt models tried in development:
-        models = { 'saga': {
-            'l1': {"multinomial": {"name": "Multinomial-L1-saga", "iters": [100]},
-                   "ovr": {"name": "OVR-L1-saga", "iters": [100]}},
-            'l2': {"multinomial": {"name": "Multinomial-L2-saga", "iters": [100]},
-                  "ovr": {"name": "OVR-L2-saga", "iters": [100]}},
-            'elasticnet': {"multinomial": {"name": "Multinomial-ENet-saga", "iters": [100]}}},
-            #'sag': {'l2': {"multinomial": {"name": "Multinomial-L2-sag", "iters": [100]},
-            #      "ovr": {"name": "OVR-L2-sag", "iters": [100]}}}
+        models = { #'saga': {
+            #'l1': {"multinomial": {"name": "Multinomial-L1-saga", "iters": [100]},
+            #       "ovr": {"name": "OVR-L1-saga", "iters": [100]}},
+            #'l2': {"multinomial": {"name": "Multinomial-L2-saga", "iters": [100]},
+            #      "ovr": {"name": "OVR-L2-saga", "iters": [100]}},
+            #'elasticnet': {"multinomial": {"name": "Multinomial-ENet-saga", "iters": [100]}}},
+            'sag': {'l2': {"multinomial": {"name": "Multinomial-L2-sag", "iters": [100]},
+                  "ovr": {"name": "OVR-L2-sag", "iters": [100]}}}
         }
     else:
         models = {
