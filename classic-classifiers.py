@@ -41,8 +41,8 @@ def train_MaxEnt(X, Y, all=False):
             'l2': {"multinomial": {"name": "Multinomial-L2-saga", "iters": [100]},
                   "ovr": {"name": "OVR-L2-saga", "iters": [100]}},
             'elasticnet': {"multinomial": {"name": "Multinomial-ENet-saga", "iters": [100]}}},
-            'sag': {'l2': {"multinomial": {"name": "Multinomial-L2-sag", "iters": [100]},
-                  "ovr": {"name": "OVR-L2-sag", "iters": [100]}}}
+            #'sag': {'l2': {"multinomial": {"name": "Multinomial-L2-sag", "iters": [100]},
+            #      "ovr": {"name": "OVR-L2-sag", "iters": [100]}}}
         }
     else:
         models = {
