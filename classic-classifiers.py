@@ -26,7 +26,6 @@ def train_SVM(X, Y):
     fit_serialize(X,Y,clf,name) # for models over 4GB, need to add protocol=4
 
 def train_MaxEnt(X, Y, all=False):
-    solver = "sag" # Another option is "sag"; it was also tried in development
     train_samples, n_features = X.shape
     n_classes = np.unique(Y).shape[0]
     print(
@@ -36,37 +35,38 @@ def train_MaxEnt(X, Y, all=False):
 
     if all:
         # All MaxEnt models tried in development:
-        models = {
-            'l1': {"multinomial": {"name": "Multinomial-L1", "iters": [100]},
-                   "ovr": {"name": "One versus Rest-L1", "iters": [100]}},
-            'l2': {"multinomial": {"name": "Multinomial-L2", "iters": [100]},
-                  "ovr": {"name": "One versus Rest-L2", "iters": [100]}}#,
-            #'elasticnet': {"multinomial": {"name": "Multinomial-ENet", "iters": [100]}},
+        models = { 'saga': {
+            'l1': {"multinomial": {"name": "Multinomial-L1-saga", "iters": [100]},
+                   "ovr": {"name": "OVR-L1-saga", "iters": [100]}},
+            'l2': {"multinomial": {"name": "Multinomial-L2-saga", "iters": [100]},
+                  "ovr": {"name": "OVR-L2-saga", "iters": [100]}},
+            'elasticnet': {"multinomial": {"name": "Multinomial-ENet-saga", "iters": [100]}}},
+            'sag': {'l2': {"multinomial": {"name": "Multinomial-L2-sag", "iters": [100]},
+                  "ovr": {"name": "OVR-L2-sag", "iters": [100]}}}
         }
     else:
-        solver = "saga"
         models = {
-            'l2': {"multinomial": {"name": "Multinomial-L2", "iters": [1]}}
+            'saga': { 'l2': {"multinomial": {"name": "Multinomial-L2", "iters": [1]}}}
         }
 
-    for penalty in models:
-        for model in models[penalty]:
-            model_params = models[penalty][model]
-            for this_max_iter in model_params["iters"]:
-                print(
-                    "[model=%s, solver=%s] Number of epochs: %s"
-                    % (model_params["name"], solver, this_max_iter)
-                )
-                clf = LogisticRegression(
-                    solver=solver,
-                    multi_class=model,
-                    penalty=penalty,
-                    max_iter=this_max_iter,
-                    random_state=42,
-                    l1_ratio=0.5 # only for elastic-net
-                )
-                model_name = models[penalty][model]["name"] + '-' + solver
-                fit_serialize(X, Y, clf, model_name)
+    for solver in models:
+        for penalty in models[solver]:
+            for model in models[solver][penalty]:
+                model_params = models[solver][penalty][model]
+                for this_max_iter in model_params["iters"]:
+                    print(
+                        "[model=%s, solver=%s] Number of epochs: %s"
+                        % (model_params["name"], solver, this_max_iter)
+                    )
+                    clf = LogisticRegression(
+                        solver=solver,
+                        multi_class=model,
+                        penalty=penalty,
+                        max_iter=this_max_iter,
+                        random_state=42,
+                        l1_ratio=0.5 # only for elastic-net
+                    )
+                    fit_serialize(X, Y, clf, models[solver][penalty][model]["name"])
 
 def fit_serialize(X, Y, clf, name):
     t1 = timeit.default_timer()
@@ -136,7 +136,7 @@ def load_vectors(path_to_vecs, path_to_labels):
 if __name__ == "__main__":
     if sys.argv[1] == 'train':
         X, Y = load_vectors(sys.argv[2], sys.argv[3])
-        train_SVM(X,Y)
+        #train_SVM(X,Y)
         train_MaxEnt(X,Y,all=True)
     elif sys.argv[1] == 'test':
         autoregressive = sys.argv[4] == 'autoreg'
