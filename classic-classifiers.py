@@ -77,29 +77,30 @@ def fit_serialize(X, Y, clf, name):
         pickle.dump(clf, f)
 
 
-def test_autoreg(clf, name,vec,le_dict,le_inv_dict):
-    t1 = timeit.default_timer()
-    with open('./output/lextypes', 'rb') as f:
-        lextypes = pickle.load(f)
-    with open('./output/by-length/dev', 'rb') as f:
+def test_autoreg(clf, name,vec,le_dict,table_path,le_inv_dict):
+    with open(table_path, 'rb') as f:
         table = pickle.load(f)
-    all_predictions = []
+    times = []
+    accuracies = []
+    all_predictions = {}
     for length in table:
+        all_predictions[length] = np.empty_like(table[length]['lt'])
         for i, row in enumerate(table[length]['ft']):
-            updated_row = update_row(list(row), all_predictions,i)
+            updated_row = update_row(list(row), all_predictions[length],i, le_inv_dict)
             x_i = vec.transform(updated_row)
-            y_i = table[length]['lt'][i]
-            clf.fit(x_i, y_i)
+            y_i = [ le_dict.get(lbl,-1) for lbl in table[length]['lt'][i] ]
+            t1 = timeit.default_timer()
             y_train_i = clf.predict(x_i)
+            test_time = timeit.default_timer() - t1
+            times.append(test_time)
             train_acc_i = np.sum(y_i == np.array(y_train_i)) / len(y_i)
-            print('Processed row {}; accuracy {}'.format(i,train_acc_i))
-            all_predictions.append(y_train_i)
-    train_time = timeit.default_timer() - t1
-    print('Training time of {}: {}'.format(name, train_time))
-    with open('models/' + name + '.model', 'wb') as f:
-        pickle.dump(clf, f)
+            #print('Processed row {}; accuracy {}'.format(i,train_acc_i))
+            accuracies.append(train_acc_i)
+            all_predictions[length][i] = [inv_le_dict[pred] for pred in y_train_i]
+    print('Test time of {}: {}'.format(name, sum(times)))
+    print('Average accuracy of {} for all tokens in {}: {}'.format(name,table_path,sum(accuracies)/len(accuracies)))
 
-def update_row(row,ys,i):
+def update_row(row,ys,i, inv_le_dict):
     new_row = []
     if i > 0:
         for j,obs in enumerate(row):
@@ -139,7 +140,7 @@ if __name__ == "__main__":
         train_SVM(X,Y)
         #train_MaxEnt(X,Y,all=True)
     elif sys.argv[1] == 'test':
-        autoregressive = sys.argv[4] == 'autoreg'
+        autoregressive = sys.argv[5] == 'autoreg'
         corpora = []
         if os.path.isdir(sys.argv[2]):
             corpora = sorted(glob.iglob(sys.argv[2] + '/*'))
@@ -161,3 +162,8 @@ if __name__ == "__main__":
                 le_dict = pickle.load(f)
             with open(sys.argv[3] + '/label-inv-dict', 'rb') as f:
                 inv_le_dict = pickle.load(f)
+            models = glob.iglob('models/*')
+            for model in models:
+                with open(model,'rb') as f:
+                    clf = pickle.load(f)
+                test_autoreg(clf,model,vec,le_dict,sys.argv[4],inv_le_dict)
