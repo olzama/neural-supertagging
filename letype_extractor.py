@@ -97,7 +97,7 @@ class LexTypeExtractor:
                     tables_by_len[k][sen_len]['ft'] = autoregress_table
                     tables_by_len[k][sen_len]['lt'] = labels_table
                 print('Total PROCESSED {} tokens: {}'.format(k, all_tokens))
-                with open('./output/by-length/'+k, 'wb') as f:
+                with open('./output-pos/by-length/'+k, 'wb') as f:
                     pickle.dump(tables_by_len[k], f)
 
     '''
@@ -290,7 +290,7 @@ if __name__ == "__main__":
     le.parse_lexicons(args[0])
     le.stats['total lextypes'] = len(le.lextypes)
     le.process_testsuites(args[1],le.lextypes)
-    with open('./output/lextypes','wb') as f:
+    with open('./output-pos/lextypes','wb') as f:
         lextypes = set([str(v) for v in list(le.lextypes.values())])
         pickle.dump(lextypes,f)
 
