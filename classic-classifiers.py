@@ -17,6 +17,8 @@ from sklearn import svm
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.preprocessing import LabelEncoder
 
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
 
 warnings.filterwarnings("ignore", category=ConvergenceWarning, module="sklearn")
 
@@ -84,9 +86,10 @@ def test_autoreg(clf, name,vec,le_dict,table_path,le_inv_dict):
     accuracies = []
     all_predictions = {}
     for length in table:
+        eprint('Processing sentences of length {}'.format(length))
         all_predictions[length] = np.empty_like(table[length]['lt'])
         for i, row in enumerate(table[length]['ft']):
-            updated_row = update_row(list(row), all_predictions[length],i, le_inv_dict)
+            updated_row = update_row(list(row), all_predictions[length],i)
             x_i = vec.transform(updated_row)
             y_i = [ le_dict.get(lbl,-1) for lbl in table[length]['lt'][i] ]
             t1 = timeit.default_timer()
@@ -99,8 +102,10 @@ def test_autoreg(clf, name,vec,le_dict,table_path,le_inv_dict):
             all_predictions[length][i] = [inv_le_dict[pred] for pred in y_train_i]
     print('Test time of {}: {}'.format(name, sum(times)))
     print('Average accuracy of {} for all tokens in {}: {}'.format(name,table_path,sum(accuracies)/len(accuracies)))
+    eprint('Test time of {}: {}'.format(name, sum(times)))
+    eprint('Average accuracy of {} for all tokens in {}: {}'.format(name,table_path,sum(accuracies)/len(accuracies)))
 
-def update_row(row,ys,i, inv_le_dict):
+def update_row(row,ys,i):
     new_row = []
     if i > 0:
         for j,obs in enumerate(row):
@@ -138,7 +143,7 @@ if __name__ == "__main__":
     if sys.argv[1] == 'train':
         X, Y = load_vectors(sys.argv[2], sys.argv[3])
         train_SVM(X,Y)
-        #train_MaxEnt(X,Y,all=True)
+        #train_MaxEnt(X,Y,all=False)
     elif sys.argv[1] == 'test':
         autoregressive = sys.argv[5] == 'autoreg'
         corpora = []
