@@ -5,6 +5,7 @@ import json, pickle
 import numpy as np
 from collections import OrderedDict
 import pos_map
+from datetime import datetime
 
 CONTEXT_WINDOW = 2
 
@@ -40,6 +41,8 @@ class LexTypeExtractor:
             for i, tsuite in enumerate(sorted(glob.iglob(path + idx + '/**'))):
                 n += 1
                 ts = itsdb.TestSuite(tsuite)
+                if idx == 'train':
+                    assert ts.path.stem not in NONTRAIN, "A nontrain dataset is being added as training data!"
                 data[idx]['by corpus'].append({'name':ts.path.stem})
                 items = list(ts.processed_items())
                 data[idx]['by corpus'][i]['sentences'] = {}
@@ -97,7 +100,7 @@ class LexTypeExtractor:
                     tables_by_len[k][sen_len]['ft'] = autoregress_table
                     tables_by_len[k][sen_len]['lt'] = labels_table
                 print('Total PROCESSED {} tokens: {}'.format(k, all_tokens))
-                with open('./output-pos/by-length/'+k, 'wb') as f:
+                with open('./labeled-data/by-length/'+k, 'wb') as f:
                     pickle.dump(tables_by_len[k], f)
 
     '''
@@ -286,11 +289,14 @@ class LexTypeExtractor:
 
 if __name__ == "__main__":
     args = sys.argv[1:]
+    run_id = sys.argv[3] + '-'.join(str(datetime.now()).split())
     le = LexTypeExtractor()
     le.parse_lexicons(args[0])
     le.stats['total lextypes'] = len(le.lextypes)
     le.process_testsuites(args[1],le.lextypes)
-    with open('./output-pos/lextypes','wb') as f:
+    with open('./labeled-data/lextypes','wb') as f:
         lextypes = set([str(v) for v in list(le.lextypes.values())])
         pickle.dump(lextypes,f)
+    #with open('./logs/'+args[2], 'w') as f:
+    #    f.write(log)
 
