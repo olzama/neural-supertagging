@@ -167,7 +167,7 @@ if __name__ == "__main__":
                 le_dict = pickle.load(f)
             with open(sys.argv[3] + '/label-inv-dict', 'rb') as f:
                 inv_le_dict = pickle.load(f)
-            models = glob.iglob('models/*')
+            models = glob.iglob('models-dridan/*')
             for model in models:
                 with open(model,'rb') as f:
                     clf = pickle.load(f)
