@@ -75,7 +75,7 @@ def fit_serialize(X, Y, clf, name):
     clf.fit(X, Y)
     train_time = timeit.default_timer() - t1
     print('Training time of {}: {}'.format(name, train_time))
-    with open('models-pos/' + name + '.model', 'wb') as f:
+    with open('models-dridan/' + name + '.model', 'wb') as f:
         pickle.dump(clf, f)
 
 
