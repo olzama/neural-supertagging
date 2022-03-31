@@ -142,8 +142,8 @@ def load_vectors(path_to_vecs, path_to_labels):
 if __name__ == "__main__":
     if sys.argv[1] == 'train':
         X, Y = load_vectors(sys.argv[2], sys.argv[3])
-        train_SVM(X,Y)
-        #train_MaxEnt(X,Y,all=False)
+        #train_SVM(X,Y)
+        train_MaxEnt(X,Y,all=False)
     elif sys.argv[1] == 'test':
         autoregressive = sys.argv[5] == 'autoreg'
         corpora = []
