@@ -79,30 +79,31 @@ def fit_serialize(X, Y, clf, name,fp):
 
 
 def test_autoreg(clf, name,vec,le_dict,table_path,inv_le_dict):
-    with open(table_path, 'rb') as f:
-        table = pickle.load(f)
-    times = []
-    accuracies = []
-    all_predictions = {}
-    for length in table:
-        eprint('Processing sentences of length {}'.format(length))
-        all_predictions[length] = np.empty_like(table[length]['lt'])
-        for i, row in enumerate(table[length]['ft']):
-            updated_row = update_row(list(row), all_predictions[length],i)
-            x_i = vec.transform(updated_row)
-            y_i = [ le_dict.get(lbl,-1) for lbl in table[length]['lt'][i] ]
-            t1 = timeit.default_timer()
-            y_train_i = clf.predict(x_i)
-            test_time = timeit.default_timer() - t1
-            times.append(test_time)
-            train_acc_i = np.sum(y_i == np.array(y_train_i)) / len(y_i)
-            #print('Processed row {}; accuracy {}'.format(i,train_acc_i))
-            accuracies.append(train_acc_i)
-            all_predictions[length][i] = [inv_le_dict[pred] for pred in y_train_i]
-    print('Test time of {}: {}'.format(name, sum(times)))
-    print('Average accuracy of {} for all tokens in {}: {}'.format(name,table_path,sum(accuracies)/len(accuracies)))
-    eprint('Test time of {}: {}'.format(name, sum(times)))
-    eprint('Average accuracy of {} for all tokens in {}: {}'.format(name,table_path,sum(accuracies)/len(accuracies)))
+    for test_file in glob.iglob(table_path+'/**'):
+        with open(test_file, 'rb') as f:
+            table = pickle.load(f)
+        times = []
+        accuracies = []
+        all_predictions = {}
+        for length in table:
+            eprint('Processing sentences of length {}'.format(length))
+            all_predictions[length] = np.empty_like(table[length]['lt'])
+            for i, row in enumerate(table[length]['ft']):
+                updated_row = update_row(list(row), all_predictions[length],i)
+                x_i = vec.transform(updated_row)
+                y_i = [ le_dict.get(lbl,-1) for lbl in table[length]['lt'][i] ]
+                t1 = timeit.default_timer()
+                y_train_i = clf.predict(x_i)
+                test_time = timeit.default_timer() - t1
+                times.append(test_time)
+                train_acc_i = np.sum(y_i == np.array(y_train_i)) / len(y_i)
+                #print('Processed row {}; accuracy {}'.format(i,train_acc_i))
+                accuracies.append(train_acc_i)
+                all_predictions[length][i] = [inv_le_dict[pred] for pred in y_train_i]
+        print('Test time of {}: {}'.format(name, sum(times)))
+        print('Average accuracy of {} for all tokens in {}: {}'.format(name,table_path,sum(accuracies)/len(accuracies)))
+        eprint('Test time of {}: {}'.format(name, sum(times)))
+        eprint('Average accuracy of {} for all tokens in {}: {}'.format(name,table_path,sum(accuracies)/len(accuracies)))
 
 def update_row(row,ys,i):
     new_row = []
@@ -156,4 +157,4 @@ if __name__ == "__main__":
         for model in models:
             with open(model,'rb') as f:
                 clf = pickle.load(f)
-            test_autoreg(clf,model,vec,le_dict,sys.argv[2],inv_le_dict)
+            test_autoreg(clf,model,vec,le_dict,to_test,inv_le_dict)
