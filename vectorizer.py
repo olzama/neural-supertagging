@@ -6,9 +6,7 @@ import pickle
 
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.preprocessing import LabelEncoder
-#from skutil.preprocessing import
 
-import numpy as np
 import ERG_Corpus
 
 def read_data(path_X, path_Y):
@@ -97,14 +95,14 @@ if __name__ == "__main__":
             X, Y, vectorizer, label_dict = vectorize_train_data(feature_dicts,true_labels)
         else:
             X, Y, vectorizer, label_dict, inv_label_dict = vectorize_autoreg(sys.argv[1])
+            with open(sys.argv[4] + 'label-inv-dict', 'wb') as f:
+                pickle.dump(inv_label_dict, f)
         with open(sys.argv[4]+'vectorizer', 'wb') as f:
             pickle.dump(vectorizer,f)
         with open(sys.argv[4]+'label-dict','wb') as f:
             pickle.dump(label_dict,f)
-        with open(sys.argv[4]+'label-inv-dict','wb') as f:
-            pickle.dump(inv_label_dict,f)
         pickle_vectors(sys.argv[4], X, Y, 'train')
-    if sys.argv[3]=='test':
+    elif sys.argv[3]=='test':
         with open(sys.argv[4]+'vectorizer', 'rb') as f:
             vec = pickle.load(f)
         with open(sys.argv[4]+'label-dict', 'rb') as f:

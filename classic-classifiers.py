@@ -14,8 +14,6 @@ import sys,os
 from sklearn.linear_model import LogisticRegression
 from sklearn.exceptions import ConvergenceWarning
 from sklearn import svm
-from sklearn.feature_extraction import DictVectorizer
-from sklearn.preprocessing import LabelEncoder
 
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
@@ -79,7 +77,7 @@ def fit_serialize(X, Y, clf, name):
         pickle.dump(clf, f)
 
 
-def test_autoreg(clf, name,vec,le_dict,table_path,le_inv_dict):
+def test_autoreg(clf, name,vec,le_dict,table_path,inv_le_dict):
     with open(table_path, 'rb') as f:
         table = pickle.load(f)
     times = []
@@ -167,7 +165,7 @@ if __name__ == "__main__":
                 le_dict = pickle.load(f)
             with open(sys.argv[3] + '/label-inv-dict', 'rb') as f:
                 inv_le_dict = pickle.load(f)
-            models = glob.iglob('models-dridan/*')
+            models = glob.iglob(sys.argv[6] + '*')
             for model in models:
                 with open(model,'rb') as f:
                     clf = pickle.load(f)
