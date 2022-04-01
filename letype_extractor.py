@@ -292,7 +292,8 @@ class LexTypeExtractor:
 
 if __name__ == "__main__":
     args = sys.argv[1:]
-    run_id = sys.argv[3] + ':'.join(str(datetime.now()).split())
+    dt_str = '-'.join(str(datetime.now()).split()).replace(':','.')
+    run_id = sys.argv[3] + dt_str
     out_dir = './output/' + run_id
     pathlib.Path(out_dir).mkdir(parents=True, exist_ok=False)
     le = LexTypeExtractor()
