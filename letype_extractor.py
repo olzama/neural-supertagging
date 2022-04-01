@@ -10,7 +10,7 @@ from datetime import datetime
 CONTEXT_WINDOW = 2
 
 DEV = ['ws212', 'ecpa']
-TEST = ['cb', 'ecpr', 'jhk', 'jhu', 'tgk', 'tgu', 'psk', 'psu', 'rondane',
+TEST = ['cb', 'ecpr', 'jhk', 'jhu', 'tgk', 'tgu', 'psk', 'psu', #'rondane',
              'vm32', 'ws213', 'ws214', 'petet', 'wsj23']
 IGNORE = ['ntucle', 'omw', 'wlb03', 'wnb03']
 NONTRAIN = DEV + TEST + IGNORE
