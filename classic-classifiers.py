@@ -165,8 +165,8 @@ if __name__ == "__main__":
                 le_dict = pickle.load(f)
             with open(sys.argv[3] + '/label-inv-dict', 'rb') as f:
                 inv_le_dict = pickle.load(f)
-            models = glob.iglob(sys.argv[6] + '*')
+            models = glob.iglob(sys.argv[4] + '*')
             for model in models:
                 with open(model,'rb') as f:
                     clf = pickle.load(f)
-                test_autoreg(clf,model,vec,le_dict,sys.argv[4],inv_le_dict)
+                test_autoreg(clf,model,vec,le_dict,sys.argv[2],inv_le_dict)
