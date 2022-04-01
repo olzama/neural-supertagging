@@ -79,6 +79,8 @@ def fit_serialize(X, Y, clf, name,fp):
 
 
 def test_autoreg(clf, name,vec,le_dict,table_path,inv_le_dict):
+    avg_accuracies = []
+    all_times = []
     for test_file in glob.iglob(table_path+'/**'):
         with open(test_file, 'rb') as f:
             table = pickle.load(f)
@@ -100,10 +102,20 @@ def test_autoreg(clf, name,vec,le_dict,table_path,inv_le_dict):
                 #print('Processed row {}; accuracy {}'.format(i,train_acc_i))
                 accuracies.append(train_acc_i)
                 all_predictions[length][i] = [inv_le_dict[pred] for pred in y_train_i]
-        print('Test time of {}: {}'.format(name, sum(times)))
-        print('Average accuracy of {} for all tokens in {}: {}'.format(name,table_path,sum(accuracies)/len(accuracies)))
-        eprint('Test time of {}: {}'.format(name, sum(times)))
-        eprint('Average accuracy of {} for all tokens in {}: {}'.format(name,table_path,sum(accuracies)/len(accuracies)))
+        avg_acc = sum(accuracies)/len(accuracies)
+        avg_accuracies.append(avg_acc)
+        all_times.append(sum(times))
+        print('Test time of {} on {}: {}'.format(name, test_file, sum(times)))
+        print('Average accuracy of {} for all tokens in {}: {}'.format(name,test_file,avg_acc))
+        eprint('Test time of {}: {}'.format(name, test_file, sum(times)))
+        eprint('Average accuracy of {} for all tokens in {}: {}'.format(name,test_file,avg_acc))
+    print('Total test time for {} on all datasets in {}: {}'.format(name, table_path, sum(all_times)))
+    print('Average accuracy of {} for all datasets in {}: {}'.format(name,table_path,
+                                                                     sum(avg_accuracies)/len(avg_accuracies)))
+    eprint('Total test time for {} on all datasets in {}: {}'.format(name, table_path, sum(all_times)))
+    eprint('Average accuracy of {} for all datasets in {}: {}'.format(name,table_path,
+                                                                     sum(avg_accuracies)/len(avg_accuracies)))
+
 
 def update_row(row,ys,i):
     new_row = []
