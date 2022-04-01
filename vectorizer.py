@@ -3,6 +3,7 @@ import json
 import os.path
 import sys
 import pickle
+from pathlib import Path
 
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.preprocessing import LabelEncoder
@@ -87,33 +88,15 @@ def vectorize_autoreg(fp):
 
 if __name__ == "__main__":
     # See sample data for the expected format.
-    # The paths must end with '/' (be directories)
-    if sys.argv[3]=='train':
-        autoregressive = sys.argv[5] == 'autoreg'
-        if not autoregressive:
-            feature_dicts, true_labels, sen_lengths = read_data(sys.argv[1], sys.argv[2])
-            X, Y, vectorizer, label_dict = vectorize_train_data(feature_dicts,true_labels)
-        else:
-            X, Y, vectorizer, label_dict, inv_label_dict = vectorize_autoreg(sys.argv[1])
-            with open(sys.argv[4] + 'label-inv-dict', 'wb') as f:
-                pickle.dump(inv_label_dict, f)
-        with open(sys.argv[4]+'vectorizer', 'wb') as f:
-            pickle.dump(vectorizer,f)
-        with open(sys.argv[4]+'label-dict','wb') as f:
-            pickle.dump(label_dict,f)
-        pickle_vectors(sys.argv[4], X, Y, 'train')
-    elif sys.argv[3]=='test':
-        with open(sys.argv[4]+'vectorizer', 'rb') as f:
-            vec = pickle.load(f)
-        with open(sys.argv[4]+'label-dict', 'rb') as f:
-            ld = pickle.load(f)
-        testcorpora_with_labels = zip(sorted(glob.iglob(sys.argv[1] + '*')),sorted(glob.iglob(sys.argv[2] + '*')))
-        for testcorpus, labels in testcorpora_with_labels:
-            feature_dicts, true_labels, sen_lengths = read_data(testcorpus, labels)
-            X,Y, unk = vectorize_test_data(feature_dicts,true_labels, vec, ld)
-            c = ERG_Corpus.ERG_Corpus(os.path.basename(testcorpus),X,Y,sen_lengths,unk)
-            with open(sys.argv[5]+'/'+c.name, 'wb') as cf:
-                pickle.dump(c,cf)
+    Path(sys.argv[1]+'/vectors').mkdir(parents=True, exist_ok=False)
+    X, Y, vectorizer, label_dict, inv_label_dict = vectorize_autoreg(sys.argv[1]+'/labeled-data/by-length/train')
+    with open(sys.argv[1] + '/vectors/label-inv-dict', 'wb') as f:
+        pickle.dump(inv_label_dict, f)
+    with open(sys.argv[1]+'/vectors/vectorizer', 'wb') as f:
+        pickle.dump(vectorizer,f)
+    with open(sys.argv[1]+'/vectors/label-dict','wb') as f:
+        pickle.dump(label_dict,f)
+    pickle_vectors(sys.argv[1]+'/vectors/', X, Y, 'train')
 
 
 
