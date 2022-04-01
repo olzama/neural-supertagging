@@ -4,6 +4,7 @@
 
 import timeit
 import warnings
+from pathlib import Path
 
 import numpy as np
 
@@ -20,12 +21,12 @@ def eprint(*args, **kwargs):
 
 warnings.filterwarnings("ignore", category=ConvergenceWarning, module="sklearn")
 
-def train_SVM(X, Y):
+def train_SVM(X, Y,fp):
     clf = svm.LinearSVC() # Kernels would be too slow, so using liblinear SVM
     name = "svm-liblinear-l2-sq-hinge-1000"
-    fit_serialize(X,Y,clf,name) # for models over 4GB, need to add protocol=4
+    fit_serialize(X,Y,clf,name,fp) # for models over 4GB, need to add protocol=4
 
-def train_MaxEnt(X, Y, all=False):
+def train_MaxEnt(X, Y, fp, all=False):
     train_samples, n_features = X.shape
     n_classes = np.unique(Y).shape[0]
     print(
@@ -66,14 +67,14 @@ def train_MaxEnt(X, Y, all=False):
                         random_state=42,
                         l1_ratio=0.5 # only for elastic-net
                     )
-                    fit_serialize(X, Y, clf, models[solver][penalty][model]["name"])
+                    fit_serialize(X, Y, clf, models[solver][penalty][model]["name"],fp)
 
-def fit_serialize(X, Y, clf, name):
+def fit_serialize(X, Y, clf, name,fp):
     t1 = timeit.default_timer()
     clf.fit(X, Y)
     train_time = timeit.default_timer() - t1
     print('Training time of {}: {}'.format(name, train_time))
-    with open('models-dridan/' + name + '.model', 'wb') as f:
+    with open(fp+'/' + name + '.model', 'wb') as f:
         pickle.dump(clf, f)
 
 
@@ -139,34 +140,20 @@ def load_vectors(path_to_vecs, path_to_labels):
 
 if __name__ == "__main__":
     if sys.argv[1] == 'train':
-        X, Y = load_vectors(sys.argv[2], sys.argv[3])
-        #train_SVM(X,Y)
-        train_MaxEnt(X,Y,all=True)
+        Path(sys.argv[2] + '/models').mkdir(parents=True, exist_ok=True)
+        X, Y = load_vectors(sys.argv[2]+'/vectors/X_train', sys.argv[2]+'/vectors/Y_train')
+        #train_SVM(X,Y,sys.argv[1] + '/models')
+        train_MaxEnt(X,Y,sys.argv[2] + '/models',all=False)
     elif sys.argv[1] == 'test':
-        autoregressive = sys.argv[5] == 'autoreg'
-        corpora = []
-        if os.path.isdir(sys.argv[2]):
-            corpora = sorted(glob.iglob(sys.argv[2] + '/*'))
-        elif os.path.isfile(sys.argv[2]):
-            corpora = glob.glob(sys.argv[2])
-        if not autoregressive:
-            for c in corpora:
-                    with open(c, 'rb') as cf:
-                        corpus = pickle.load(cf)
-                    print('Testing corpus {} which has {} unknown labels'.format(corpus.name, corpus.unk))
-                    for model in glob.iglob('models/' + '*'):
-                        with open(model, 'rb') as f:
-                            clf = pickle.load(f)
-                        acc = test_model(clf,corpus.X,corpus.Y,len(corpus.sen_lengths))
-        else:
-            with open(sys.argv[3]+'/vectorizer','rb') as f:
-                vec = pickle.load(f)
-            with open(sys.argv[3]+'/label-dict', 'rb') as f:
-                le_dict = pickle.load(f)
-            with open(sys.argv[3] + '/label-inv-dict', 'rb') as f:
-                inv_le_dict = pickle.load(f)
-            models = glob.iglob(sys.argv[4] + '*')
-            for model in models:
-                with open(model,'rb') as f:
-                    clf = pickle.load(f)
-                test_autoreg(clf,model,vec,le_dict,sys.argv[2],inv_le_dict)
+        to_test = sys.argv[2] + '/labeled-data/' + sys.argv[3]
+        with open(sys.argv[2] +'/vectors/vectorizer','rb') as f:
+            vec = pickle.load(f)
+        with open(sys.argv[2]+'/vectors/label-dict', 'rb') as f:
+            le_dict = pickle.load(f)
+        with open(sys.argv[2] + '/vectors/label-inv-dict', 'rb') as f:
+            inv_le_dict = pickle.load(f)
+        models = glob.iglob(sys.argv[2] + '/models/*')
+        for model in models:
+            with open(model,'rb') as f:
+                clf = pickle.load(f)
+            test_autoreg(clf,model,vec,le_dict,sys.argv[2],inv_le_dict)
