@@ -42,8 +42,8 @@ class LexTypeExtractor:
                 n += 1
                 ts = itsdb.TestSuite(tsuite)
                 if idx == 'train':
-                    assert ts.path.stem not in NONTRAIN, \
-                        "A nontrain dataset {} is being added as training data!".format(ts.path.stem)
+                    message = "A nontrain dataset {} is being added as training data!".format(ts.path.stem)
+                    assert ts.path.stem not in NONTRAIN, message
                 data[idx]['by corpus'].append({'name':ts.path.stem})
                 items = list(ts.processed_items())
                 data[idx]['by corpus'][i]['sentences'] = {}
