@@ -31,9 +31,9 @@ class LexTypeExtractor:
     def read_testsuites(self,path):
         max_sen_length = 0
         corpus_size = 0
-        data = {'train':{'by corpus':[], 'by length':OrderedDict()},
-                'test':{'by corpus':[], 'by length':OrderedDict()},
-                'dev':{'by corpus':[], 'by length':OrderedDict()}}
+        data = {'train':{'by corpus':[], 'by length': {}},
+                'test':{'by corpus':[], 'by length': {}},
+                'dev':{'by corpus':[], 'by length': {}}}
         print('Reading test suite files into pydelphin objects...')
         n = 0
         for idx in ['train','dev','test']:
@@ -64,47 +64,75 @@ class LexTypeExtractor:
                         if len(terminals) > max_sen_length:
                             max_sen_length = len(terminals)
             print('All raw {} tokens: {}'.format(idx,t))
-            all_sentences = {}
             t1 = 0
             t2 = 0
-            for ts in data[idx]['by corpus']:
-                for l in ts['sentences']:
-                    for s in ts['sentences'][l]:
-                        t1 += len(s)
-                    if l not in all_sentences:
-                        all_sentences[l] = []
-                    all_sentences[l] += ts['sentences'][l]
-            for l in all_sentences:
-                for s in all_sentences[l]:
-                    t2 += len(s)
+            if idx == 'train':
+                all_sentences = {}
+                for ts in data[idx]['by corpus']:
+                    t1 += self.org_sen_by_length(all_sentences, ts)
+                for l in all_sentences:
+                    for s in all_sentences[l]:
+                        t2 += len(s)
+                data[idx]['by length'] = OrderedDict(sorted(all_sentences.items()))
+            else:
+                for ts in data[idx]['by corpus']:
+                    all_sentences = {}
+                    t1 += self.org_sen_by_length(all_sentences, ts)
+                    data[idx]['by length'][ts['name']] = OrderedDict(sorted(all_sentences.items()))
+                for ts in data[idx]['by length']:
+                    for l in data[idx]['by length'][ts]:
+                        for s in data[idx]['by length'][ts][l]:
+                            t2 += len(s)
             print('Added {} {} tokens to the by-corpus table'.format(t1,idx))
             print('Added {} {} tokens to the by-length table'.format(t2,idx))
-            data[idx]['by length'] = OrderedDict(sorted(all_sentences.items()))
+
         return max_sen_length, corpus_size, n+1, data
+
+    def org_sen_by_length(self, all_sentences, ts):
+        n = 0
+        for l in ts['sentences']:
+            for s in ts['sentences'][l]:
+                n += len(s)
+            if l not in all_sentences:
+                all_sentences[l] = []
+            all_sentences[l] += ts['sentences'][l]
+        return n
 
     def process_testsuites(self,testsuites,lextypes, out_dir):
         max_sen_length, corpus_size, num_ts, data = self.read_testsuites(testsuites)
-        pathlib.Path(out_dir + '/labeled-data/by-length').mkdir(parents=True, exist_ok=False)
-        with open(out_dir + '/log.txt', 'w') as logf:
-            logf.write("Run ID: {}\n".format(out_dir))
-            tables_by_len = {'train':{},'dev':{},'test':{}}
-            for k in ['train','dev','test']:
-                all_tokens = 0
-                test = k in ['dev','test']
-                for sen_len in data[k]['by length']:
-                    tables_by_len[k][sen_len] = {}
-                    autoregress_table = np.array([[{}] * len(data[k]['by length'][sen_len])
-                                                  for i in range(sen_len)])
-                    labels_table = np.array([[{}] * len(data[k]['by length'][sen_len]) for i in range(sen_len)])
-                    #print("Processing sentences of length {}".format(sen_len))
-                    logf.write("Processing sentences of length {}\n".format(sen_len))
-                    all_tokens += self.process_length(lextypes, data[k]['by length'][sen_len],
-                                                      autoregress_table,labels_table,test=test)
-                    tables_by_len[k][sen_len]['ft'] = autoregress_table
-                    tables_by_len[k][sen_len]['lt'] = labels_table
-                print('Total PROCESSED {} tokens: {}'.format(k, all_tokens))
-                with open(out_dir + '/labeled-data/by-length/'+k, 'wb') as f:
-                    pickle.dump(tables_by_len[k], f)
+        tables_by_len = {'train':{},'dev':{},'test':{}}
+        for k in ['train','dev','test']:
+            pathlib.Path(out_dir + '/labeled-data/' + k).mkdir(parents=True, exist_ok=False)
+            all_tokens = 0
+            test = k in ['dev','test']
+            if test:
+                for corpus in data[k]['by length']:
+                    all_tokens += self.process_table(data, k, lextypes, tables_by_len, test, corpus)
+            else:
+                all_tokens += self.process_table(data, k, lextypes, tables_by_len, test)
+            print('Total PROCESSED {} tokens: {}'.format(k, all_tokens))
+
+    def process_table(self, data, k, lextypes, tables_by_len, test, corpus=None):
+        n = 0
+        table = data[k]['by length'] if not test else data[k]['by length'][corpus]
+        for sen_len in table:
+            tables_by_len[k][sen_len] = {}
+            autoregress_table = np.array([[{}] * len(table[sen_len])
+                                          for i in range(sen_len)])
+            labels_table = np.array([[{}] * len(table[sen_len]) for i in range(sen_len)])
+            # print("Processing sentences of length {}".format(sen_len))
+            n += self.process_length(lextypes, table[sen_len],
+                                              autoregress_table, labels_table, test=test)
+            tables_by_len[k][sen_len]['ft'] = autoregress_table
+            tables_by_len[k][sen_len]['lt'] = labels_table
+        if test:
+            with open(out_dir + '/labeled-data/' + k + '/' + corpus, 'wb') as f:
+                pickle.dump(tables_by_len[k], f)
+        else:
+            with open(out_dir + '/labeled-data/train/train' , 'wb') as f:
+                pickle.dump(tables_by_len[k], f)
+        return n
+
 
     '''
     Assume a numpy table coming in. Get e.g. tokens 2 through 5 in sentences 4 and 5,
