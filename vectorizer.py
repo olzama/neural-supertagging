@@ -89,7 +89,7 @@ def vectorize_autoreg(fp):
 if __name__ == "__main__":
     # See sample data for the expected format.
     Path(sys.argv[1]+'/vectors').mkdir(parents=True, exist_ok=False)
-    X, Y, vectorizer, label_dict, inv_label_dict = vectorize_autoreg(sys.argv[1]+'/labeled-data/by-length/train')
+    X, Y, vectorizer, label_dict, inv_label_dict = vectorize_autoreg(sys.argv[1]+'/labeled-data/train/train')
     with open(sys.argv[1] + '/vectors/label-inv-dict', 'wb') as f:
         pickle.dump(inv_label_dict, f)
     with open(sys.argv[1]+'/vectors/vectorizer', 'wb') as f:

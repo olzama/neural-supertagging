@@ -47,7 +47,7 @@ def train_MaxEnt(X, Y, fp, all=False):
         }
     else:
         models = {
-            'saga': { 'l2': {"multinomial": {"name": "Multinomial-L2", "iters": [1]}}}
+            'saga': { 'l2': {"multinomial": {"name": "Multinomial-L2-saga", "iters": [1]}}}
         }
 
     for solver in models:
