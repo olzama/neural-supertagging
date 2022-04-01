@@ -136,8 +136,3 @@ if __name__ == "__main__":
 #      },
 #
 #  ]
-
-# vec = DictVectorizer()
-# pos_vectorized = vec.fit_transform(pos_window)
-# arr = pos_vectorized.toarray()
-# names = vec.get_feature_names_out()

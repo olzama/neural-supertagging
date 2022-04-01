@@ -82,9 +82,11 @@ class LexTypeExtractor:
             data[idx]['by length'] = OrderedDict(sorted(all_sentences.items()))
         return max_sen_length, corpus_size, n+1, data
 
-    def process_testsuites(self,testsuites,lextypes):
+    def process_testsuites(self,testsuites,lextypes, out_dir):
         max_sen_length, corpus_size, num_ts, data = self.read_testsuites(testsuites)
-        with open('./log.txt', 'w') as logf:
+        pathlib.Path(out_dir + '/labeled-data/by-length').mkdir(parents=True, exist_ok=False)
+        with open(out_dir + '/log.txt', 'w') as logf:
+            logf.write("Run ID: {}\n".format(out_dir))
             tables_by_len = {'train':{},'dev':{},'test':{}}
             for k in ['train','dev','test']:
                 all_tokens = 0
@@ -101,7 +103,7 @@ class LexTypeExtractor:
                     tables_by_len[k][sen_len]['ft'] = autoregress_table
                     tables_by_len[k][sen_len]['lt'] = labels_table
                 print('Total PROCESSED {} tokens: {}'.format(k, all_tokens))
-                with open('./labeled-data/by-length/'+k, 'wb') as f:
+                with open(out_dir + '/labeled-data/by-length/'+k, 'wb') as f:
                     pickle.dump(tables_by_len[k], f)
 
     '''
@@ -290,14 +292,14 @@ class LexTypeExtractor:
 
 if __name__ == "__main__":
     args = sys.argv[1:]
-    run_id = sys.argv[3] + '-'.join(str(datetime.now()).split())
+    run_id = sys.argv[3] + ':'.join(str(datetime.now()).split())
+    out_dir = './output/' + run_id
+    pathlib.Path(out_dir).mkdir(parents=True, exist_ok=False)
     le = LexTypeExtractor()
     le.parse_lexicons(args[0])
     le.stats['total lextypes'] = len(le.lextypes)
-    le.process_testsuites(args[1],le.lextypes)
-    with open('./labeled-data/lextypes','wb') as f:
+    le.process_testsuites(args[1],le.lextypes,out_dir)
+    with open(out_dir + '/lextypes','wb') as f:
         lextypes = set([str(v) for v in list(le.lextypes.values())])
         pickle.dump(lextypes,f)
-    #with open('./logs/'+args[2], 'w') as f:
-    #    f.write(log)
 
