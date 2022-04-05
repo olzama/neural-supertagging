@@ -40,8 +40,8 @@ def train_MaxEnt(X, Y, fp, all=False):
             'l1': {"multinomial": {"name": "Multinomial-L1-saga", "iters": [100]},
                   "ovr": {"name": "OVR-L1-saga", "iters": [100]}},
             'l2': {"multinomial": {"name": "Multinomial-L2-saga", "iters": [100]},
-                 "ovr": {"name": "OVR-L2-saga", "iters": [100]}},
-            'elasticnet': {"multinomial": {"name": "Multinomial-ENet-saga", "iters": [100]}}},
+                 "ovr": {"name": "OVR-L2-saga", "iters": [100]}}},
+            #'elasticnet': {"multinomial": {"name": "Multinomial-ENet-saga", "iters": [100]}}},
             'sag': {'l2': {"multinomial": {"name": "Multinomial-L2-sag", "iters": [100]},
                   "ovr": {"name": "OVR-L2-sag", "iters": [100]}}}
         }
@@ -155,8 +155,8 @@ if __name__ == "__main__":
     if sys.argv[1] == 'train':
         Path(sys.argv[2] + '/models').mkdir(parents=True, exist_ok=True)
         X, Y = load_vectors(sys.argv[2]+'/vectors/X_train', sys.argv[2]+'/vectors/Y_train')
-        train_SVM(X,Y,sys.argv[2] + '/models')
-        #train_MaxEnt(X,Y,sys.argv[2] + '/models',all=True)
+        #train_SVM(X,Y,sys.argv[2] + '/models')
+        train_MaxEnt(X,Y,sys.argv[2] + '/models',all=True)
     elif sys.argv[1] == 'test':
         to_test = sys.argv[2] + '/labeled-data/' + sys.argv[3]
         with open(sys.argv[2] +'/vectors/vectorizer','rb') as f:
