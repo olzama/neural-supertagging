@@ -155,7 +155,7 @@ if __name__ == "__main__":
     if sys.argv[1] == 'train':
         Path(sys.argv[2] + '/models').mkdir(parents=True, exist_ok=True)
         X, Y = load_vectors(sys.argv[2]+'/vectors/X_train', sys.argv[2]+'/vectors/Y_train')
-        train_SVM(X,Y,sys.argv[1] + '/models')
+        train_SVM(X,Y,sys.argv[2] + '/models')
         train_MaxEnt(X,Y,sys.argv[2] + '/models',all=True)
     elif sys.argv[1] == 'test':
         to_test = sys.argv[2] + '/labeled-data/' + sys.argv[3]
