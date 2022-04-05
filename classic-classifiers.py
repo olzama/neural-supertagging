@@ -91,9 +91,8 @@ def test_autoreg(clf, name,vec,le_dict,table_path,inv_le_dict):
             eprint('Processing sentences of length {}'.format(length))
             all_predictions[length] = np.empty_like(table[length]['lt'])
             for i, row in enumerate(table[length]['ft']):
-                #updated_row = update_row(list(row), all_predictions[length],i)
-                #x_i = vec.transform(updated_row)
-                x_i = vec.transform(list(row))
+                updated_row = update_row(list(row), all_predictions[length],i)
+                x_i = vec.transform(updated_row)
                 y_i = [ le_dict.get(lbl,-1) for lbl in table[length]['lt'][i] ]
                 t1 = timeit.default_timer()
                 y_train_i = clf.predict(x_i)

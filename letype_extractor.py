@@ -280,7 +280,7 @@ class LexTypeExtractor:
             context['w+' + str(i)] = tokens[k+i]
             context['pos-' + str(i)] = pos_tags[k-i]
             context['pos+' + str(i)] = pos_tags[k+i]
-            #context['tag-' + str(i)] = predicted_labels[k-i] # Will be None or FAKE in test mode
+            context['tag-' + str(i)] = predicted_labels[k-i] # Will be None or FAKE in test mode
         return context
 
     def get_tokens_labels(self, terms_and_tokens_tags, context_window, lextypes,pos_mapper, test):
