@@ -76,6 +76,7 @@ def fit_serialize(X, Y, clf, name,fp):
     print('Training time of {}: {}'.format(name, train_time))
     with open(fp+'/' + name + '.model', 'wb') as f:
         pickle.dump(clf, f)
+        print("The saved model was created using sklearn version {}".format(clf.__getstate__()['_sklearn_version']))
 
 
 def test_autoreg(clf, name,vec,le_dict,table_path,inv_le_dict):
@@ -169,4 +170,5 @@ if __name__ == "__main__":
         for model in models:
             with open(model,'rb') as f:
                 clf = pickle.load(f)
+                print("The loaded model was created using sklearn version {}".format(clf.__getstate__()['_sklearn_version']))
             test_autoreg(clf,model,vec,le_dict,to_test,inv_le_dict)
