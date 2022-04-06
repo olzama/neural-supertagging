@@ -94,6 +94,7 @@ if __name__ == "__main__":
         pickle.dump(inv_label_dict, f)
     with open(sys.argv[1]+'/vectors/vectorizer', 'wb') as f:
         pickle.dump(vectorizer,f)
+        print("The saved vectorizer was created using sklearn version {}".format(vectorizer.__getstate__()['_sklearn_version']))
     with open(sys.argv[1]+'/vectors/label-dict','wb') as f:
         pickle.dump(label_dict,f)
     pickle_vectors(sys.argv[1]+'/vectors/', X, Y, 'train')

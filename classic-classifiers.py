@@ -162,6 +162,8 @@ if __name__ == "__main__":
         to_test = sys.argv[2] + '/labeled-data/' + sys.argv[3]
         with open(sys.argv[2] +'/vectors/vectorizer','rb') as f:
             vec = pickle.load(f)
+            print("The loaded vectorizer was created using sklearn version {}".format(
+                vec.__getstate__()['_sklearn_version']))
         with open(sys.argv[2]+'/vectors/label-dict', 'rb') as f:
             le_dict = pickle.load(f)
         with open(sys.argv[2] + '/vectors/label-inv-dict', 'rb') as f:
