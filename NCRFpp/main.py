@@ -11,7 +11,6 @@ import argparse
 import random
 import torch
 import gc
-import torch.nn as nn
 import torch.optim as optim
 import numpy as np
 from utils.metric import get_ner_fmeasure
