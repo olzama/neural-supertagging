@@ -47,7 +47,7 @@ def train_MaxEnt(X, Y, fp, all=False):
         }
     else:
         models = {
-            'saga': { 'l1': {"ovr": {"name": "OVR-L1-saga", "iters": [100]}}}
+            'saga': { 'l2': {"multinomial": {"name": "Multinomial-L2", "iters": [10]}}}
         }
 
     for solver in models:
@@ -80,13 +80,16 @@ def fit_serialize(X, Y, clf, name,fp):
 
 
 def test_autoreg(clf, name,vec,le_dict,table_path,inv_le_dict):
-    avg_accuracies = []
+    # How the hell to compute accuracy correctly :)))
+    all_preds_for_acc = []
+    all_true_labels = []
     all_times = []
+    n_ts = 0
+    errors = []
     for test_file in glob.iglob(table_path+'/**'):
         with open(test_file, 'rb') as f:
             table = pickle.load(f)
         times = []
-        accuracies = []
         all_predictions = {}
         for length in table:
             eprint('Processing sentences of length {}'.format(length))
@@ -95,27 +98,30 @@ def test_autoreg(clf, name,vec,le_dict,table_path,inv_le_dict):
                 updated_row = update_row(list(row), all_predictions[length],i)
                 x_i = vec.transform(updated_row)
                 y_i = [ le_dict.get(lbl,-1) for lbl in table[length]['lt'][i] ]
+                all_true_labels += y_i
+                n_ts += len(row)
                 t1 = timeit.default_timer()
                 y_train_i = clf.predict(x_i)
+                all_preds_for_acc += list(y_train_i)
+                for j,prediction in enumerate(y_train_i):
+                    if prediction != y_i[j]:
+                        errors.append((str(row[j]),inv_le_dict[prediction],inv_le_dict.get(y_i[j],'UNK')))
                 test_time = timeit.default_timer() - t1
                 times.append(test_time)
                 train_acc_i = np.sum(y_i == np.array(y_train_i)) / len(y_i)
                 #print('Processed row {}; accuracy {}'.format(i,train_acc_i))
-                accuracies.append(train_acc_i)
                 all_predictions[length][i] = [inv_le_dict[pred] for pred in y_train_i]
-        avg_acc = sum(accuracies)/len(accuracies)
-        avg_accuracies.append(avg_acc)
         all_times.append(sum(times))
-        print('Test time of {} on {}: {}'.format(name, test_file, sum(times)))
-        print('Average accuracy of {} for all tokens in {}: {}'.format(name,test_file,avg_acc))
-        eprint('Test time of {}: {}'.format(name, test_file, sum(times)))
-        eprint('Average accuracy of {} for all tokens in {}: {}'.format(name,test_file,avg_acc))
     print('Total test time for {} on all datasets in {}: {}'.format(name, table_path, sum(all_times)))
-    print('Average accuracy of {} for all datasets in {}: {}'.format(name,table_path,
-                                                                     sum(avg_accuracies)/len(avg_accuracies)))
+    print('Accuracy of {} for all datasets in {}: {}'.format(name,table_path,
+                                                                     np.sum(np.array(all_true_labels) == np.array(all_preds_for_acc)) / len(all_true_labels)))
     eprint('Total test time for {} on all datasets in {}: {}'.format(name, table_path, sum(all_times)))
-    eprint('Average accuracy of {} for all datasets in {}: {}'.format(name,table_path,
-                                                                     sum(avg_accuracies)/len(avg_accuracies)))
+    print('Number of test samples: {}'.format(n_ts))
+    print('Number of errors: {}'.format(len(errors)))
+    with open('/Users/olzama/Desktop/cur-errors.txt', 'w') as f:
+        for e in sorted(errors):
+            e_str = 'Observation: {}, Predicion: {}, True label: {}'.format(e[0],e[1],e[2])
+            f.write(e_str + '\n')
 
 
 def update_row(row,ys,i):
@@ -156,7 +162,12 @@ if __name__ == "__main__":
     if sys.argv[1] == 'train':
         Path(sys.argv[2] + '/models').mkdir(parents=True, exist_ok=True)
         X, Y = load_vectors(sys.argv[2]+'/vectors/X_train', sys.argv[2]+'/vectors/Y_train')
-        train_SVM(X,Y,sys.argv[2] + '/models')
+        with open(sys.argv[2] +'/vectors/vectorizer','rb') as f:
+            vec = pickle.load(f)
+        with open('/Users/olzama/Desktop/cur-features.txt', 'w') as f:
+            for feat in vec.feature_names_:
+                f.write(feat + '\n')
+        #train_SVM(X,Y,sys.argv[2] + '/models')
         train_MaxEnt(X,Y,sys.argv[2] + '/models',all=False)
     elif sys.argv[1] == 'test':
         to_test = sys.argv[2] + '/labeled-data/' + sys.argv[3]
@@ -164,10 +175,13 @@ if __name__ == "__main__":
             vec = pickle.load(f)
             print("The loaded vectorizer was created using sklearn version {}".format(
                 vec.__getstate__()['_sklearn_version']))
+            print('Number of features: {}'.format(len(vec.feature_names_)))
         with open(sys.argv[2]+'/vectors/label-dict', 'rb') as f:
             le_dict = pickle.load(f)
+            print('Number of classes: {}'.format(len(le_dict)))
         with open(sys.argv[2] + '/vectors/label-inv-dict', 'rb') as f:
             inv_le_dict = pickle.load(f)
+            print('Number of classes in the inverse dictionary: {}'.format(len(inv_le_dict)))
         models = glob.iglob(sys.argv[2] + '/models/*')
         for model in models:
             with open(model,'rb') as f:
