@@ -48,7 +48,7 @@ def train_MaxEnt(X, Y, all=False):
         }
     else:
         models = {
-            'saga': { 'l2': {"multinomial": {"name": "Multinomial-L2", "iters": [1]}}}
+            'saga': { 'l2': {"multinomial": {"name": "Multinomial-L2", "iters": [10]}}}
         }
 
     for solver in models:
@@ -83,8 +83,11 @@ def test_autoreg(clf, name,vec,le_dict,table_path,le_inv_dict):
     with open(table_path, 'rb') as f:
         table = pickle.load(f)
     times = []
-    accuracies = []
+    preds_for_accuracies = []
+    true_labels = []
     all_predictions = {}
+    n_ts = 0
+    errors = []
     for length in table:
         eprint('Processing sentences of length {}'.format(length))
         all_predictions[length] = np.empty_like(table[length]['lt'])
@@ -94,16 +97,27 @@ def test_autoreg(clf, name,vec,le_dict,table_path,le_inv_dict):
             y_i = [ le_dict.get(lbl,-1) for lbl in table[length]['lt'][i] ]
             t1 = timeit.default_timer()
             y_train_i = clf.predict(x_i)
+            for j, prediction in enumerate(y_train_i):
+                if prediction != y_i[j]:
+                    errors.append((str(row[j]), inv_le_dict[prediction], inv_le_dict.get(y_i[j], 'UNK')))
             test_time = timeit.default_timer() - t1
             times.append(test_time)
-            train_acc_i = np.sum(y_i == np.array(y_train_i)) / len(y_i)
-            #print('Processed row {}; accuracy {}'.format(i,train_acc_i))
-            accuracies.append(train_acc_i)
-            all_predictions[length][i] = [inv_le_dict[pred] for pred in y_train_i]
+            n_ts += len(y_i)
+            preds_for_accuracies += list(y_train_i)
+            true_labels += y_i
+            all_predictions[length][i] = [le_inv_dict[pred] for pred in y_train_i]
     print('Test time of {}: {}'.format(name, sum(times)))
-    print('Average accuracy of {} for all tokens in {}: {}'.format(name,table_path,sum(accuracies)/len(accuracies)))
     eprint('Test time of {}: {}'.format(name, sum(times)))
-    eprint('Average accuracy of {} for all tokens in {}: {}'.format(name,table_path,sum(accuracies)/len(accuracies)))
+    print('Total test samples: {}'.format(n_ts))
+    print('Number of errors: {}'.format(len(errors)))
+    print('Accuracy of {} on all datasets in {}: {}'.format(name, table_path,
+                                                            np.sum(np.array(preds_for_accuracies)==np.array(true_labels))
+                                                            /len(true_labels)))
+    with open('/Users/olzama/Desktop/old-errors.txt', 'w') as f:
+        for e in sorted(errors):
+            e_str = 'Observation: {}, Predicion: {}, True label: {}'.format(e[0],e[1],e[2])
+            f.write(e_str + '\n')
+
 
 def update_row(row,ys,i):
     new_row = []
@@ -143,7 +157,12 @@ if __name__ == "__main__":
     if sys.argv[1] == 'train':
         X, Y = load_vectors(sys.argv[2], sys.argv[3])
         #train_SVM(X,Y)
-        train_MaxEnt(X,Y,all=True)
+        with open('./output-pos/vectorized/vectorizer', 'rb') as f:
+            vec = pickle.load(f)
+        with open('/Users/olzama/Desktop/old-features.txt', 'w') as f:
+            for feat in vec.feature_names_:
+                f.write(feat + '\n')
+        train_MaxEnt(X,Y,all=False)
     elif sys.argv[1] == 'test':
         autoregressive = sys.argv[5] == 'autoreg'
         corpora = []
@@ -163,10 +182,13 @@ if __name__ == "__main__":
         else:
             with open(sys.argv[3]+'/vectorizer','rb') as f:
                 vec = pickle.load(f)
+                print(len(vec.feature_names_))
             with open(sys.argv[3]+'/label-dict', 'rb') as f:
                 le_dict = pickle.load(f)
+                print(len(le_dict))
             with open(sys.argv[3] + '/label-inv-dict', 'rb') as f:
                 inv_le_dict = pickle.load(f)
+                print(len(inv_le_dict))
             models = glob.iglob('models-dridan/*')
             for model in models:
                 with open(model,'rb') as f:
