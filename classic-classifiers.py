@@ -127,10 +127,10 @@ def test_autoreg(clf, name,vec,le_dict,table_path,inv_le_dict):
     print('Number of predictions: {}'.format(len(all_preds_for_acc)))
     print('Number of true labels: {}'.format(len(all_true_labels)))
     print('Number of errors: {}'.format(len(errors)))
-    with open('/Users/olzama/Desktop/cur-errors.txt', 'w') as f:
-        for e in sorted(errors):
-            e_str = 'Observation: {}, Predicion: {}, True label: {}'.format(e[0],e[1],e[2])
-            f.write(e_str + '\n')
+    # with open(table_path + 'errors.txt', 'w') as f:
+    #     for e in sorted(errors):
+    #         e_str = 'Observation: {}, Predicion: {}, True label: {}'.format(e[0],e[1],e[2])
+    #         f.write(e_str + '\n')
 
 
 def update_row(row,ys,i):
@@ -173,9 +173,9 @@ if __name__ == "__main__":
         X, Y = load_vectors(sys.argv[2]+'/vectors/X_train', sys.argv[2]+'/vectors/Y_train')
         with open(sys.argv[2] +'/vectors/vectorizer','rb') as f:
             vec = pickle.load(f)
-        with open('/Users/olzama/Desktop/cur-features.txt', 'w') as f:
-            for feat in vec.feature_names_:
-                f.write(feat + '\n')
+        # with open('/Users/olzama/Desktop/cur-features.txt', 'w') as f:
+        #     for feat in vec.feature_names_:
+        #         f.write(feat + '\n')
         #train_SVM(X,Y,sys.argv[2] + '/models')
         train_MaxEnt(X,Y,sys.argv[2] + '/models',all=False)
     elif sys.argv[1] == 'test':
