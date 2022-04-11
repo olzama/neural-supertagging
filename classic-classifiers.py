@@ -177,7 +177,7 @@ if __name__ == "__main__":
         #     for feat in vec.feature_names_:
         #         f.write(feat + '\n')
         #train_SVM(X,Y,sys.argv[2] + '/models')
-        train_MaxEnt(X,Y,sys.argv[2] + '/models',all=False)
+        train_MaxEnt(X,Y,sys.argv[2] + '/models',all=True)
     elif sys.argv[1] == 'test':
         to_test = sys.argv[2] + '/labeled-data/' + sys.argv[3]
         with open(sys.argv[2] +'/vectors/vectorizer','rb') as f:
