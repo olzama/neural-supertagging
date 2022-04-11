@@ -80,11 +80,9 @@ def fit_serialize(X, Y, clf, name,fp):
 
 
 def test_autoreg(clf, name,vec,le_dict,table_path,inv_le_dict):
-    # How the hell to compute accuracy correctly :)))
     all_preds_for_acc = []
     all_true_labels = []
     all_times = []
-    n_ts = 0
     errors = []
     for test_file in glob.iglob(table_path+'/**'):
         with open(test_file, 'rb') as f:
@@ -99,7 +97,6 @@ def test_autoreg(clf, name,vec,le_dict,table_path,inv_le_dict):
                 x_i = vec.transform(updated_row)
                 y_i = [ le_dict.get(lbl,-1) for lbl in table[length]['lt'][i] ]
                 all_true_labels += y_i
-                n_ts += len(row)
                 t1 = timeit.default_timer()
                 y_train_i = clf.predict(x_i)
                 all_preds_for_acc += list(y_train_i)
@@ -108,15 +105,16 @@ def test_autoreg(clf, name,vec,le_dict,table_path,inv_le_dict):
                         errors.append((str(row[j]),inv_le_dict[prediction],inv_le_dict.get(y_i[j],'UNK')))
                 test_time = timeit.default_timer() - t1
                 times.append(test_time)
-                train_acc_i = np.sum(y_i == np.array(y_train_i)) / len(y_i)
-                #print('Processed row {}; accuracy {}'.format(i,train_acc_i))
                 all_predictions[length][i] = [inv_le_dict[pred] for pred in y_train_i]
         all_times.append(sum(times))
     print('Total test time for {} on all datasets in {}: {}'.format(name, table_path, sum(all_times)))
     print('Accuracy of {} for all datasets in {}: {}'.format(name,table_path,
-                                                                     np.sum(np.array(all_true_labels) == np.array(all_preds_for_acc)) / len(all_true_labels)))
+                                                                     np.sum(np.array(all_true_labels) ==
+                                                                            np.array(all_preds_for_acc))
+                                                             / len(all_true_labels)))
     eprint('Total test time for {} on all datasets in {}: {}'.format(name, table_path, sum(all_times)))
-    print('Number of test samples: {}'.format(n_ts))
+    print('Number of predictions: {}'.format(len(all_preds_for_acc)))
+    print('Number of true labels: {}'.format(len(all_true_labels)))
     print('Number of errors: {}'.format(len(errors)))
     with open('/Users/olzama/Desktop/cur-errors.txt', 'w') as f:
         for e in sorted(errors):
