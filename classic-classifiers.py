@@ -89,6 +89,8 @@ def test_autoreg(clf, name,vec,le_dict,table_path,inv_le_dict):
             table = pickle.load(f)
         times = []
         all_predictions = {}
+        pred_list = []
+        true_list = []
         for length in table:
             eprint('Processing sentences of length {}'.format(length))
             all_predictions[length] = np.empty_like(table[length]['lt'])
@@ -97,9 +99,11 @@ def test_autoreg(clf, name,vec,le_dict,table_path,inv_le_dict):
                 x_i = vec.transform(updated_row)
                 y_i = [ le_dict.get(lbl,-1) for lbl in table[length]['lt'][i] ]
                 all_true_labels += y_i
+                true_list += y_i
                 t1 = timeit.default_timer()
                 y_train_i = clf.predict(x_i)
                 all_preds_for_acc += list(y_train_i)
+                pred_list += list(y_train_i)
                 for j,prediction in enumerate(y_train_i):
                     if prediction != y_i[j]:
                         errors.append((str(row[j]),inv_le_dict[prediction],inv_le_dict.get(y_i[j],'UNK')))
@@ -107,8 +111,15 @@ def test_autoreg(clf, name,vec,le_dict,table_path,inv_le_dict):
                 times.append(test_time)
                 all_predictions[length][i] = [inv_le_dict[pred] for pred in y_train_i]
         all_times.append(sum(times))
+        acc = np.sum(np.array(true_list) == np.array(pred_list)) / len(pred_list)
+        print('Accuracy of {} on {}: {}'.format(name, test_file, acc))
+        eprint('Accuracy of {} on {}: {}'.format(name, test_file, acc))
     print('Total test time for {} on all datasets in {}: {}'.format(name, table_path, sum(all_times)))
     print('Accuracy of {} for all datasets in {}: {}'.format(name,table_path,
+                                                                     np.sum(np.array(all_true_labels) ==
+                                                                            np.array(all_preds_for_acc))
+                                                             / len(all_true_labels)))
+    eprint('Accuracy of {} for all datasets in {}: {}'.format(name,table_path,
                                                                      np.sum(np.array(all_true_labels) ==
                                                                             np.array(all_preds_for_acc))
                                                              / len(all_true_labels)))
