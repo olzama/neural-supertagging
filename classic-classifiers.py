@@ -113,7 +113,7 @@ def test_autoreg(clf, name,vec,le_dict,table_path,le_inv_dict):
     print('Accuracy of {} on all datasets in {}: {}'.format(name, table_path,
                                                             np.sum(np.array(preds_for_accuracies)==np.array(true_labels))
                                                             /len(true_labels)))
-    with open('/Users/olzama/Desktop/old-errors.txt', 'w') as f:
+    with open('errors.txt', 'w') as f:
         for e in sorted(errors):
             e_str = 'Observation: {}, Predicion: {}, True label: {}'.format(e[0],e[1],e[2])
             f.write(e_str + '\n')
