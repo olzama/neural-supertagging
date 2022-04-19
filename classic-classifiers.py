@@ -179,7 +179,7 @@ if __name__ == "__main__":
         # with open('/Users/olzama/Desktop/cur-features.txt', 'w') as f:
         #     for feat in vec.feature_names_:
         #         f.write(feat + '\n')
-        #train_SVM(X,Y,sys.argv[2] + '/models')
+        train_SVM(X,Y,sys.argv[2] + '/models')
         train_MaxEnt(X,Y,sys.argv[2] + '/models',all=False)
     elif sys.argv[1] == 'test':
         to_test = sys.argv[2] + '/labeled-data/' + sys.argv[3]
@@ -202,6 +202,6 @@ if __name__ == "__main__":
             errors = test_autoreg(clf,model,vec,le_dict,to_test,inv_le_dict)
             with open(model + '-errors.txt', 'w') as f:
                 for e in sorted(errors):
-                    e_str = 'Observation: {}, Predicion: {}, True label: {}'.format(e[0], e[1], e[2])
+                    e_str = 'Observation: {}, Prediction: {}, True label: {}'.format(e[0], e[1], e[2])
                     f.write(e_str + '\n')
 
