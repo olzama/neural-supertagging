@@ -22,8 +22,12 @@ for e in errors1:
 for e in errors2:
     error_set2.add(e)
 
-diff = error_set1 - error_set2
+diff1 = error_set1 - error_set2
+diff2 = error_set2 - error_set1
 
-with open('error-diff.txt', 'w') as f:
-    for e in list(diff):
-        f.write(e + '\n')
+with open('error-diff1.txt', 'w') as f:
+    for e in list(diff1):
+        f.write(e)
+with open('error-diff2.txt', 'w') as f:
+    for e in list(diff2):
+        f.write(e)
