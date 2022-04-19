@@ -25,9 +25,9 @@ for e in errors2:
 diff1 = error_set1 - error_set2
 diff2 = error_set2 - error_set1
 
-with open('error-diff1.txt', 'w') as f:
-    for e in list(diff1):
+with open(sys.argv[1]+ '-error-diff1.txt', 'w') as f:
+    for e in sorted(list(diff1)):
         f.write(e)
-with open('error-diff2.txt', 'w') as f:
-    for e in list(diff2):
+with open(sys.argv[2]+ 'error-diff2.txt', 'w') as f:
+    for e in sorted(list(diff2)):
         f.write(e)
