@@ -127,11 +127,7 @@ def test_autoreg(clf, name,vec,le_dict,table_path,inv_le_dict):
     print('Number of predictions: {}'.format(len(all_preds_for_acc)))
     print('Number of true labels: {}'.format(len(all_true_labels)))
     print('Number of errors: {}'.format(len(errors)))
-    # with open(table_path + 'errors.txt', 'w') as f:
-    #     for e in sorted(errors):
-    #         e_str = 'Observation: {}, Predicion: {}, True label: {}'.format(e[0],e[1],e[2])
-    #         f.write(e_str + '\n')
-
+    return errors
 
 def update_row(row,ys,i):
     new_row = []
@@ -196,4 +192,9 @@ if __name__ == "__main__":
             with open(model,'rb') as f:
                 clf = pickle.load(f)
                 print("The loaded model was created using sklearn version {}".format(clf.__getstate__()['_sklearn_version']))
-            test_autoreg(clf,model,vec,le_dict,to_test,inv_le_dict)
+            errors = test_autoreg(clf,model,vec,le_dict,to_test,inv_le_dict)
+            with open(model + '-errors.txt', 'w') as f:
+                for e in sorted(errors):
+                    e_str = 'Observation: {}, Predicion: {}, True label: {}'.format(e[0], e[1], e[2])
+                    f.write(e_str + '\n')
+
