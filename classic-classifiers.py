@@ -106,7 +106,7 @@ def test_autoreg(clf, name,vec,le_dict,table_path,inv_le_dict):
                 pred_list += list(y_train_i)
                 for j,prediction in enumerate(y_train_i):
                     if prediction != y_i[j]:
-                        errors.append((str(row[j]),inv_le_dict[prediction],inv_le_dict.get(y_i[j],'UNK')))
+                        errors.append((remove_tag_features(row[j]),inv_le_dict[prediction],inv_le_dict.get(y_i[j],'UNK')))
                 test_time = timeit.default_timer() - t1
                 times.append(test_time)
                 all_predictions[length][i] = [inv_le_dict[pred] for pred in y_train_i]
@@ -128,6 +128,13 @@ def test_autoreg(clf, name,vec,le_dict,table_path,inv_le_dict):
     print('Number of true labels: {}'.format(len(all_true_labels)))
     print('Number of errors: {}'.format(len(errors)))
     return errors
+
+def remove_tag_features(obs):
+    new_obs = {}
+    for f in obs:
+        if not f.startswith('tag-'):
+            new_obs[f] = obs[f]
+    return str(new_obs)
 
 def update_row(row,ys,i):
     new_row = []
@@ -173,7 +180,7 @@ if __name__ == "__main__":
         #     for feat in vec.feature_names_:
         #         f.write(feat + '\n')
         #train_SVM(X,Y,sys.argv[2] + '/models')
-        train_MaxEnt(X,Y,sys.argv[2] + '/models',all=True)
+        train_MaxEnt(X,Y,sys.argv[2] + '/models',all=False)
     elif sys.argv[1] == 'test':
         to_test = sys.argv[2] + '/labeled-data/' + sys.argv[3]
         with open(sys.argv[2] +'/vectors/vectorizer','rb') as f:
@@ -187,7 +194,7 @@ if __name__ == "__main__":
         with open(sys.argv[2] + '/vectors/label-inv-dict', 'rb') as f:
             inv_le_dict = pickle.load(f)
             print('Number of classes in the inverse dictionary: {}'.format(len(inv_le_dict)))
-        models = glob.iglob(sys.argv[2] + '/models/*')
+        models = glob.iglob(sys.argv[2] + '/models/*.model')
         for model in models:
             with open(model,'rb') as f:
                 clf = pickle.load(f)
