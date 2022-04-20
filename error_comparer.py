@@ -33,6 +33,30 @@ def store_error_info(errors, model_name, obs, overpredicted, token, underpredict
         {'obs': obs, 'pred': overpredicted, 'true': underpredicted})
 
 
+def analyze_errors(errors, bigger_errors, error_list1, error_list2):
+    for model in errors:
+        list_of_misclassified_tokens = []
+        list_of_underpredicted_labels = []
+        for t in errors[model]['token']:
+            list_of_misclassified_tokens.append((len(errors[model]['token'][t]),t))
+        list_of_misclassified_tokens = sorted(list_of_misclassified_tokens,reverse=True)
+        for l in errors[model]['underpredicted']:
+            list_of_underpredicted_labels.append((len(errors[model]['underpredicted'][l]),l))
+        list_of_underpredicted_labels = sorted(list_of_underpredicted_labels,reverse=True)
+        print("Analysis of the performance of {}".format(model))
+        print("Total mistakes: {}".format(len(errors1)))
+        #print("Wrongly classified token orthographies: {}".format(len(errors[model]['token'])))
+        print("Tokens that were misclassified most times:")
+        for n,t in list_of_misclassified_tokens:
+            if n > 3:
+                print("{} ({})".format(t,n))
+            else:
+                break
+        print("True labels which were missed most often:")
+        for n,l in list_of_underpredicted_labels:
+            if n > 3:
+                print("{} ({})".format(l,n))
+
 with open(sys.argv[1], 'r') as f:
     errors1 = f.readlines()
 with open(sys.argv[2], 'r') as f:
@@ -48,10 +72,15 @@ bigger_errors = {sys.argv[1]: {'token':{}, 'overpredicted':{}, 'underpredicted':
                  sys.argv[2]: {'token':{}, 'overpredicted':{}, 'underpredicted':{}}}
 
 for e in errors1:
+    error_set1.add(e)
     systematize_error(e,sys.argv[1],errors, bigger_errors)
 
 for e in errors2:
+    error_set2.add(e)
     systematize_error(e,sys.argv[2],errors,bigger_errors)
+
+analyze_errors(errors,bigger_errors,errors1,errors2)
+
 
 
 diff1 = error_set1 - error_set2
