@@ -34,28 +34,37 @@ def store_error_info(errors, model_name, obs, overpredicted, token, underpredict
 
 
 def analyze_errors(errors, bigger_errors, error_list1, error_list2):
+    min_frequency = 3
     for model in errors:
-        list_of_misclassified_tokens = []
-        list_of_underpredicted_labels = []
-        for t in errors[model]['token']:
-            list_of_misclassified_tokens.append((len(errors[model]['token'][t]),t))
-        list_of_misclassified_tokens = sorted(list_of_misclassified_tokens,reverse=True)
-        for l in errors[model]['underpredicted']:
-            list_of_underpredicted_labels.append((len(errors[model]['underpredicted'][l]),l))
-        list_of_underpredicted_labels = sorted(list_of_underpredicted_labels,reverse=True)
+        list_of_misclassified_tokens = sort_mistakes_by_len(errors, model,"token")
+        list_of_underpredicted_labels = sort_mistakes_by_len(errors,model,"underpredicted")
+        list_of_overpredicted_labels = sort_mistakes_by_len(errors,model,"overpredicted")
         print("Analysis of the performance of {}".format(model))
         print("Total mistakes: {}".format(len(errors1)))
         #print("Wrongly classified token orthographies: {}".format(len(errors[model]['token'])))
         print("Tokens that were misclassified most times:")
-        for n,t in list_of_misclassified_tokens:
-            if n > 3:
-                print("{} ({})".format(t,n))
-            else:
-                break
+        report_most_common_mistakes(list_of_misclassified_tokens, min_frequency)
         print("True labels which were missed most often:")
-        for n,l in list_of_underpredicted_labels:
-            if n > 3:
-                print("{} ({})".format(l,n))
+        report_most_common_mistakes(list_of_underpredicted_labels, min_frequency)
+        print("Labels which were most often predicted instead of a true label:")
+        report_most_common_mistakes(list_of_overpredicted_labels, min_frequency)
+        
+
+def report_most_common_mistakes(list_of_mistakes, m):
+    for n, t in list_of_mistakes:
+        if n > m:
+            print("{} ({})".format(t, n))
+        else:
+            break
+
+
+def sort_mistakes_by_len(errors, model, key):
+    list_of_mistakes = []
+    for t in errors[model][key]:
+        list_of_mistakes.append((len(errors[model][key][t]), t))
+    list_of_mistakes = sorted(list_of_mistakes, reverse=True)
+    return list_of_mistakes
+
 
 with open(sys.argv[1], 'r') as f:
     errors1 = f.readlines()
