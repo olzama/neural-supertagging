@@ -8,11 +8,12 @@ def systematize_error(e, model_name, errors, bigger_errors):
     overpredicted = m[0][2]
     underpredicted = m[0][1]
     obs = m[0][0]
-    pat = re.compile("\'w\': \'(.+)\', \'pos\'.+")
-    m = re.findall(pat, obs)
+    pattern = re.compile("\'w\': \'(.+)\', \'pos\'.+")
+    m = re.findall(pattern, obs)
     token = m[0]
     store_error_info(errors, model_name, obs, overpredicted, token, underpredicted)
-    pos = re.findall(r"(.+_.+)_.+",underpredicted)[0]
+    pattern = re.compile("(.+?_.+?)_.+")
+    pos = re.findall(pattern,underpredicted)[0]
     # Next: why does the above not capture what I want?
     if not overpredicted.startswith(pos):
         store_error_info(bigger_errors, model_name, obs, overpredicted, token, underpredicted)
