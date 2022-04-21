@@ -109,7 +109,7 @@ def test_autoreg(clf, name,vec,le_dict,table_path,inv_le_dict):
                 pred_list += list(y_train_i)
                 for j,prediction in enumerate(y_train_i):
                     if prediction != y_i[j]:
-                        errors.append((remove_tag_features(row[j]),inv_le_dict[prediction],inv_le_dict.get(y_i[j],'UNK')))
+                        errors.append((remove_tag_features(row[j]),inv_le_dict[prediction],table[length]['lt'][i][j]))
                 test_time = timeit.default_timer() - t1
                 times.append(test_time)
                 all_predictions[length][i] = [inv_le_dict[pred] for pred in y_train_i]

@@ -6,8 +6,8 @@ import re
 def systematize_error(e, model_name, errors, bigger_errors):
     pattern = re.compile('Observation: \{(.+)\}, Prediction: (.+), True label: (.+)')
     m = re.findall(pattern, e)
-    overpredicted = m[0][2]
-    underpredicted = m[0][1]
+    overpredicted = m[0][1]
+    underpredicted = m[0][2]
     obs = m[0][0]
     pattern = re.compile("\'w\': \'(.+)\', \'pos\'.+")
     m = re.findall(pattern, obs)
