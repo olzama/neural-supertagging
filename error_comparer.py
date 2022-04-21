@@ -1,5 +1,7 @@
 import sys
 import re
+import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 
 
 
@@ -51,29 +53,37 @@ def analyze_errors(errors, bigger_errors, error_list1, error_list2):
         report_most_common_mistakes(list_of_overpredicted_labels, min_frequency)
     print('Reporting differences between two models')
     for error_type in ['underpredicted','overpredicted']:
-        diff1, diff2 = find_error_diff(errors, error_type)
-        for model in errors:
-            print("{} by {}:".format(error_type, model))
-            for e in diff1:
-                print("{} ({})".format(e,len(errors[model][error_type][e])))
-                if error_type == 'underpredicted':
-                    for ee in errors[model][error_type][e]:
+        y_true=[]
+        y_pred=[]
+        for i, model_name in enumerate(errors.keys()):
+            model = errors[model_name]
+            diffset = find_error_diff(errors, error_type, i)
+            print("{} by {}:".format(error_type, model_name))
+            for e in diffset:
+                print("{} ({})".format(e,len(model[error_type][e])))
+                for ee in errors[model][error_type][e]:
+                    if error_type == 'underpredicted':
                         print('Predicted: {}'.format(ee['pred']))
-                elif error_type == 'overpredicted':
-                    for ee in errors[model][error_type][e]:
+                    elif error_type == 'overpredicted':
                         print('True label: {}'.format(ee['true']))
+                    y_pred.append(ee['pred'])
+                    y_true.append(ee['true'])
+            cm = confusion_matrix(y_true,y_pred)
+            ConfusionMatrixDisplay(cm).plot()
+            plt.savefig(model_name+'-confmatrix.png')
 
 
 
-def find_error_diff(errors, k):
-    for i, model in enumerate(errors.keys()):
-        if i == 0:
+def find_error_diff(errors, k, i):
+    for j, model in enumerate(errors.keys()):
+        if j == 0:
             set1 = set(errors[model][k].keys())
-        elif i == 1:
+        elif j == 1:
             set2 = set(errors[model][k].keys())
-    diff1 = set1 - set2
-    diff2 = set2 - set1
-    return diff1, diff2
+    if i == 0:
+        return set1 - set2
+    elif i == 1:
+        return set2 - set1
 
 
 def report_most_common_mistakes(list_of_mistakes, m):
