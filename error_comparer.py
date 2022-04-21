@@ -2,6 +2,7 @@ import sys
 import re
 
 
+
 def systematize_error(e, model_name, errors, bigger_errors):
     pattern = re.compile('Observation: \{(.+)\}, Prediction: (.+), True label: (.+)')
     m = re.findall(pattern, e)
@@ -39,7 +40,7 @@ def analyze_errors(errors, bigger_errors, error_list1, error_list2):
         list_of_misclassified_tokens = sort_mistakes_by_len(errors, model,"token")
         list_of_underpredicted_labels = sort_mistakes_by_len(errors,model,"underpredicted")
         list_of_overpredicted_labels = sort_mistakes_by_len(errors,model,"overpredicted")
-        print("Analysis of the performance of {}".format(model))
+        print("Errors made by {}".format(model))
         print("Total mistakes: {}".format(len(errors1)))
         #print("Wrongly classified token orthographies: {}".format(len(errors[model]['token'])))
         print("Tokens that were misclassified most times:")
@@ -48,7 +49,32 @@ def analyze_errors(errors, bigger_errors, error_list1, error_list2):
         report_most_common_mistakes(list_of_underpredicted_labels, min_frequency)
         print("Labels which were most often predicted instead of a true label:")
         report_most_common_mistakes(list_of_overpredicted_labels, min_frequency)
-        
+    print('Reporting differences between two models')
+    for error_type in ['underpredicted','overpredicted']:
+        diff1, diff2 = find_error_diff(errors, error_type)
+        for model in errors:
+            print("{} by {}:".format(error_type, model))
+            for e in diff1:
+                print("{} ({})".format(e,len(errors[model][error_type][e])))
+                if error_type == 'underpredicted':
+                    for ee in errors[model][error_type][e]:
+                        print('Predicted: {}'.format(ee['pred']))
+                elif error_type == 'overpredicted':
+                    for ee in errors[model][error_type][e]:
+                        print('True label: {}'.format(ee['true']))
+
+
+
+def find_error_diff(errors, k):
+    for i, model in enumerate(errors.keys()):
+        if i == 0:
+            set1 = set(errors[model][k].keys())
+        elif i == 1:
+            set2 = set(errors[model][k].keys())
+    diff1 = set1 - set2
+    diff2 = set2 - set1
+    return diff1, diff2
+
 
 def report_most_common_mistakes(list_of_mistakes, m):
     for n, t in list_of_mistakes:
@@ -81,19 +107,15 @@ bigger_errors = {sys.argv[1]: {'token':{}, 'overpredicted':{}, 'underpredicted':
                  sys.argv[2]: {'token':{}, 'overpredicted':{}, 'underpredicted':{}}}
 
 for e in errors1:
-    error_set1.add(e)
     systematize_error(e,sys.argv[1],errors, bigger_errors)
 
 for e in errors2:
-    error_set2.add(e)
     systematize_error(e,sys.argv[2],errors,bigger_errors)
 
 analyze_errors(errors,bigger_errors,errors1,errors2)
 
 
 
-diff1 = error_set1 - error_set2
-diff2 = error_set2 - error_set1
 
 
 

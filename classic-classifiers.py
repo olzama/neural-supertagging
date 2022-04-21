@@ -6,6 +6,8 @@ import timeit
 import warnings
 from pathlib import Path
 
+import matplotlib.pyplot as plt
+
 import numpy as np
 
 import pickle,glob
@@ -15,6 +17,7 @@ import sys
 from sklearn.linear_model import LogisticRegression
 from sklearn.exceptions import ConvergenceWarning
 from sklearn import svm
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
@@ -127,6 +130,7 @@ def test_autoreg(clf, name,vec,le_dict,table_path,inv_le_dict):
     print('Number of predictions: {}'.format(len(all_preds_for_acc)))
     print('Number of true labels: {}'.format(len(all_true_labels)))
     print('Number of errors: {}'.format(len(errors)))
+    #cm = confusion_matrix(all_true_labels[:10],all_preds_for_acc[:10])
     return errors
 
 def remove_tag_features(obs):
@@ -204,4 +208,6 @@ if __name__ == "__main__":
                 for e in sorted(errors):
                     e_str = 'Observation: {}, Prediction: {}, True label: {}'.format(e[0], e[1], e[2])
                     f.write(e_str + '\n')
+            #ConfusionMatrixDisplay(conf_matrix).plot()
+            #plt.savefig(model+ '-conf-matrix.png')
 
