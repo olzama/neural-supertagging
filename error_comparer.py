@@ -58,16 +58,28 @@ def analyze_errors(errors, bigger_errors, error_list1, error_list2):
         for i, model_name in enumerate(errors.keys()):
             model = errors[model_name]
             diffset = find_error_diff(errors, error_type, i)
-            print("{} by {}:".format(error_type, model_name))
+            print("{} ONLY by {}:".format(error_type, model_name))
             for e in diffset:
-                print("{} ({})".format(e,len(model[error_type][e])))
+                report = "{} ({})\t".format(e,len(model[error_type][e]))
+                other = {}
                 for ee in model[error_type][e]:
                     if error_type == 'underpredicted':
-                        print('Predicted: {}'.format(ee['pred']))
+                        if not ee['pred'] in other:
+                            other[ee['pred']] = 0
+                        other[ee['pred']] += 1
                     elif error_type == 'overpredicted':
-                        print('True label: {}'.format(ee['true']))
+                        if not ee['true'] in other:
+                            other[ee['true']] = 0
+                        other[ee['true']] += 1
                     y_pred.append(ee['pred'])
                     y_true.append(ee['true'])
+                if error_type == "underpredicted":
+                    report += 'Predicted instead: '
+                elif error_type == "overpredicted":
+                    report += 'The true labels were: '
+                for ee in other:
+                    report += "{} ({}) ".format(ee,other[ee])
+                print(report)
             cm = confusion_matrix(y_true,y_pred)
             ConfusionMatrixDisplay(cm).plot()
             plt.savefig(model_name+'-confmatrix.png')
