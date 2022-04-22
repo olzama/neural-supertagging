@@ -61,7 +61,7 @@ def analyze_errors(errors, bigger_errors, error_list1, error_list2):
             print("{} by {}:".format(error_type, model_name))
             for e in diffset:
                 print("{} ({})".format(e,len(model[error_type][e])))
-                for ee in errors[model][error_type][e]:
+                for ee in model[error_type][e]:
                     if error_type == 'underpredicted':
                         print('Predicted: {}'.format(ee['pred']))
                     elif error_type == 'overpredicted':
