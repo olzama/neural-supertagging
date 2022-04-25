@@ -71,8 +71,9 @@ def analyze_errors(errors, bigger_errors, error_list1, error_list2):
                         if not ee['true'] in other:
                             other[ee['true']] = 0
                         other[ee['true']] += 1
-                    y_pred.append(ee['pred'])
-                    y_true.append(ee['true'])
+                    if len(model[error_type][e]) >= min_frequency:
+                        y_pred.append(ee['pred'])
+                        y_true.append(ee['true'])
                 if error_type == "underpredicted":
                     report += 'Predicted instead: '
                 elif error_type == "overpredicted":
@@ -80,9 +81,11 @@ def analyze_errors(errors, bigger_errors, error_list1, error_list2):
                 for ee in other:
                     report += "{} ({}) ".format(ee,other[ee])
                 print(report)
-            cm = confusion_matrix(y_true,y_pred)
-            ConfusionMatrixDisplay(cm).plot()
-            plt.savefig(model_name+'-confmatrix.png')
+            if len(y_true) > 0:
+                cm = confusion_matrix(y_true,y_pred)
+                ConfusionMatrixDisplay(cm).plot()
+                plt.savefig(model_name+'-'+error_type+'-confmatrix.png')
+
 
 
 
@@ -136,14 +139,3 @@ for e in errors2:
 
 analyze_errors(errors,bigger_errors,errors1,errors2)
 
-
-
-
-
-
-with open(sys.argv[1]+ '-error-diff1.txt', 'w') as f:
-    for e in sorted(list(diff1)):
-        f.write(e)
-with open(sys.argv[2]+ 'error-diff2.txt', 'w') as f:
-    for e in sorted(list(diff2)):
-        f.write(e)
