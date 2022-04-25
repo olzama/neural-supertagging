@@ -130,7 +130,12 @@ def test_autoreg(clf, name,vec,le_dict,table_path,inv_le_dict):
     print('Number of predictions: {}'.format(len(all_preds_for_acc)))
     print('Number of true labels: {}'.format(len(all_true_labels)))
     print('Number of errors: {}'.format(len(errors)))
-    #cm = confusion_matrix(all_true_labels[:10],all_preds_for_acc[:10])
+    classes = list(set([inv_le_dict[l] for l in all_preds_for_acc] + [inv_le_dict.get(l,'UNK') for l in all_true_labels]))
+    cm = ConfusionMatrixDisplay.from_predictions(all_preds_for_acc, all_true_labels, display_labels=classes,
+                                                 xticks_rotation="vertical")
+    fig, ax = plt.subplots(figsize=(100, 100))
+    cm.plot(ax=ax, xticks_rotation="vertical")
+    plt.savefig(name + '-confmatrix.png')
     return errors
 
 def remove_tag_features(obs):
@@ -208,6 +213,4 @@ if __name__ == "__main__":
                 for e in sorted(errors):
                     e_str = 'Observation: {}, Prediction: {}, True label: {}'.format(e[0], e[1], e[2])
                     f.write(e_str + '\n')
-            #ConfusionMatrixDisplay(conf_matrix).plot()
-            #plt.savefig(model+ '-conf-matrix.png')
 
