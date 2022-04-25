@@ -2,7 +2,8 @@ import sys
 import re
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
-
+import numpy as np
+import itertools
 
 
 def systematize_error(e, model_name, errors, bigger_errors):
@@ -36,8 +37,7 @@ def store_error_info(errors, model_name, obs, overpredicted, token, underpredict
         {'obs': obs, 'pred': overpredicted, 'true': underpredicted})
 
 
-def analyze_errors(errors, bigger_errors, error_list1, error_list2):
-    min_frequency = 3
+def analyze_errors(errors, min_frequency):
     for model in errors:
         list_of_misclassified_tokens = sort_mistakes_by_len(errors, model,"token")
         list_of_underpredicted_labels = sort_mistakes_by_len(errors,model,"underpredicted")
@@ -82,12 +82,41 @@ def analyze_errors(errors, bigger_errors, error_list1, error_list2):
                     report += "{} ({}) ".format(ee,other[ee])
                 print(report)
             if len(y_true) > 0:
-                cm = confusion_matrix(y_true,y_pred)
-                ConfusionMatrixDisplay(cm).plot()
+                classes = list(set(y_pred+y_true))
+                cm = ConfusionMatrixDisplay.from_predictions(y_true, y_pred,labels=classes,display_labels=classes,xticks_rotation="vertical")
+                fig, ax = plt.subplots(figsize=(20,20))
+                cm.plot(ax=ax,xticks_rotation="vertical")
                 plt.savefig(model_name+'-'+error_type+'-confmatrix.png')
 
 
+def plotConfusionMatrix(cm, classes, normalize=False, title='Confusion Matrix', cmap = plt.cm.Blues):
 
+    plt.figure()
+    plt.imshow(cm, interpolation='nearest', cmap=cmap)
+    plt.title(title)
+    plt.colorbar()
+    tick_marks = np.arange(len(classes))
+    plt.xticks(tick_marks, classes, rotation=45)
+    plt.yticks(tick_marks, classes)
+    plt.ylabel('Actual Class')
+    plt.xlabel('Predicted Class')
+
+    # if normalize:
+    #     cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+    #     print('Normalized Confusion Matrix')
+    # else:
+    #     print('Un-normalized Confusion Matrix')
+
+    #print(cm)
+
+    # thresh = cm.max()/2
+    #
+    # for i,j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+    #     plt.text(j,i, cm[i,j], horizontalalignment='center', color='white' if cm[i,j] > thresh else 'black', fontsize=25, fontweight='bold')
+    #     plt.tight_layout()
+    #     plt.ylabel('Actual Class')
+    #     plt.xlabel('Predicted Class')
+    return plt
 
 def find_error_diff(errors, k, i):
     for j, model in enumerate(errors.keys()):
@@ -137,5 +166,6 @@ for e in errors1:
 for e in errors2:
     systematize_error(e,sys.argv[2],errors,bigger_errors)
 
-analyze_errors(errors,bigger_errors,errors1,errors2)
+min_freq = int(sys.argv[3])
+analyze_errors(errors, min_freq)
 
