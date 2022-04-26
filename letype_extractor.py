@@ -98,7 +98,7 @@ class LexTypeExtractor:
             all_sentences[l] += ts['sentences'][l]
         return n
 
-    def process_testsuites(self,testsuites,lextypes, out_dir):
+    def process_testsuites_autoreg(self,testsuites,lextypes, out_dir):
         max_sen_length, corpus_size, num_ts, data = self.read_testsuites(testsuites)
         tables_by_len = {'train':{},'dev':{},'test':{}}
         for k in ['train','dev','test']:
@@ -111,6 +111,41 @@ class LexTypeExtractor:
             else:
                 all_tokens += self.process_table(data, k, lextypes, tables_by_len, test)
             print('Total PROCESSED {} tokens: {}'.format(k, all_tokens))
+
+    def process_testsuites_nonautoreg(self,testsuites,lextypes, out_dir):
+        pos_mapper = pos_map.Pos_mapper('./pos-map.txt')
+        max_sen_length, corpus_size, num_ts, data = self.read_testsuites(testsuites)
+        for k in ['train','dev','test']:
+            is_devtest_data = k in ['dev','test']
+            pathlib.Path(out_dir + '/labeled-data/' + k).mkdir(parents=True, exist_ok=False)
+            if is_devtest_data:
+                for corpus in data[k]['by corpus']:
+                    x,y = self.process_corpus(lextypes,corpus,pos_mapper)
+                    data_table['ft'] = x
+                    data_table['lt'] = y
+                    with open(out_dir + '/labeled-data/' + k + '/' + corpus['name'], 'wb') as f:
+                        pickle.dump(data_table, f)
+            else:
+                data_table = {'ft':[],'lt':[]}
+                for corpus in data[k]['by corpus']:
+                    x, y = self.process_corpus(lextypes,corpus,pos_mapper)
+                    data_table['ft'] += x
+                    data_table['lt'] += y
+                with open(out_dir + '/labeled-data/train/train' , 'wb') as f:
+                    pickle.dump(data_table, f)
+
+    def process_corpus(self, lextypes, corpus,pos_mapper):
+        data = []
+        y = []
+        for sen in corpus['tokens-tags']:
+            tokens, labels, pos_tags, autoregress_labels = \
+                self.get_tokens_labels(sen, CONTEXT_WINDOW, lextypes, pos_mapper, False)
+            for k, t in enumerate(tokens):
+                if k < CONTEXT_WINDOW or k >= len(tokens) - CONTEXT_WINDOW:
+                    continue
+                y.append(labels[k])
+                data.append(self.get_context(t, tokens, pos_tags, k, CONTEXT_WINDOW))
+        return data, y
 
     def process_table(self, data, k, lextypes, tables_by_len, test, corpus=None):
         n = 0
@@ -322,12 +357,17 @@ if __name__ == "__main__":
     args = sys.argv[1:]
     dt_str = '-'.join(str(datetime.now()).split()).replace(':','.')
     run_id = sys.argv[3] + dt_str
+    if len(sys.argv) > 3:
+        autoreg = sys.argv[4] == 'autoreg'
     out_dir = './output/' + run_id
     pathlib.Path(out_dir).mkdir(parents=True, exist_ok=False)
     le = LexTypeExtractor()
     le.parse_lexicons(args[0])
     le.stats['total lextypes'] = len(le.lextypes)
-    le.process_testsuites(args[1],le.lextypes,out_dir)
+    if autoreg:
+        le.process_testsuites_autoreg(args[1],le.lextypes,out_dir)
+    else:
+        le.process_testsuites_nonautoreg(args[1],le.lextypes,out_dir)
     with open(out_dir + '/lextypes','wb') as f:
         lextypes = set([str(v) for v in list(le.lextypes.values())])
         pickle.dump(lextypes,f)
