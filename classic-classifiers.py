@@ -107,10 +107,10 @@ def test_autoreg(clf, name,vec,le_dict,table_path,inv_le_dict):
                 y_train_i = clf.predict(x_i)
                 all_preds_for_acc += list(y_train_i)
                 pred_list += list(y_train_i)
+                test_time = timeit.default_timer() - t1
                 for j,prediction in enumerate(y_train_i):
                     if prediction != y_i[j]:
                         errors.append((remove_tag_features(row[j]),inv_le_dict[prediction],table[length]['lt'][i][j]))
-                test_time = timeit.default_timer() - t1
                 times.append(test_time)
                 all_predictions[length][i] = [inv_le_dict[pred] for pred in y_train_i]
         all_times.append(sum(times))
@@ -133,7 +133,7 @@ def test_autoreg(clf, name,vec,le_dict,table_path,inv_le_dict):
     classes = list(set([inv_le_dict[l] for l in all_preds_for_acc] + [inv_le_dict.get(l,'UNK') for l in all_true_labels]))
     cm = ConfusionMatrixDisplay.from_predictions(all_preds_for_acc, all_true_labels, display_labels=classes,
                                                  xticks_rotation="vertical")
-    fig, ax = plt.subplots(figsize=(1000, 1000))
+    fig, ax = plt.subplots(figsize=(500, 500))
     cm.plot(ax=ax, xticks_rotation="vertical")
     plt.savefig(name + '-confmatrix.png')
     return errors
@@ -162,15 +162,50 @@ def update_row(row,ys,i):
     else:
         return row
 
-def test_model(clf, X_test, Y_test, num_sentences):
-    t1 = timeit.default_timer()
-    y_pred = clf.predict(X_test)
-    test_time = timeit.default_timer() - t1
-    avg_time = test_time/num_sentences
-    print('Test time of {}: {}; {} average per sentence'.format(model, test_time, avg_time))
-    accuracy = np.sum(np.array(y_pred) == np.array(Y_test)) / len(Y_test)
-    print("Test accuracy for model %s: %.4f" % (model, accuracy))
-    return accuracy
+def test_model(clf,model,vec,le_dict,table_path,inv_le_dict):
+    all_preds = []
+    all_true_labels = []
+    all_times = []
+    errors = []
+    for test_file in glob.iglob(table_path+'/**'):
+        with open(test_file, 'rb') as f:
+            table = pickle.load(f)
+        X = vec.transform(table['ft'])
+        y = [ le_dict.get(lbl,-1) for lbl in table['lt'] ]
+        t1 = timeit.default_timer()
+        y_pred = clf.predict(X)
+        test_time = timeit.default_timer() - t1
+        for j, prediction in enumerate(y_pred):
+            if prediction != y[j]:
+                errors.append((table['ft'][j], inv_le_dict[prediction], inv_le_dict.get(y[j],'UNK')))
+        all_times.append(test_time)
+        all_preds += list(y_pred)
+        all_true_labels += y
+        acc = np.sum(np.array(y) == y_pred) / len(y)
+        print('Accuracy of {} on {}: {}'.format(model, test_file, acc))
+        eprint('Accuracy of {} on {}: {}'.format(model, test_file, acc))
+    print('Total test time for {} on all datasets in {}: {}'.format(model, table_path, sum(all_times)))
+    print('Accuracy of {} for all datasets in {}: {}'.format(model,table_path,
+                                                                     np.sum(np.array(all_true_labels) ==
+                                                                            np.array(all_preds))
+                                                             / len(all_true_labels)))
+    eprint('Accuracy of {} for all datasets in {}: {}'.format(model,table_path,
+                                                                     np.sum(np.array(all_true_labels) ==
+                                                                            np.array(all_preds))
+                                                             / len(all_true_labels)))
+    eprint('Total test time for {} on all datasets in {}: {}'.format(model, table_path, sum(all_times)))
+    print('Number of predictions: {}'.format(len(all_preds)))
+    print('Number of true labels: {}'.format(len(all_true_labels)))
+    print('Number of errors: {}'.format(len(errors)))
+    classes = list(set([inv_le_dict[l] for l in all_preds] + [inv_le_dict.get(l,'UNK') for l in all_true_labels]))
+    cm = ConfusionMatrixDisplay.from_predictions(all_preds, all_true_labels, display_labels=classes,
+                                                 xticks_rotation="vertical")
+    fig, ax = plt.subplots(figsize=(500, 500))
+    cm.plot(ax=ax, xticks_rotation="vertical")
+    plt.savefig(model + '-confmatrix.png')
+    return errors
+
+
 
 def load_vectors(path_to_vecs, path_to_labels):
     with open(path_to_vecs, 'rb') as vf:
@@ -208,7 +243,11 @@ if __name__ == "__main__":
             with open(model,'rb') as f:
                 clf = pickle.load(f)
                 print("The loaded model was created using sklearn version {}".format(clf.__getstate__()['_sklearn_version']))
-            errors = test_autoreg(clf,model,vec,le_dict,to_test,inv_le_dict)
+            autoreg = sys.argv[4] == 'autoreg'
+            if autoreg:
+                errors = test_autoreg(clf,model,vec,le_dict,to_test,inv_le_dict)
+            else:
+                errors = test_model(clf,model,vec,le_dict,to_test,inv_le_dict)
             with open(model + '-errors.txt', 'w') as f:
                 for e in sorted(errors):
                     e_str = 'Observation: {}, Prediction: {}, True label: {}'.format(e[0], e[1], e[2])
