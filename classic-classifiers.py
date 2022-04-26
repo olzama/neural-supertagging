@@ -133,7 +133,7 @@ def test_autoreg(clf, name,vec,le_dict,table_path,inv_le_dict):
     classes = list(set([inv_le_dict[l] for l in all_preds_for_acc] + [inv_le_dict.get(l,'UNK') for l in all_true_labels]))
     cm = ConfusionMatrixDisplay.from_predictions(all_preds_for_acc, all_true_labels, display_labels=classes,
                                                  xticks_rotation="vertical")
-    fig, ax = plt.subplots(figsize=(400, 400))
+    fig, ax = plt.subplots(figsize=(1000, 1000))
     cm.plot(ax=ax, xticks_rotation="vertical")
     plt.savefig(name + '-confmatrix.png')
     return errors
