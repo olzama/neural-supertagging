@@ -177,7 +177,7 @@ def test_model(clf,model,vec,le_dict,table_path,inv_le_dict):
         test_time = timeit.default_timer() - t1
         for j, prediction in enumerate(y_pred):
             if prediction != y[j]:
-                errors.append((table['ft'][j], inv_le_dict[prediction], inv_le_dict.get(y[j],'UNK')))
+                errors.append((str(table['ft'][j]), inv_le_dict[prediction], inv_le_dict.get(y[j],'UNK')))
         all_times.append(test_time)
         all_preds += list(y_pred)
         all_true_labels += y
