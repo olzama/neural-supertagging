@@ -81,12 +81,12 @@ def analyze_errors(errors, min_frequency):
                 for ee in other:
                     report += "{} ({}) ".format(ee,other[ee])
                 print(report)
-            if len(y_true) > 0:
-                classes = list(set(y_pred+y_true))
-                cm = ConfusionMatrixDisplay.from_predictions(y_true, y_pred,labels=classes,display_labels=classes,xticks_rotation="vertical")
-                fig, ax = plt.subplots(figsize=(20,20))
-                cm.plot(ax=ax,xticks_rotation="vertical")
-                plt.savefig(model_name+'-'+error_type+'-confmatrix.png')
+            #if len(y_true) > 0:
+                #classes = list(set(y_pred+y_true))
+                #cm = ConfusionMatrixDisplay.from_predictions(y_true, y_pred,labels=classes,display_labels=classes,xticks_rotation="vertical")
+                #fig, ax = plt.subplots(figsize=(20,20))
+                #cm.plot(ax=ax,xticks_rotation="vertical")
+                #plt.savefig(model_name+'-'+error_type+'-confmatrix.png')
 
 
 def plotConfusionMatrix(cm, classes, normalize=False, title='Confusion Matrix', cmap = plt.cm.Blues):

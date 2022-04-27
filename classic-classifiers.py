@@ -197,12 +197,12 @@ def test_model(clf,model,vec,le_dict,table_path,inv_le_dict):
     print('Number of predictions: {}'.format(len(all_preds)))
     print('Number of true labels: {}'.format(len(all_true_labels)))
     print('Number of errors: {}'.format(len(errors)))
-    classes = list(set([inv_le_dict[l] for l in all_preds] + [inv_le_dict.get(l,'UNK') for l in all_true_labels]))
-    cm = ConfusionMatrixDisplay.from_predictions(all_preds, all_true_labels, display_labels=classes,
-                                                 xticks_rotation="vertical")
-    fig, ax = plt.subplots(figsize=(500, 500))
-    cm.plot(ax=ax, xticks_rotation="vertical")
-    plt.savefig(model + '-confmatrix.png')
+    # classes = list(set([inv_le_dict[l] for l in all_preds] + [inv_le_dict.get(l,'UNK') for l in all_true_labels]))
+    # cm = ConfusionMatrixDisplay.from_predictions(all_preds, all_true_labels, display_labels=classes,
+    #                                              xticks_rotation="vertical")
+    # fig, ax = plt.subplots(figsize=(500, 500))
+    # cm.plot(ax=ax, xticks_rotation="vertical")
+    # plt.savefig(model + '-confmatrix.png')
     return errors
 
 
