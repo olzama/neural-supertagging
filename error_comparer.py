@@ -18,7 +18,6 @@ def systematize_error(e, model_name, errors, bigger_errors):
     store_error_info(errors, model_name, obs, overpredicted, token, underpredicted)
     pattern = re.compile("(.+?_.+?)_.+")
     pos = re.findall(pattern,underpredicted)[0]
-    # Next: why does the above not capture what I want?
     if not overpredicted.startswith(pos):
         store_error_info(bigger_errors, model_name, obs, overpredicted, token, underpredicted)
 
@@ -43,7 +42,8 @@ def analyze_errors(errors, min_frequency):
         list_of_underpredicted_labels = sort_mistakes_by_len(errors,model,"underpredicted")
         list_of_overpredicted_labels = sort_mistakes_by_len(errors,model,"overpredicted")
         print("Errors made by {}".format(model))
-        print("Total mistakes: {}".format(len(errors1)))
+        num_errors = sum([n for n,t in list_of_misclassified_tokens])
+        print("Total mistakes: {}".format(num_errors))
         #print("Wrongly classified token orthographies: {}".format(len(errors[model]['token'])))
         print("Tokens that were misclassified most times:")
         report_most_common_mistakes(list_of_misclassified_tokens, min_frequency)
@@ -119,15 +119,20 @@ def plotConfusionMatrix(cm, classes, normalize=False, title='Confusion Matrix', 
     return plt
 
 def find_error_diff(errors, k, i):
+    set1 = set()
+    set2 = set()
     for j, model in enumerate(errors.keys()):
         if j == 0:
             set1 = set(errors[model][k].keys())
         elif j == 1:
             set2 = set(errors[model][k].keys())
-    if i == 0:
-        return set1 - set2
-    elif i == 1:
-        return set2 - set1
+    if set1 and set2:
+        if i == 0:
+            return set1 - set2
+        elif i == 1:
+            return set2 - set1
+    else:
+        return set1
 
 
 def report_most_common_mistakes(list_of_mistakes, m):
@@ -146,26 +151,21 @@ def sort_mistakes_by_len(errors, model, key):
     return list_of_mistakes
 
 
-with open(sys.argv[1], 'r') as f:
-    errors1 = f.readlines()
 with open(sys.argv[2], 'r') as f:
-    errors2 = f.readlines()
-error_set1 = set()
-error_set2 = set()
-bigger_error_set1 = set()
-bigger_error_set2 = set()
-errors = {sys.argv[1]: {'token':{}, 'overpredicted':{}, 'underpredicted':{}},
-          sys.argv[2]: {'token':{}, 'overpredicted':{}, 'underpredicted':{}}}
-
-bigger_errors = {sys.argv[1]: {'token':{}, 'overpredicted':{}, 'underpredicted':{}},
-                 sys.argv[2]: {'token':{}, 'overpredicted':{}, 'underpredicted':{}}}
-
+    errors1 = f.readlines()
+errors = {sys.argv[2]: {'token':{}, 'overpredicted':{}, 'underpredicted':{}}}
+bigger_errors = {sys.argv[2]: {'token': {}, 'overpredicted': {}, 'underpredicted': {}}}
 for e in errors1:
-    systematize_error(e,sys.argv[1],errors, bigger_errors)
-
-for e in errors2:
-    systematize_error(e,sys.argv[2],errors,bigger_errors)
-
-min_freq = int(sys.argv[3])
+    systematize_error(e,sys.argv[2],errors, bigger_errors)
+if len(sys.argv) > 3:
+    with open(sys.argv[3], 'r') as f:
+        errors2 = f.readlines()
+    errors[sys.argv[3]] = {'token':{}, 'overpredicted':{}, 'underpredicted':{}}
+    bigger_errors[sys.argv[3]] = {'token': {}, 'overpredicted': {}, 'underpredicted': {}}
+    for e in errors2:
+        systematize_error(e,sys.argv[3],errors,bigger_errors)
+min_freq = int(sys.argv[1])
 analyze_errors(errors, min_freq)
+print('Errors between types with different prefix:')
+analyze_errors(bigger_errors,0)
 
