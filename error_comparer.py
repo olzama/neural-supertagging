@@ -17,7 +17,10 @@ def systematize_error(e, model_name, errors, bigger_errors):
     token = m[0]
     store_error_info(errors, model_name, obs, overpredicted, token, underpredicted)
     pattern = re.compile("(.+?_.+?)_.+")
-    pos = re.findall(pattern,underpredicted)[0]
+    if underpredicted != 'UNK':
+        pos = re.findall(pattern,underpredicted)[0]
+    else:
+        pos = 'UNK'
     if not overpredicted.startswith(pos):
         store_error_info(bigger_errors, model_name, obs, overpredicted, token, underpredicted)
 
