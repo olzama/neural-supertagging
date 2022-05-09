@@ -24,7 +24,6 @@ def systematize_error(e, model_name, errors, bigger_errors):
     if not overpredicted.startswith(pos):
         store_error_info(bigger_errors, model_name, obs, overpredicted, token, underpredicted)
 
-
 def store_error_info(errors, model_name, obs, overpredicted, token, underpredicted):
     if not token in errors[model_name]['token']:
         errors[model_name]['token'][token] = []
@@ -153,14 +152,35 @@ def sort_mistakes_by_len(errors, model, key):
     list_of_mistakes = sorted(list_of_mistakes, reverse=True)
     return list_of_mistakes
 
+def find_errors_neural(pred,gold):
+    errors = []
+    for i, p in enumerate(pred):
+        tok_p, lp = p.split(' ')
+        g = gold[i]
+        tok_g, gl = g.split('\t')
+        # if tok_p != tok_g:
+        #     print(tok_p + '\t' + tok_g)
+        if gl != lp:
+            w = "{{'w': '{}', 'pos': NEURAL}}".format(tok_p)
+            errors.append("Observation: {}, Prediction: {}, "
+                          "True label: {}".format(w,lp.strip(),gl.strip()))
+    return errors
 
-with open(sys.argv[2], 'r') as f:
-    errors1 = f.readlines()
+if sys.argv[3] == 'classic':
+    with open(sys.argv[2], 'r') as f:
+        errors1 = f.readlines()
+else:
+    with open(sys.argv[2], 'r') as f:
+        predictions_ = [ ln for ln in  f.readlines() if ln != '\n' ]
+    with open(sys.argv[3], 'r') as f:
+        gold = [g for g in f.readlines() if g != '\n']
+    predictions = [p for p in predictions_ if not (p == '\n' or p.startswith('# 1.0'))]
+    errors1 = find_errors_neural(predictions, gold)
 errors = {sys.argv[2]: {'token':{}, 'overpredicted':{}, 'underpredicted':{}}}
 bigger_errors = {sys.argv[2]: {'token': {}, 'overpredicted': {}, 'underpredicted': {}}}
 for e in errors1:
     systematize_error(e,sys.argv[2],errors, bigger_errors)
-if len(sys.argv) > 3:
+if len(sys.argv) > 5:
     with open(sys.argv[3], 'r') as f:
         errors2 = f.readlines()
     errors[sys.argv[3]] = {'token':{}, 'overpredicted':{}, 'underpredicted':{}}
@@ -171,4 +191,3 @@ min_freq = int(sys.argv[1])
 analyze_errors(errors, min_freq)
 print('Errors between types with different prefix:')
 analyze_errors(bigger_errors,0)
-
