@@ -7,6 +7,7 @@
 from __future__ import print_function
 import time
 import sys
+import energyusage
 import argparse
 import random
 import torch
@@ -583,7 +584,7 @@ if __name__ == '__main__':
         data.generate_instance('dev')
         data.generate_instance('test')
         data.build_pretrain_emb()
-        train(data)
+        energyusage.evaluate(train,data,pdf=True)
     elif status == 'decode':
         print("MODEL: decode")
         data.load(data.dset_dir)
