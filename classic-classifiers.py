@@ -14,6 +14,8 @@ import pickle,glob
 
 import sys
 
+import energyusage
+
 from sklearn.linear_model import LogisticRegression
 from sklearn.exceptions import ConvergenceWarning
 from sklearn import svm
@@ -223,8 +225,8 @@ if __name__ == "__main__":
         # with open('/Users/olzama/Desktop/cur-features.txt', 'w') as f:
         #     for feat in vec.feature_names_:
         #         f.write(feat + '\n')
-        train_SVM(X,Y,sys.argv[2] + '/models')
-        train_MaxEnt(X,Y,sys.argv[2] + '/models',all=True)
+        energyusage.evaluate(train_SVM,X,Y,sys.argv[2] + '/models')
+        #train_MaxEnt(X,Y,sys.argv[2] + '/models',all=True)
     elif sys.argv[1] == 'test':
         to_test = sys.argv[2] + '/labeled-data/' + sys.argv[3]
         with open(sys.argv[2] +'/vectors/vectorizer','rb') as f:
