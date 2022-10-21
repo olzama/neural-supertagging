@@ -56,7 +56,10 @@ class LexTypeExtractor:
                         t += len(terminals)
                         p_input = response['p-input']
                         p_tokens = response['p-tokens']
-                        terminals_tok_tags = self.map_lattice_to_input(p_input, p_tokens, deriv)
+                        if p_tokens:
+                            terminals_tok_tags = self.map_lattice_to_input(p_input, p_tokens, deriv)
+                        else:
+                            terminals_tok_tags = self.get_eagle_tags(p_input,deriv)
                         if len(terminals) not in data[idx]['by corpus'][i]['sentences']:
                             data[idx]['by corpus'][i]['sentences'][len(terminals)] = []
                         data[idx]['by corpus'][i]['sentences'][len(terminals)].append(terminals_tok_tags)
@@ -231,10 +234,45 @@ class LexTypeExtractor:
             y.append('\n') # sentence separator
         return all_tokens
 
+    def leave_one_tag_per_token(self,yy_tokens):
+        new_tokens = []
+        prev = None
+        for t in yy_tokens:
+            if prev:
+                if t.start != prev.start:
+                    if t.end != prev.end:
+                        new_tokens.append(t)
+                        prev = t
+            else:
+                new_tokens.append(t)
+                prev = t
+        return new_tokens
+
+    '''
+    Sometimes, in yy_input, there are multiple possible Freeling tags for the same token.
+    I don't know what the order of the tags is (may be even arbitrary).
+    For now, I will just take the first tag.
+    '''
+    def get_eagle_tags(self, p_input, deriv):
+        terminals_toks_postags = []
+        yy_input = YYTokenLattice.from_string(p_input)
+        if len(deriv.terminals()) != len(yy_input.tokens):
+            yy_tokens = self.leave_one_tag_per_token(yy_input.tokens)
+        else:
+            yy_tokens = yy_input.tokens
+        assert len(deriv.terminals()) == len(yy_tokens)
+        for t in deriv.terminals():
+            assert len(t.tokens) == 1
+            toks_pos_tags = []
+            for i,tok in enumerate(t.tokens):
+                toks_pos_tags.append((tok, yy_tokens[i].lrules[0]))
+            terminals_toks_postags.append((t,toks_pos_tags))
+        return terminals_toks_postags
+
     def map_lattice_to_input(self, p_input, p_tokens, deriv):
+        terminals_toks_postags = []
         yy_lattice = YYTokenLattice.from_string(p_tokens)
         yy_input = YYTokenLattice.from_string(p_input)
-        terminals_toks_postags = []
         for t in deriv.terminals():
             toks_pos_tags = []
             for ttok in t.tokens:
