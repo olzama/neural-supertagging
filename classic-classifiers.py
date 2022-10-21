@@ -52,7 +52,7 @@ def train_MaxEnt(X, Y, fp, all=False):
         }
     else:
         models = {
-            'saga': { 'l2': {"multinomial": {"name": "Multinomial-L2", "iters": [10]}}}
+            'saga': { 'l1': {"OVR": {"name": "OVR-L1", "iters": [100]}}}
         }
 
     for solver in models:
@@ -225,7 +225,8 @@ if __name__ == "__main__":
         # with open('/Users/olzama/Desktop/cur-features.txt', 'w') as f:
         #     for feat in vec.feature_names_:
         #         f.write(feat + '\n')
-        energyusage.evaluate(train_SVM,X,Y,sys.argv[2] + '/models')
+        #energyusage.evaluate(train_SVM,X,Y,sys.argv[2] + '/models')
+        train_SVM(X,Y,sys.argv[2] + '/models')
         #train_MaxEnt(X,Y,sys.argv[2] + '/models',all=True)
     elif sys.argv[1] == 'test':
         to_test = sys.argv[2] + '/labeled-data/' + sys.argv[3]
