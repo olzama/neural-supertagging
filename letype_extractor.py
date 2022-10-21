@@ -234,10 +234,13 @@ class LexTypeExtractor:
             y.append('\n') # sentence separator
         return all_tokens
 
-    def leave_one_tag_per_token(self,yy_tokens):
+    def leave_one_token_per_terminal(self,yy_tokens, deriv):
+        # TODO: Here, need to compare to the surface of the terminal!!!
         new_tokens = []
         prev = None
         for t in yy_tokens:
+            if t.surface == '\\"':
+                continue
             if prev:
                 if t.start != prev.start:
                     if t.end != prev.end:
@@ -254,18 +257,23 @@ class LexTypeExtractor:
     For now, I will just take the first tag.
     '''
     def get_eagle_tags(self, p_input, deriv):
+        if "Alusiones" in p_input:
+            print('stop')
         terminals_toks_postags = []
         yy_input = YYTokenLattice.from_string(p_input)
         if len(deriv.terminals()) != len(yy_input.tokens):
-            yy_tokens = self.leave_one_tag_per_token(yy_input.tokens)
+            yy_tokens = self.leave_one_token_per_terminal(yy_input.tokens, deriv)
         else:
             yy_tokens = yy_input.tokens
-        assert len(deriv.terminals()) == len(yy_tokens)
+        if len(deriv.terminals()) != len(yy_tokens):
+            print('stop')
         for t in deriv.terminals():
             assert len(t.tokens) == 1
             toks_pos_tags = []
+            pos_probs = {}
             for i,tok in enumerate(t.tokens):
-                toks_pos_tags.append((tok, yy_tokens[i].lrules[0]))
+                pos_probs[yy_tokens[i].lrules[0]] = [1.0] #This is a fake probability
+                toks_pos_tags.append((tok, pos_probs))
             terminals_toks_postags.append((t,toks_pos_tags))
         return terminals_toks_postags
 
