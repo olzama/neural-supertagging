@@ -246,7 +246,7 @@ class LexTypeExtractor:
         return terminals_toks
 
 
-    def leave_one_token_per_terminal(self,yy_tokens, deriv):
+    def leave_one_token_per_terminal(self,yy_tokens):
         new_tokens = []
         prev = None
         for t in yy_tokens:
@@ -271,7 +271,7 @@ class LexTypeExtractor:
         terminals_toks_postags = []
         yy_input = YYTokenLattice.from_string(p_input)
         if len(deriv.terminals()) != len(yy_input.tokens):
-            yy_tokens = self.leave_one_token_per_terminal(yy_input.tokens, deriv)
+            yy_tokens = self.leave_one_token_per_terminal(yy_input.tokens)
         else:
             yy_tokens = yy_input.tokens
         if len(deriv.terminals()) != len(yy_tokens):
