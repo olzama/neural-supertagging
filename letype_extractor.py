@@ -234,8 +234,19 @@ class LexTypeExtractor:
             y.append('\n') # sentence separator
         return all_tokens
 
+
+    def find_corresponding_toks(self, toks, d):
+        j = 0
+        terminals_toks = []
+        for i, terminal in enumerate(list(d.terminals())):
+            while terminal.form != toks[j].surface:
+                j = j + 1
+            terminals_toks.append((terminal, toks[j]))
+            j = j + 1
+        return terminals_toks
+
+
     def leave_one_token_per_terminal(self,yy_tokens, deriv):
-        # TODO: Here, need to compare to the surface of the terminal!!!
         new_tokens = []
         prev = None
         for t in yy_tokens:
@@ -257,8 +268,6 @@ class LexTypeExtractor:
     For now, I will just take the first tag.
     '''
     def get_eagle_tags(self, p_input, deriv):
-        if "Alusiones" in p_input:
-            print('stop')
         terminals_toks_postags = []
         yy_input = YYTokenLattice.from_string(p_input)
         if len(deriv.terminals()) != len(yy_input.tokens):
@@ -266,7 +275,9 @@ class LexTypeExtractor:
         else:
             yy_tokens = yy_input.tokens
         if len(deriv.terminals()) != len(yy_tokens):
-            print('stop')
+            terms_toks = self.find_corresponding_toks(yy_input.tokens, deriv)
+            yy_tokens = [pair[1] for pair in terms_toks]
+        assert len(deriv.terminals()) == len(yy_tokens)
         for t in deriv.terminals():
             assert len(t.tokens) == 1
             toks_pos_tags = []
