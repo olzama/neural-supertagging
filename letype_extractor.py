@@ -6,6 +6,8 @@ import numpy as np
 from collections import OrderedDict
 import pos_map
 from datetime import datetime
+from random import shuffle
+
 
 CONTEXT_WINDOW = 2
 
@@ -115,6 +117,44 @@ class LexTypeExtractor:
                 all_tokens += self.process_table(data, k, lextypes, tables_by_len, test)
             print('Total PROCESSED {} tokens: {}'.format(k, all_tokens))
 
+
+    def resplit_data(self,testsuites,lextypes,out_dir):
+        pos_mapper = pos_map.Pos_mapper('./pos-map.txt')
+        max_sen_length, corpus_size, num_ts, data = self.read_testsuites(testsuites)
+        combined_data = {}
+        data_table = {'ft': [], 'lt': []}
+        for k in ['train', 'dev', 'test']:
+            for corpus in data[k]['by corpus']:
+                x, y = self.process_corpus(lextypes, corpus, pos_mapper)
+                data_table['ft'] += x
+                data_table['lt'] += y
+        resplit_data = self.random_split(data_table,0.7,0.1,0.2)
+
+    def random_split(self, data, train_perc, dev_perc, test_perc):
+        assert train_perc + dev_perc + test_perc == 1.0
+        resplit_data = {'train':{}, 'dev':{}, 'test':{}}
+        shuffled_data_ft = []
+        shuffled_data_lt = []
+        train_start = 0
+        train_end = int(len(data['ft'])*train_perc)
+        dev_end = train_end + int(len(data['ft'])*dev_perc)
+        test_end = len(data['ft'])
+        shuffle_indices = list(range(len(data['ft'])))
+        shuffle(shuffle_indices)
+        for i in shuffle_indices:
+            shuffled_data_ft.append(data['ft'][i])
+            shuffled_data_lt.append(data['lt'][i])
+        train_indices = range(train_start,train_end)
+        dev_indices = range(train_end,dev_end)
+        test_indices = range(dev_end,test_end)
+        resplit_data['train']['ft'] = shuffled_data_ft[train_indices.start:train_indices.stop]
+        resplit_data['train']['lt'] = shuffled_data_lt[train_indices.start:train_indices.stop]
+        resplit_data['dev']['ft'] = shuffled_data_ft[dev_indices.start:dev_indices.stop]
+        resplit_data['dev']['lt'] = shuffled_data_lt[dev_indices.start:dev_indices.stop]
+        resplit_data['test']['ft'] = shuffled_data_ft[test_indices.start:test_indices.stop]
+        resplit_data['test']['lt'] = shuffled_data_lt[test_indices.start:test_indices.stop]
+        return resplit_data
+
     def process_testsuites_nonautoreg(self,testsuites,lextypes, out_dir):
         pos_mapper = pos_map.Pos_mapper('./pos-map.txt')
         max_sen_length, corpus_size, num_ts, data = self.read_testsuites(testsuites)
@@ -170,16 +210,6 @@ class LexTypeExtractor:
             with open(out_dir + '/labeled-data/train/train' , 'wb') as f:
                 pickle.dump(tables_by_len[k], f)
         return n
-
-
-    '''
-    Assume a numpy table coming in. Get e.g. tokens 2 through 5 in sentences 4 and 5,
-    for the test suite #20 in the data.
-    '''
-    def get_table_portion(self, ts_info, table, ts_num, token_range, sentence_range):
-        ts_column = ts_info[ts_num]['column']
-        tokens = sum(ts_info[ts_num]['sentences'][sentence_range[0]:sentence_range[1]])
-        return table[token_range[0]:token_range[1],ts_column:ts_column+tokens]
 
     def process_testsuite(self, lextypes, logf, tsuite, autoregress_table, labels_table, start):
         print("Processing " + tsuite['name'])
@@ -424,7 +454,8 @@ if __name__ == "__main__":
     if autoreg:
         le.process_testsuites_autoreg(args[1],le.lextypes,out_dir)
     else:
-        le.process_testsuites_nonautoreg(args[1],le.lextypes,out_dir)
+        #le.process_testsuites_nonautoreg(args[1],le.lextypes,out_dir)
+        le.resplit_data(args[1], le.lextypes, out_dir)
     with open(out_dir + '/lextypes','wb') as f:
         lextypes = set([str(v) for v in list(le.lextypes.values())])
         pickle.dump(lextypes,f)
