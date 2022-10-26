@@ -129,6 +129,7 @@ class LexTypeExtractor:
                 data_table['ft'] += x
                 data_table['lt'] += y
         resplit_data = self.random_split(data_table,0.7,0.1,0.2)
+        return resplit_data
 
     def random_split(self, data, train_perc, dev_perc, test_perc):
         assert train_perc + dev_perc + test_perc == 1.0
@@ -223,8 +224,6 @@ class LexTypeExtractor:
             items = tsuite['sentences'][sentence_len]
             for j, lst_of_terminals in enumerate(items):
                 contexts.append([])
-                #if j % 100 == 0:
-                #    print("Processing item {} out of {}...".format(j, len(items)))
                 tokens,labels,pos_tags,autoregress_labels = \
                      self.get_tokens_labels(tsuite['tokens-tags'][j],CONTEXT_WINDOW, lextypes,pos_mapper,test=False)
                 ys.append(labels[CONTEXT_WINDOW:CONTEXT_WINDOW*-1])
@@ -455,7 +454,11 @@ if __name__ == "__main__":
         le.process_testsuites_autoreg(args[1],le.lextypes,out_dir)
     else:
         #le.process_testsuites_nonautoreg(args[1],le.lextypes,out_dir)
-        le.resplit_data(args[1], le.lextypes, out_dir)
+        data = le.resplit_data(args[1], le.lextypes, out_dir)
+        for k in ['train', 'dev', 'test']:
+            pathlib.Path(out_dir + '/labeled-data/' + k).mkdir(parents=True, exist_ok=False)
+            with open(out_dir + '/labeled-data/' + k + '/' + k, 'wb') as f:
+                pickle.dump(data[k], f)
     with open(out_dir + '/lextypes','wb') as f:
         lextypes = set([str(v) for v in list(le.lextypes.values())])
         pickle.dump(lextypes,f)
