@@ -6,7 +6,7 @@ import numpy as np
 from collections import OrderedDict
 import pos_map
 from datetime import datetime
-from random import shuffle
+import random
 
 
 CONTEXT_WINDOW = 2
@@ -29,6 +29,48 @@ class LexTypeExtractor:
                 if event == 'TypeDefinition':
                     lextypes[obj.identifier] = obj.supertypes[0]  # assume exactly 1
         self.lextypes = lextypes
+
+    def read_and_reshuffle_testsuites(self,path):
+        all_items = []
+        data = {'train':[], 'dev':[], 'test':[]}
+        print('Reading test suite files into pydelphin objects...')
+        for i, tsuite in enumerate(sorted(glob.iglob(path + '/**'))):
+            ts = itsdb.TestSuite(tsuite)
+            items = list(ts.processed_items())
+            all_items.extend([response for response in items if len(response['results']) > 0])
+        reshuffled_items = self.random_split(all_items, 0.7, 0.1, 0.2, 42)
+        for k in ['train', 'dev', 'test']:
+            for response in reshuffled_items[k]:
+                deriv = response.result(0).derivation()
+                p_input = response['p-input']
+                terminals_tok_tags = self.get_eagle_tags(p_input,deriv)
+                data[k].append(terminals_tok_tags)
+        return data
+
+    def process_reshuffled_nonautoreg(self,data,out_dir):
+        pos_mapper = pos_map.Pos_mapper('./pos-map.txt')
+        for k in ['train','dev','test']:
+            data_table = {'ft': [], 'lt': []}
+            pathlib.Path(out_dir + '/labeled-data/' + k).mkdir(parents=True, exist_ok=False)
+            for ttt in data[k]:
+                x,y = self.process_ttt(self.lextypes,ttt,pos_mapper)
+                data_table['ft'] += x
+                data_table['lt'] += y
+            with open(out_dir + '/labeled-data/' + k + '/' + k, 'wb') as f:
+                pickle.dump(data_table, f)
+
+    def process_ttt(self, lextypes, ttt, pos_mapper):
+        data = []
+        y = []
+        tokens, labels, pos_tags, autoregress_labels = \
+            self.get_tokens_labels(ttt, CONTEXT_WINDOW, lextypes, pos_mapper, False)
+        for k, t in enumerate(tokens):
+            if k < CONTEXT_WINDOW or k >= len(tokens) - CONTEXT_WINDOW:
+                continue
+            y.append(labels[k])
+            data.append(self.get_context(t, tokens, pos_tags, k, CONTEXT_WINDOW))
+        return data, y
+
 
     def read_testsuites(self,path):
         max_sen_length = 0
@@ -117,43 +159,24 @@ class LexTypeExtractor:
                 all_tokens += self.process_table(data, k, lextypes, tables_by_len, test)
             print('Total PROCESSED {} tokens: {}'.format(k, all_tokens))
 
-
-    def resplit_data(self,testsuites,lextypes,out_dir):
-        pos_mapper = pos_map.Pos_mapper('./pos-map.txt')
-        max_sen_length, corpus_size, num_ts, data = self.read_testsuites(testsuites)
-        combined_data = {}
-        data_table = {'ft': [], 'lt': []}
-        for k in ['train', 'dev', 'test']:
-            for corpus in data[k]['by corpus']:
-                x, y = self.process_corpus(lextypes, corpus, pos_mapper)
-                data_table['ft'] += x
-                data_table['lt'] += y
-        resplit_data = self.random_split(data_table,0.7,0.1,0.2)
-        return resplit_data
-
-    def random_split(self, data, train_perc, dev_perc, test_perc):
+    def random_split(self, data, train_perc, dev_perc, test_perc, seed):
         assert train_perc + dev_perc + test_perc == 1.0
         resplit_data = {'train':{}, 'dev':{}, 'test':{}}
-        shuffled_data_ft = []
-        shuffled_data_lt = []
+        shuffled_data = []
         train_start = 0
-        train_end = int(len(data['ft'])*train_perc)
-        dev_end = train_end + int(len(data['ft'])*dev_perc)
-        test_end = len(data['ft'])
-        shuffle_indices = list(range(len(data['ft'])))
-        shuffle(shuffle_indices)
+        train_end = int(len(data)*train_perc)
+        dev_end = train_end + int(len(data)*dev_perc)
+        test_end = len(data)
+        shuffle_indices = list(range(len(data)))
+        random.Random(seed).shuffle(shuffle_indices)
         for i in shuffle_indices:
-            shuffled_data_ft.append(data['ft'][i])
-            shuffled_data_lt.append(data['lt'][i])
+            shuffled_data.append(data[i])
         train_indices = range(train_start,train_end)
         dev_indices = range(train_end,dev_end)
         test_indices = range(dev_end,test_end)
-        resplit_data['train']['ft'] = shuffled_data_ft[train_indices.start:train_indices.stop]
-        resplit_data['train']['lt'] = shuffled_data_lt[train_indices.start:train_indices.stop]
-        resplit_data['dev']['ft'] = shuffled_data_ft[dev_indices.start:dev_indices.stop]
-        resplit_data['dev']['lt'] = shuffled_data_lt[dev_indices.start:dev_indices.stop]
-        resplit_data['test']['ft'] = shuffled_data_ft[test_indices.start:test_indices.stop]
-        resplit_data['test']['lt'] = shuffled_data_lt[test_indices.start:test_indices.stop]
+        resplit_data['train'] = shuffled_data[train_indices.start:train_indices.stop]
+        resplit_data['dev'] = shuffled_data[dev_indices.start:dev_indices.stop]
+        resplit_data['test'] = shuffled_data[test_indices.start:test_indices.stop]
         return resplit_data
 
     def process_testsuites_nonautoreg(self,testsuites,lextypes, out_dir):
@@ -178,7 +201,7 @@ class LexTypeExtractor:
                 with open(out_dir + '/labeled-data/train/train' , 'wb') as f:
                     pickle.dump(data_table, f)
 
-    def process_corpus(self, lextypes, corpus,pos_mapper):
+    def process_corpus(self, lextypes, corpus, pos_mapper):
         data = []
         y = []
         for sen in corpus['tokens-tags']:
@@ -454,11 +477,8 @@ if __name__ == "__main__":
         le.process_testsuites_autoreg(args[1],le.lextypes,out_dir)
     else:
         #le.process_testsuites_nonautoreg(args[1],le.lextypes,out_dir)
-        data = le.resplit_data(args[1], le.lextypes, out_dir)
-        for k in ['train', 'dev', 'test']:
-            pathlib.Path(out_dir + '/labeled-data/' + k).mkdir(parents=True, exist_ok=False)
-            with open(out_dir + '/labeled-data/' + k + '/' + k, 'wb') as f:
-                pickle.dump(data[k], f)
+        data = le.read_and_reshuffle_testsuites(args[1])
+        le.process_reshuffled_nonautoreg(data,out_dir)
     with open(out_dir + '/lextypes','wb') as f:
         lextypes = set([str(v) for v in list(le.lextypes.values())])
         pickle.dump(lextypes,f)
