@@ -34,7 +34,7 @@ class LexTypeExtractor:
         all_items = []
         data = {'train':[], 'dev':[], 'test':[]}
         print('Reading test suite files into pydelphin objects...')
-        for i, tsuite in enumerate(sorted(glob.iglob(path + '/**'))):
+        for i, tsuite in enumerate(sorted(glob.iglob(path + '*/pet'))):
             ts = itsdb.TestSuite(tsuite)
             items = list(ts.processed_items())
             all_items.extend([response for response in items if len(response['results']) > 0])
