@@ -32,12 +32,15 @@ class LexTypeExtractor:
 
     def read_and_reshuffle_testsuites(self,path):
         all_items = []
+        total_n = 0
         data = {'train':[], 'dev':[], 'test':[]}
         print('Reading test suite files into pydelphin objects...')
         for i, tsuite in enumerate(sorted(glob.iglob(path + '*/pet'))):
             ts = itsdb.TestSuite(tsuite)
             items = list(ts.processed_items())
+            total_n += len(items)
             all_items.extend([response for response in items if len(response['results']) > 0])
+        print('Total sentences in the dataset: {}'.format(total_n))
         print('Total parsed sentences in the dataset: {}'.format(len(all_items)))
         reshuffled_items = self.random_split(all_items, 0.7, 0.1, 0.2, 42)
         print('Total parsed sentences in the reshuffled dataset: {}'.format(len(reshuffled_items['train'])+
