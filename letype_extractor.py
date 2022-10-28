@@ -38,13 +38,20 @@ class LexTypeExtractor:
             ts = itsdb.TestSuite(tsuite)
             items = list(ts.processed_items())
             all_items.extend([response for response in items if len(response['results']) > 0])
+        print('Total parsed sentences in the dataset: {}'.format(len(all_items)))
         reshuffled_items = self.random_split(all_items, 0.7, 0.1, 0.2, 42)
+        print('Total parsed sentences in the reshuffled dataset: {}'.format(len(reshuffled_items['train'])+
+                                                                            len(reshuffled_items['dev'])+
+                                                                            len(reshuffled_items['test'])))
         for k in ['train', 'dev', 'test']:
+            n = 0
             for response in reshuffled_items[k]:
                 deriv = response.result(0).derivation()
                 p_input = response['p-input']
                 terminals_tok_tags = self.get_eagle_tags(p_input,deriv)
+                n += len(terminals_tok_tags[0])
                 data[k].append(terminals_tok_tags)
+            print('Total terminals in {} dataset: {}'.format(k,n))
         return data
 
     def process_reshuffled_nonautoreg(self,data,out_dir):
