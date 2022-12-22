@@ -8,6 +8,7 @@ import sys
 import json
 from tempfile import NamedTemporaryFile
 from datasets import Sequence, Value, ClassLabel, Features, load_dataset, Features
+import evaluate
 from letype_extractor import LexTypeExtractor
 
 SPECIAL_TOKEN = -10000
@@ -100,20 +101,35 @@ def tokenize_and_align_labels(examples, tokenizer):
 # def serialize(files, file_names):
 #     pass
 
-#if __name__ == 'main':
-data_dir = sys.argv[1]
-lexicons_dir = sys.argv[2]
-print(1)
-le = LexTypeExtractor()
-le.parse_lexicons(lexicons_dir)
-class_names = set([str(v) for v in list(le.lextypes.values())])
-data_tsv = {
-    "train": data_dir + 'train',
-    "validation": data_dir + 'dev',
-    "test": data_dir + 'test'
-}
-data_json = create_json_files(data_tsv)
-metric = evaluate.load("seqeval")
-num_labels = len(class_names["syntax_labels"])
+if __name__ == 'main':
+    data_dir = sys.argv[1]
+    lexicons_dir = sys.argv[2]
+    le = LexTypeExtractor()
+    le.parse_lexicons(lexicons_dir)
+    class_names = set([str(v) for v in list(le.lextypes.values())])
+    class_names.add('None_label')
+    data_tsv = {
+        "train": data_dir + 'train',
+        "validation": data_dir + 'dev',
+        "test": data_dir + 'test'
+    }
+    data_json = create_json_files(data_tsv)
+    #metric = evaluate.load("seqeval")
+    num_labels = len(class_names)
 
-print(5)
+    label2id = {v: i for i, v in enumerate(class_names)}
+    id2label = {i: v for i, v in enumerate(class_names)}
+
+    dataset = load_dataset(
+        "json",
+        data_files=data_json,
+        features=Features(
+            {
+                "id": Value("int32"),
+                "tokens": Sequence(Value("string")),
+                "tags": Sequence(ClassLabel(names=list(class_names), num_classes=num_labels))
+            }
+        ),
+        field="data"
+    )
+
