@@ -6,12 +6,94 @@
 
 import sys
 import json
+import numpy as np
 from tempfile import NamedTemporaryFile
 from datasets import Sequence, Value, ClassLabel, Features, load_dataset, Features
 import evaluate
+from transformers import AutoModelForTokenClassification, TrainingArguments, Trainer
+from transformers import DataCollatorForTokenClassification
+from transformers import AutoTokenizer
 from letype_extractor import LexTypeExtractor
 
-SPECIAL_TOKEN = -10000
+SPECIAL_TOKEN = -100
+
+
+def predict_test_set(input_test_seq, classifier, tokenizer):
+    """
+    Predict the syntaxis labels of a given test set in .seq format.
+    """
+    # Load test seq
+    with open(input_test_seq, 'r') as f:
+        sentences = f.read().split('\n\n')
+        tokens_list = []
+        pos_tags_list = []
+        gold_labels_list = []
+
+        i = 0
+        for sentence in sentences:
+            if len(sentence) > 0:
+                # sys.stdout.write("\rPredicting sentence {}/{}".format(i, len(sentences)))
+                i += 1
+                sentence_tokens = []
+                sentence_pos_tags = []
+                sentence_gold_labels = []
+                lines = sentence.split('\n')
+                # Get tokens, pos tags and gold labels
+                for line in lines:
+                    if line:
+                        token = line.split('\t')[0]
+                        pos_tag = line.split('\t')[1]
+                        gold_syntax_label = line.split('\t')[2]
+                        sentence_tokens.append(token)
+                        sentence_pos_tags.append(pos_tag)
+                        sentence_gold_labels.append(gold_syntax_label)
+
+                # Append to lists
+                tokens_list.append(sentence_tokens)
+                pos_tags_list.append(sentence_pos_tags)
+                gold_labels_list.append(sentence_gold_labels)
+
+    # Predict labels
+    tokens_list = tokenizer(tokens_list, truncation=True, padding=True, is_split_into_words=True)
+    predictions = classifier(tokens_list)
+
+    print(predictions)
+    print('\n')
+    # print(f"Labeling accuracy: {sum(acc_list)/len(acc_list)}")
+
+    # Generate output file
+    output_test_seq = 'output_test.seq'
+    with open(output_test_seq, 'w') as f:
+        for i in range(len(tokens_list)):
+            for j in range(len(tokens_list[i])):
+                f.write(tokens_list[i][j] + '\t')
+                f.write(pos_tags_list[i][j] + '\t')
+                f.write('\n')
+            f.write('\n\n')
+
+# def compute_metrics(eval_preds, metric):
+#     logits, labels = eval_preds
+#     predictions = np.argmax(logits, axis=-1)
+#
+#     # Remove ignored index (special tokens) and convert to labels
+#     true_labels = [[label_names[l] for l in label if l != SPECIAL_TOKEN] for label in labels]
+#     true_predictions = [
+#         [label_names[p] for (p, l) in zip(prediction, label) if l != SPECIAL_TOKEN]
+#         for prediction, label in zip(predictions, labels)
+#     ]
+#     all_metrics = metric.compute(predictions=true_predictions, references=true_labels)
+#     return {
+#         "precision": all_metrics["overall_precision"],
+#         "recall": all_metrics["overall_recall"],
+#         "f1": all_metrics["overall_f1"],
+#         "accuracy": all_metrics["overall_accuracy"],
+#     }
+
+def compute_metrics(eval_pred, metric):
+    logits, labels = eval_pred
+    predictions = np.argmax(logits, axis=-1)
+    return metric.compute(predictions=predictions, references=labels)
+
 
 def create_json_files(data_files):
     train_list = []
@@ -101,35 +183,82 @@ def tokenize_and_align_labels(examples, tokenizer):
 # def serialize(files, file_names):
 #     pass
 
-if __name__ == 'main':
-    data_dir = sys.argv[1]
-    lexicons_dir = sys.argv[2]
-    le = LexTypeExtractor()
-    le.parse_lexicons(lexicons_dir)
-    class_names = set([str(v) for v in list(le.lextypes.values())])
-    class_names.add('None_label')
-    data_tsv = {
-        "train": data_dir + 'train',
-        "validation": data_dir + 'dev',
-        "test": data_dir + 'test'
-    }
-    data_json = create_json_files(data_tsv)
-    #metric = evaluate.load("seqeval")
-    num_labels = len(class_names)
+#if __name__ == 'main':
+data_dir = sys.argv[1]
+lexicons_dir = sys.argv[2]
+le = LexTypeExtractor()
+le.parse_lexicons(lexicons_dir)
+class_names = set([str(v) for v in list(le.lextypes.values())])
+class_names.add('None_label')
+data_tsv = {
+    "train": data_dir + 'train',
+    "validation": data_dir + 'dev',
+    "test": data_dir + 'test'
+}
+data_json = create_json_files(data_tsv)
+#metric = evaluate.load("seqeval")
+num_labels = len(class_names)
 
-    label2id = {v: i for i, v in enumerate(class_names)}
-    id2label = {i: v for i, v in enumerate(class_names)}
+label2id = {v: i for i, v in enumerate(class_names)}
+id2label = {i: v for i, v in enumerate(class_names)}
 
-    dataset = load_dataset(
-        "json",
-        data_files=data_json,
-        features=Features(
-            {
-                "id": Value("int32"),
-                "tokens": Sequence(Value("string")),
-                "tags": Sequence(ClassLabel(names=list(class_names), num_classes=num_labels))
-            }
-        ),
-        field="data"
-    )
+tokenizer = AutoTokenizer.from_pretrained('bert-base-cased')
+data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
+
+model = AutoModelForTokenClassification.from_pretrained(
+    "bert-base-cased",
+    num_labels=num_labels,
+    id2label=id2label,
+    label2id=label2id
+)
+
+dataset = load_dataset(
+    "json",
+    cache_dir='/media/olga/kesha/BERT/cache',
+    data_files=data_json,
+    features=Features(
+        {
+            "id": Value("int32"),
+            "tokens": Sequence(Value("string")),
+            "tags": Sequence(ClassLabel(names=list(class_names), num_classes=num_labels))
+        }
+    ),
+    field="data"
+)
+
+dataset = dataset.map(
+    tokenize_and_align_labels,
+    batched=True,
+    remove_columns=dataset['train'].column_names,
+    fn_kwargs={"tokenizer": tokenizer}
+
+)
+
+dataset.save_to_disk('/media/olga/kesha/BERT/erg/')
+
+features = dataset['train'].features['labels']
+
+training_args = TrainingArguments(
+    output_dir="/media/olga/kesha/BERT/erg/trainer/",
+    evaluation_strategy = "epoch",
+    learning_rate=2e-5,
+    num_train_epochs= 1,
+    weight_decay=0.01,
+    save_strategy = "no"
+)
+
+trainer = Trainer(
+    model=model,
+    args=training_args,
+    train_dataset=dataset["train"],
+    eval_dataset=dataset["validation"],
+    data_collator=data_collator,
+    compute_metrics=compute_metrics,
+    tokenizer=tokenizer,
+)
+
+metric = evaluate.load("accuracy")
+
+trainer.train()
+
 
