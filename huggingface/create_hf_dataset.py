@@ -8,7 +8,7 @@ import sys
 import json
 import numpy as np
 from tempfile import NamedTemporaryFile
-from datasets import Sequence, Value, ClassLabel, Features, load_dataset, Features
+from datasets import Sequence, Value, ClassLabel, load_dataset, Features
 import evaluate
 from transformers import AutoModelForTokenClassification, TrainingArguments, Trainer
 from transformers import DataCollatorForTokenClassification
@@ -43,10 +43,10 @@ def predict_test_set(input_test_seq, classifier, tokenizer):
                     if line:
                         token = line.split('\t')[0]
                         pos_tag = line.split('\t')[1]
-                        gold_syntax_label = line.split('\t')[2]
+                        gold_label = line.split('\t')[1]
                         sentence_tokens.append(token)
                         sentence_pos_tags.append(pos_tag)
-                        sentence_gold_labels.append(gold_syntax_label)
+                        sentence_gold_labels.append(gold_label)
 
                 # Append to lists
                 tokens_list.append(sentence_tokens)
@@ -71,31 +71,32 @@ def predict_test_set(input_test_seq, classifier, tokenizer):
                 f.write('\n')
             f.write('\n\n')
 
-# def compute_metrics(eval_preds, metric):
-#     logits, labels = eval_preds
-#     predictions = np.argmax(logits, axis=-1)
-#
-#     # Remove ignored index (special tokens) and convert to labels
-#     true_labels = [[label_names[l] for l in label if l != SPECIAL_TOKEN] for label in labels]
-#     true_predictions = [
-#         [label_names[p] for (p, l) in zip(prediction, label) if l != SPECIAL_TOKEN]
-#         for prediction, label in zip(predictions, labels)
-#     ]
-#     all_metrics = metric.compute(predictions=true_predictions, references=true_labels)
-#     return {
-#         "precision": all_metrics["overall_precision"],
-#         "recall": all_metrics["overall_recall"],
-#         "f1": all_metrics["overall_f1"],
-#         "accuracy": all_metrics["overall_accuracy"],
-#     }
+def compute_metrics(eval_preds):
+    metric = evaluate.load("seqeval")
+    logits, labels = eval_preds
+    predictions = np.argmax(logits, axis=-1)
 
-def compute_metrics(eval_pred, metric):
+    # Remove ignored index (special tokens) and convert to labels
+    true_labels = [[label_names[l] for l in label if l != SPECIAL_TOKEN] for label in labels]
+    true_predictions = [
+        [label_names[p] for (p, l) in zip(prediction, label) if l != SPECIAL_TOKEN]
+        for prediction, label in zip(predictions, labels)
+    ]
+    all_metrics = metric.compute(predictions=true_predictions, references=true_labels)
+    return {
+        "precision": all_metrics["overall_precision"],
+        "recall": all_metrics["overall_recall"],
+        "f1": all_metrics["overall_f1"],
+        "accuracy": all_metrics["overall_accuracy"],
+    }
+
+def compute_metrics1(eval_pred):
+    metric = evaluate.load("accuracy")
     logits, labels = eval_pred
     predictions = np.argmax(logits, axis=-1)
     return metric.compute(predictions=predictions, references=labels)
 
-
-def create_json_files(data_files):
+def create_json_files(data_files, label_set):
     train_list = []
     eval_list = []
     test_list = []
@@ -120,8 +121,13 @@ def create_json_files(data_files):
                         if line:
                             token, tag = line.split('\t')
                             sentence_tokens.append(token)
-                            sentence_tags.append(tag)
-
+                            if split != 'test':
+                                sentence_tags.append(tag)
+                            else:
+                                if tag in label_set:
+                                    sentence_tags.append(tag)
+                                else:
+                                    sentence_tags.append('UNK')
                 if sentence_tokens != []:
                     if split == "train":
                         train_list.append({"id": idx, "tokens": sentence_tokens, "tags": sentence_tags})
@@ -188,14 +194,15 @@ data_dir = sys.argv[1]
 lexicons_dir = sys.argv[2]
 le = LexTypeExtractor()
 le.parse_lexicons(lexicons_dir)
-class_names = set([str(v) for v in list(le.lextypes.values())])
-class_names.add('None_label')
+class_names = list(set([str(v) for v in list(le.lextypes.values())]))
+class_names.append('None_label')
+class_names.append('UNK')
 data_tsv = {
     "train": data_dir + 'train',
     "validation": data_dir + 'dev',
     "test": data_dir + 'test'
 }
-data_json = create_json_files(data_tsv)
+data_json = create_json_files(data_tsv, class_names)
 #metric = evaluate.load("seqeval")
 num_labels = len(class_names)
 
@@ -226,6 +233,11 @@ dataset = load_dataset(
     field="data"
 )
 
+print('Dataset loaded.')
+
+syntax_features = dataset['train'].features['tags']
+label_names = syntax_features.feature.names
+
 dataset = dataset.map(
     tokenize_and_align_labels,
     batched=True,
@@ -236,7 +248,8 @@ dataset = dataset.map(
 
 dataset.save_to_disk('/media/olga/kesha/BERT/erg/')
 
-features = dataset['train'].features['labels']
+
+#features = dataset['train'].features['labels']
 
 training_args = TrainingArguments(
     output_dir="/media/olga/kesha/BERT/erg/trainer/",
@@ -257,7 +270,7 @@ trainer = Trainer(
     tokenizer=tokenizer,
 )
 
-metric = evaluate.load("accuracy")
+metric = evaluate.load("seqeval")
 
 trainer.train()
 
