@@ -189,89 +189,89 @@ def tokenize_and_align_labels(examples, tokenizer):
 # def serialize(files, file_names):
 #     pass
 
-#if __name__ == 'main':
-data_dir = sys.argv[1]
-lexicons_dir = sys.argv[2]
-le = LexTypeExtractor()
-le.parse_lexicons(lexicons_dir)
-class_names = list(set([str(v) for v in list(le.lextypes.values())]))
-class_names.append('None_label')
-class_names.append('UNK')
-data_tsv = {
-    "train": data_dir + 'train',
-    "validation": data_dir + 'dev',
-    "test": data_dir + 'test'
-}
-data_json = create_json_files(data_tsv, class_names)
-#metric = evaluate.load("seqeval")
-num_labels = len(class_names)
+if __name__ == 'main':
+    data_dir = sys.argv[1]
+    lexicons_dir = sys.argv[2]
+    le = LexTypeExtractor()
+    le.parse_lexicons(lexicons_dir)
+    class_names = list(set([str(v) for v in list(le.lextypes.values())]))
+    class_names.append('None_label')
+    class_names.append('UNK')
+    data_tsv = {
+        "train": data_dir + 'train',
+        "validation": data_dir + 'dev',
+        "test": data_dir + 'test'
+    }
+    data_json = create_json_files(data_tsv, class_names)
+    #metric = evaluate.load("seqeval")
+    num_labels = len(class_names)
 
-label2id = {v: i for i, v in enumerate(class_names)}
-id2label = {i: v for i, v in enumerate(class_names)}
+    label2id = {v: i for i, v in enumerate(class_names)}
+    id2label = {i: v for i, v in enumerate(class_names)}
 
-tokenizer = AutoTokenizer.from_pretrained('bert-base-cased')
-data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
+    tokenizer = AutoTokenizer.from_pretrained('bert-base-cased')
+    data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
 
-model = AutoModelForTokenClassification.from_pretrained(
-    "bert-base-cased",
-    num_labels=num_labels,
-    id2label=id2label,
-    label2id=label2id
-)
+    model = AutoModelForTokenClassification.from_pretrained(
+        "bert-base-cased",
+        num_labels=num_labels,
+        id2label=id2label,
+        label2id=label2id
+    )
 
-dataset = load_dataset(
-    "json",
-    cache_dir='/media/olga/kesha/BERT/cache',
-    data_files=data_json,
-    features=Features(
-        {
-            "id": Value("int32"),
-            "tokens": Sequence(Value("string")),
-            "tags": Sequence(ClassLabel(names=list(class_names), num_classes=num_labels))
-        }
-    ),
-    field="data"
-)
+    dataset = load_dataset(
+        "json",
+        cache_dir='/media/olga/kesha/BERT/cache',
+        data_files=data_json,
+        features=Features(
+            {
+                "id": Value("int32"),
+                "tokens": Sequence(Value("string")),
+                "tags": Sequence(ClassLabel(names=list(class_names), num_classes=num_labels))
+            }
+        ),
+        field="data"
+    )
 
-print('Dataset loaded.')
+    print('Dataset loaded.')
 
-syntax_features = dataset['train'].features['tags']
-label_names = syntax_features.feature.names
+    syntax_features = dataset['train'].features['tags']
+    label_names = syntax_features.feature.names
 
-dataset = dataset.map(
-    tokenize_and_align_labels,
-    batched=True,
-    remove_columns=dataset['train'].column_names,
-    fn_kwargs={"tokenizer": tokenizer}
+    dataset = dataset.map(
+        tokenize_and_align_labels,
+        batched=True,
+        remove_columns=dataset['train'].column_names,
+        fn_kwargs={"tokenizer": tokenizer}
 
-)
+    )
 
-dataset.save_to_disk('/media/olga/kesha/BERT/erg/')
+    dataset.save_to_disk('/media/olga/kesha/BERT/erg/')
 
 
-#features = dataset['train'].features['labels']
+    #features = dataset['train'].features['labels']
 
-training_args = TrainingArguments(
-    output_dir="/media/olga/kesha/BERT/erg/trainer/",
-    evaluation_strategy = "epoch",
-    learning_rate=2e-5,
-    num_train_epochs= 50,
-    weight_decay=0.01,
-    save_strategy = "no"
-)
+    training_args = TrainingArguments(
+        output_dir="/media/olga/kesha/BERT/erg/trainer/",
+        evaluation_strategy = "epoch",
+        learning_rate=2e-5,
+        num_train_epochs= 50,
+        weight_decay=0.01,
+        save_strategy = "no"
+    )
 
-trainer = Trainer(
-    model=model,
-    args=training_args,
-    train_dataset=dataset["train"],
-    eval_dataset=dataset["validation"],
-    data_collator=data_collator,
-    compute_metrics=compute_metrics,
-    tokenizer=tokenizer,
-)
+    trainer = Trainer(
+        model=model,
+        args=training_args,
+        train_dataset=dataset["train"],
+        eval_dataset=dataset["validation"],
+        data_collator=data_collator,
+        compute_metrics=compute_metrics,
+        tokenizer=tokenizer,
+    )
 
-metric = evaluate.load("seqeval")
+    metric = evaluate.load("seqeval")
 
-trainer.train()
+    trainer.train()
 
 
