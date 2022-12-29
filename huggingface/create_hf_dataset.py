@@ -189,7 +189,7 @@ def tokenize_and_align_labels(examples, tokenizer):
 # def serialize(files, file_names):
 #     pass
 
-if __name__ == 'main':
+if __name__ == '__main__':
     data_dir = sys.argv[1]
     lexicons_dir = sys.argv[2]
     le = LexTypeExtractor()
