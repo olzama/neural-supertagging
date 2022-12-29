@@ -255,7 +255,7 @@ training_args = TrainingArguments(
     output_dir="/media/olga/kesha/BERT/erg/trainer/",
     evaluation_strategy = "epoch",
     learning_rate=2e-5,
-    num_train_epochs= 1,
+    num_train_epochs= 50,
     weight_decay=0.01,
     save_strategy = "no"
 )
