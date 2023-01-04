@@ -252,9 +252,9 @@ if __name__ == '__main__':
     #features = dataset['train'].features['labels']
 
     training_args = TrainingArguments(
-        output_dir="/media/olga/kesha/BERT/erg/trainer-1e-5/",
+        output_dir="/media/olga/kesha/BERT/erg/trainer-5e-6/",
         evaluation_strategy = "epoch",
-        learning_rate=1e-5,
+        learning_rate=5e-6,
         num_train_epochs= 50,
         weight_decay=0.01,
         save_strategy = "no"
