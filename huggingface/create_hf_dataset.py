@@ -213,7 +213,7 @@ if __name__ == '__main__':
     data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
 
     model = AutoModelForTokenClassification.from_pretrained(
-        "bert-base-cased",
+        "bert-base-uncased",
         num_labels=num_labels,
         id2label=id2label,
         label2id=label2id
@@ -252,13 +252,12 @@ if __name__ == '__main__':
     #features = dataset['train'].features['labels']
 
     training_args = TrainingArguments(
-        output_dir="/media/olga/kesha/BERT/erg/trainer-2e-5-warmup02/",
+        output_dir="/media/olga/kesha/BERT/erg/trainer-2e-5-uncased/",
         evaluation_strategy = "epoch",
         learning_rate=2e-5,
         num_train_epochs= 50,
         weight_decay=0.01,
-        save_strategy = "no",
-        warmup_ratio=0.2
+        save_strategy = "no"
     )
 
     trainer = Trainer(
