@@ -209,7 +209,7 @@ if __name__ == '__main__':
     label2id = {v: i for i, v in enumerate(class_names)}
     id2label = {i: v for i, v in enumerate(class_names)}
 
-    tokenizer = AutoTokenizer.from_pretrained('bert-base-cased')
+    tokenizer = AutoTokenizer.from_pretrained('bert-base-uncased')
     data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
 
     model = AutoModelForTokenClassification.from_pretrained(
