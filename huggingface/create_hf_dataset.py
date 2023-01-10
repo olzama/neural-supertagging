@@ -209,11 +209,11 @@ if __name__ == '__main__':
     label2id = {v: i for i, v in enumerate(class_names)}
     id2label = {i: v for i, v in enumerate(class_names)}
 
-    tokenizer = AutoTokenizer.from_pretrained('bert-base-uncased')
+    tokenizer = AutoTokenizer.from_pretrained('roberta')
     data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
 
     model = AutoModelForTokenClassification.from_pretrained(
-        "bert-base-uncased",
+        "roberta",
         num_labels=num_labels,
         id2label=id2label,
         label2id=label2id
@@ -252,7 +252,7 @@ if __name__ == '__main__':
     #features = dataset['train'].features['labels']
 
     training_args = TrainingArguments(
-        output_dir="/media/olga/kesha/BERT/erg/trainer-2e-5-uncased/",
+        output_dir="/media/olga/kesha/BERT/erg/roberta-2e-5/",
         evaluation_strategy = "epoch",
         learning_rate=2e-5,
         num_train_epochs= 50,
