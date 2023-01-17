@@ -30,30 +30,32 @@ def test_eval_on_sentence(best_model, input_text, tokenizer):
 
 
 if __name__ == "__main__":
-    best_model = AutoModelForTokenClassification.from_pretrained("/media/olga/kesha/BERT/erg/debug/")
-    tokenizer = AutoTokenizer.from_pretrained("/media/olga/kesha/BERT/erg/debug/")
+    model_path = sys.argv[1]
+    dataset_path = sys.argv[2]
+    output_path = sys.argv[3]
+    best_model = AutoModelForTokenClassification.from_pretrained(model_path) #"/media/olga/kesha/BERT/erg/debug/"
+    tokenizer = AutoTokenizer.from_pretrained(model_path)
     data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
-    dataset = load_from_disk('/media/olga/kesha/BERT/erg/dataset/')
+    dataset = load_from_disk(dataset_path)#'/media/olga/kesha/BERT/erg/dataset/')
 
     training_args = TrainingArguments(
         disable_tqdm=True,
         do_train=False,
         do_eval=True,
         do_predict=False,
-        output_dir="/media/olga/kesha/BERT/erg/debug/"
+        output_dir=output_path
     )
 
     trainer = Trainer(
         model=best_model,
         args=training_args,
-        eval_dataset=dataset["validation"],
+        eval_dataset=dataset["test"],
         data_collator=data_collator,
         compute_metrics=compute_metrics,
         tokenizer=tokenizer,
     )
 
     trainer.evaluate()
-    print(5)
 
     #best_model = AutoModelForTokenClassification.from_pretrained("/media/olga/kesha/BERT/erg/best/")
     #tokenizer = AutoTokenizer.from_pretrained("/media/olga/kesha/BERT/erg/best/")
