@@ -274,6 +274,25 @@ class LexTypeExtractor:
         self.write_output(contexts, pairs, tsuite['name'])
         return ys
 
+    def process_testsuite_simple(self, tsuite):
+        print("Processing " + tsuite['name'])
+        pairs = []
+        y = []
+        pos_mapper = pos_map.Pos_mapper('./pos-map.txt')  # do this for every test suite to count unknowns in each
+        for sentence_len in tsuite['sentences']:
+            items = tsuite['sentences'][sentence_len]
+            for j, lst_of_terminals in enumerate(items):
+                tokens,labels,pos_tags,autoregress_labels = \
+                     self.get_tokens_labels(tsuite['tokens-tags'][j],CONTEXT_WINDOW, self.lextypes,pos_mapper,test=False)
+                for k, t in enumerate(tokens):
+                    if k < CONTEXT_WINDOW or k >= len(tokens) - CONTEXT_WINDOW:
+                        continue
+                    pairs.append((t, labels[k]))
+                    y.append(labels[k])
+                pairs.append(('--EOS--','--EOS--')) # sentence separator
+        self.write_output_simple(pairs, tsuite['name'])
+
+
     def process_length(self, lextypes, items, autoregress_table, labels_table,test):
         y = []
         ys = []
@@ -414,6 +433,29 @@ class LexTypeExtractor:
         with open('./output/by-corpus/contexts/' + suf + ts_name, 'w') as f:
             f.write(json.dumps(contexts))
 
+    def write_output_simple(self, pairs, ts_name):
+        for d in ['train/','test/','dev/', 'ignore/']:
+            for pd in ['simple/']:
+                pathlib.Path('./output/' + pd + d).mkdir(parents=True, exist_ok=True)
+        true_labels = []
+        suf = 'train/'
+        if ts_name in IGNORE:
+            suf = 'ignore/'
+        if ts_name in TEST:
+            suf = 'test/'
+        elif ts_name in DEV:
+            suf = 'dev/'
+        with open('./output/simple/' + suf + ts_name, 'w') as f:
+            for form, letype in pairs:
+                if not letype=='--EOS--':
+                    true_labels.append(str(letype))
+                    str_pair = f'{form}\t{letype}'
+                    f.write(str_pair + '\n')
+                else:
+                    f.write('\n') # sentence separator
+                    true_labels.append('\n') # sentence separator
+
+
     def get_context(self, t, tokens, pos_tags, i, window):
         context = {'w': t, 'pos': pos_tags[i]}
         for j in range(1,window+1):
@@ -487,9 +529,14 @@ if __name__ == "__main__":
         le.process_testsuites_autoreg(args[1],le.lextypes,out_dir)
     else:
         #le.process_testsuites_nonautoreg(args[1],le.lextypes,out_dir)
-        data = le.read_and_reshuffle_testsuites(args[1])
-        le.process_reshuffled_nonautoreg(data,out_dir)
-    with open(out_dir + '/lextypes','wb') as f:
-        lextypes = set([str(v) for v in list(le.lextypes.values())])
-        pickle.dump(lextypes,f)
+        #data = le.read_and_reshuffle_testsuites(args[1])
+        #le.process_reshuffled_nonautoreg(data,out_dir)
+        data = le.read_testsuites(args[1])
+        for suf in ['dev', 'test']:
+            for ts in data[3][suf]['by corpus']:
+                le.process_testsuite_simple(ts)
+        #print(5)
+    #with open(out_dir + '/lextypes','wb') as f:
+    #    lextypes = set([str(v) for v in list(le.lextypes.values())])
+    #    pickle.dump(lextypes,f)
 

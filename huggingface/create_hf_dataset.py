@@ -104,11 +104,7 @@ def tokenize_and_align_labels(examples, tokenizer):
     return tokenized_inputs
 
 
-if __name__ == '__main__':
-    data_dir = sys.argv[1]
-    lexicons_dir = sys.argv[2]
-    le = LexTypeExtractor()
-    le.parse_lexicons(lexicons_dir)
+def create_full_dataset(le):
     class_names = list(set([str(v) for v in list(le.lextypes.values())]))
     class_names.append('None_label')
     class_names.append('UNK')
@@ -120,18 +116,14 @@ if __name__ == '__main__':
     data_json = create_json_files(data_tsv, class_names)
     num_labels = len(class_names)
     print('Number of labels:{}'.format(num_labels))
-
     label2id = {v: i for i, v in enumerate(class_names)}
     id2label = {i: v for i, v in enumerate(class_names)}
-
     with open('label2id.json', 'w') as f:
-        json.dump(label2id,f)
+        json.dump(label2id, f)
     with open('id2label.json', 'w') as f:
-        json.dump(id2label,f)
-
+        json.dump(id2label, f)
     tokenizer = AutoTokenizer.from_pretrained('bert-base-cased')
     data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
-
     dataset = load_dataset(
         "json",
         cache_dir='/media/olga/kesha/BERT/cache',
@@ -145,17 +137,13 @@ if __name__ == '__main__':
         ),
         field="data"
     )
-
     print('Dataset loaded.')
-
     syntax_features = dataset['train'].features['tags']
     label_names = syntax_features.feature.names
-
     with open('label_names.txt', 'w') as f:
         for l in label_names:
-            f.write(l+'\n')
+            f.write(l + '\n')
     print('Saved label names in label_names.txt')
-
     dataset = dataset.map(
         tokenize_and_align_labels,
         batched=True,
@@ -163,5 +151,53 @@ if __name__ == '__main__':
         fn_kwargs={"tokenizer": tokenizer}
 
     )
-
     dataset.save_to_disk('/media/olga/kesha/BERT/erg/dataset/')
+
+def create_test_subdataset(subdata_name):
+    with open('label_names.txt', 'r') as f:
+        class_names = [l.strip() for l in f.readlines()]
+    data_tsv = {
+        #"train": data_dir + 'train',
+        #"validation": data_dir + 'dev',
+        "test": data_dir + 'test/' + subdata_name
+    }
+    data_json = create_json_files(data_tsv, class_names)
+    num_labels = len(class_names)
+    print('Number of labels:{}'.format(num_labels))
+    with open('label2id.json', 'r') as f:
+        label2id = json.load(f)
+    with open('id2label.json', 'r') as f:
+        id2label = json.load(f)
+    tokenizer = AutoTokenizer.from_pretrained('/media/olga/kesha/BERT/erg/best/')
+    data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
+    dataset = load_dataset(
+        "json",
+        cache_dir='/media/olga/kesha/BERT/cache',
+        data_files=data_json,
+        features=Features(
+            {
+                "id": Value("int32"),
+                "tokens": Sequence(Value("string")),
+                "tags": Sequence(ClassLabel(names=list(class_names), num_classes=num_labels))
+            }
+        ),
+        field="data"
+    )
+    print('Dataset loaded.')
+    dataset = dataset.map(
+        tokenize_and_align_labels,
+        batched=True,
+        remove_columns=dataset['train'].column_names,
+        fn_kwargs={"tokenizer": tokenizer}
+
+    )
+    dataset.save_to_disk('/media/olga/kesha/BERT/erg/dataset-test-separate/' + subdata_name)
+
+
+if __name__ == '__main__':
+    data_dir = sys.argv[1]
+    #lexicons_dir = sys.argv[2]
+    #le = LexTypeExtractor()
+    #le.parse_lexicons(lexicons_dir)
+    #create_full_dataset(le)
+    create_test_subdataset('wsj23')
