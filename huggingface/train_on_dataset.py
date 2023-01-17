@@ -92,8 +92,9 @@ def compute_metrics(eval_preds):
     }
 
 if __name__ == '__main__':
-
-    dataset = load_from_disk('/media/olga/kesha/BERT/erg/dataset/')
+    dataset_path = sys.argv[1]
+    output_path = sys.argv[2]
+    dataset = load_from_disk(dataset_path) #'/media/olga/kesha/BERT/erg/dataset/'
     tokenizer = AutoTokenizer.from_pretrained('bert-base-cased')
     data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
     with open('id2label.json','r') as f:
@@ -109,9 +110,9 @@ if __name__ == '__main__':
     )
 
     training_args = TrainingArguments(
-        output_dir="/media/olga/kesha/BERT/erg/3e-5/",
+        output_dir= output_path+'/checkpoints/', #"/media/olga/kesha/BERT/erg/3e-5/"
         evaluation_strategy = "epoch",
-        learning_rate=3e-5,
+        learning_rate=5e-6,
         num_train_epochs= 60,
         weight_decay=0.01,
         save_strategy = "no"
@@ -130,25 +131,4 @@ if __name__ == '__main__':
     metric = evaluate.load("seqeval")
 
     trainer.train()
-    trainer.save_model("/media/olga/kesha/BERT/erg/3e-5")
-    #best_model = AutoModelForTokenClassification.from_pretrained("/media/olga/kesha/BERT/erg/best/")
-
-    # training_args = TrainingArguments(
-    #     disable_tqdm=True,
-    #     do_train=False,
-    #     do_eval=True,
-    #     do_predict=False,
-    #     output_dir="/media/olga/kesha/BERT/erg/debug/"
-    # )
-    #
-    # trainer = Trainer(
-    #     model=model,
-    #     args=training_args,
-    #     eval_dataset=dataset["validation"],
-    #     data_collator=data_collator,
-    #     compute_metrics=compute_metrics,
-    #     tokenizer=tokenizer,
-    # )
-    #
-    # trainer.evaluate()
-    # print(5)
+    trainer.save_model(output_path + '/saved/')
