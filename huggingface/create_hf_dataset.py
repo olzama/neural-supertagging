@@ -153,7 +153,7 @@ def create_full_dataset(le):
     )
     dataset.save_to_disk('/media/olga/kesha/BERT/erg/dataset/')
 
-def create_test_subdataset(subdata_name):
+def create_test_subdataset(data_dir, subdata_name):
     with open('label_names.txt', 'r') as f:
         class_names = [l.strip() for l in f.readlines()]
     data_tsv = {
@@ -196,8 +196,9 @@ def create_test_subdataset(subdata_name):
 
 if __name__ == '__main__':
     data_dir = sys.argv[1]
+    subdataset_name = sys.argv[2]
     #lexicons_dir = sys.argv[2]
     #le = LexTypeExtractor()
     #le.parse_lexicons(lexicons_dir)
     #create_full_dataset(le)
-    create_test_subdataset('wsj23')
+    create_test_subdataset(data_dir, subdataset_name)
