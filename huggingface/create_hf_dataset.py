@@ -156,6 +156,8 @@ def create_full_dataset(le):
 def create_test_subdataset(data_dir, subdata_name):
     with open('label_names.txt', 'r') as f:
         class_names = [l.strip() for l in f.readlines()]
+    class_names.append('None_label')
+    class_names.append('UNK')
     data_tsv = {
         #"train": data_dir + 'train',
         #"validation": data_dir + 'dev',
