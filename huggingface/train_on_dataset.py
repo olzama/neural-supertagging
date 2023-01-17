@@ -95,7 +95,7 @@ if __name__ == '__main__':
     dataset_path = sys.argv[1]
     output_path = sys.argv[2]
     dataset = load_from_disk(dataset_path) #'/media/olga/kesha/BERT/erg/dataset/'
-    tokenizer = AutoTokenizer.from_pretrained('bert-base-cased')
+    tokenizer = AutoTokenizer.from_pretrained('bert-base-uncased')
     data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
     with open('id2label.json','r') as f:
         id2label = json.load(f)
@@ -103,7 +103,7 @@ if __name__ == '__main__':
         label2id = json.load(f)
 
     model = AutoModelForTokenClassification.from_pretrained(
-        "bert-base-cased",
+        "bert-base-uncased",
         num_labels=1295,
         id2label=id2label,
         label2id=label2id
@@ -112,7 +112,7 @@ if __name__ == '__main__':
     training_args = TrainingArguments(
         output_dir= output_path+'/checkpoints/', #"/media/olga/kesha/BERT/erg/3e-5/"
         evaluation_strategy = "epoch",
-        learning_rate=5e-6,
+        learning_rate=2e-5,
         num_train_epochs= 60,
         weight_decay=0.01,
         save_strategy = "no"
