@@ -109,10 +109,10 @@ if __name__ == '__main__':
     )
 
     training_args = TrainingArguments(
-        output_dir="/media/olga/kesha/BERT/erg/debug/",
+        output_dir="/media/olga/kesha/BERT/erg/1e-5/",
         evaluation_strategy = "epoch",
-        learning_rate=2e-5,
-        num_train_epochs= 50,
+        learning_rate=1e-5,
+        num_train_epochs= 60,
         weight_decay=0.01,
         save_strategy = "no"
     )
@@ -130,7 +130,7 @@ if __name__ == '__main__':
     metric = evaluate.load("seqeval")
 
     trainer.train()
-    trainer.save_model("/media/olga/kesha/BERT/erg/debug")
+    trainer.save_model("/media/olga/kesha/BERT/erg/1e-5")
     #best_model = AutoModelForTokenClassification.from_pretrained("/media/olga/kesha/BERT/erg/best/")
 
     # training_args = TrainingArguments(
