@@ -1,17 +1,16 @@
 import sys
 from datasets import load_from_disk, load_dataset, Features, Value, Sequence, ClassLabel
 import evaluate
-from transformers import AutoModelForTokenClassification, Trainer
+from transformers import AutoModelForTokenClassification, Trainer, TrainingArguments
 from transformers import DataCollatorForTokenClassification
 from transformers import AutoTokenizer
 import numpy as np
 from torch import nn, max as torch_max, IntTensor
-from create_hf_dataset import create_json_files, align_labels_with_tokens, tokenize_and_align_labels
-from letype_extractor import LexTypeExtractor
+from train_on_dataset import compute_metrics
 
 SPECIAL_TOKEN = -100
 
-def test_eval_on_sentence(best_model, input_text):
+def test_eval_on_sentence(best_model, input_text, tokenizer):
     #input_text = "The text on which I test"
     input_text_tokenized = tokenizer.encode(input_text,
                                             truncation=True,
@@ -29,45 +28,49 @@ def test_eval_on_sentence(best_model, input_text):
     predicted_labels = [best_model.config.id2label[idx] for idx in max_prob_indices]
     print(predicted_labels)
 
-def compute_metrics(eval_preds):
-    metric = evaluate.load("seqeval")
-    logits, labels = eval_preds
-    predictions = np.argmax(logits, axis=-1)
 
-    # Remove ignored index (special tokens) and convert to labels
-    true_labels = [[label_names[l] for l in label if l != SPECIAL_TOKEN] for label in labels]
-    true_predictions = [
-        [label_names[p] for (p, l) in zip(prediction, label) if l != SPECIAL_TOKEN]
-        for prediction, label in zip(predictions, labels)
-    ]
-    all_metrics = metric.compute(predictions=true_predictions, references=true_labels)
-    return {
-        "precision": all_metrics["overall_precision"],
-        "recall": all_metrics["overall_recall"],
-        "f1": all_metrics["overall_f1"],
-        "accuracy": all_metrics["overall_accuracy"],
-    }
+if __name__ == "__main__":
+    best_model = AutoModelForTokenClassification.from_pretrained("/media/olga/kesha/BERT/erg/debug/")
+    tokenizer = AutoTokenizer.from_pretrained("/media/olga/kesha/BERT/erg/debug/")
+    data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
+    dataset = load_from_disk('/media/olga/kesha/BERT/erg/dataset/')
 
-best_model = AutoModelForTokenClassification.from_pretrained("/media/olga/kesha/BERT/erg/best/")
-tokenizer = AutoTokenizer.from_pretrained("/media/olga/kesha/BERT/erg/best/")
-#tokenizer = AutoTokenizer.from_pretrained('bert-base-cased')
-data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
+    training_args = TrainingArguments(
+        disable_tqdm=True,
+        do_train=False,
+        do_eval=True,
+        do_predict=False,
+        output_dir="/media/olga/kesha/BERT/erg/debug/"
+    )
 
-trainer = Trainer(
-    model=best_model,
-    data_collator=data_collator,
-    compute_metrics=compute_metrics,
-    tokenizer=tokenizer,
-)
+    trainer = Trainer(
+        model=best_model,
+        args=training_args,
+        eval_dataset=dataset["validation"],
+        data_collator=data_collator,
+        compute_metrics=compute_metrics,
+        tokenizer=tokenizer,
+    )
 
-best_model.eval()
+    trainer.evaluate()
+    print(5)
 
-with open('label_names.txt', 'r') as f:
-    label_names = [l.strip() for l in f.readlines()]
+    #best_model = AutoModelForTokenClassification.from_pretrained("/media/olga/kesha/BERT/erg/best/")
+    #tokenizer = AutoTokenizer.from_pretrained("/media/olga/kesha/BERT/erg/best/")
 
-dataset = load_from_disk('/media/olga/kesha/BERT/erg/')
-predictions = trainer.predict(dataset['validation'])
-print(5)
-#test_eval_on_sentence(best_model=best_model, input_text="predictive analytivs encompasses a variety of techniques from statistics.")
-#prediction_probs = tf.nn.softmax(prediction_logits,axis=1).numpy()
-#print(f'The prediction probs are: {prediction_probs}')
+    # trainer = Trainer(
+    #     model=best_model,
+    #     data_collator=data_collator,
+    #     compute_metrics=compute_metrics,
+    #     tokenizer=tokenizer,
+    # )
+    #
+    # best_model.eval()
+    #
+    #
+    # dataset = load_from_disk('/media/olga/kesha/BERT/erg/dataset/')
+    # predictions = trainer.predict(dataset['validation'])
+    # print(5)
+    #test_eval_on_sentence(best_model=best_model, input_text="predictive analytivs encompasses a variety of techniques from statistics.")
+    #prediction_probs = tf.nn.softmax(prediction_logits,axis=1).numpy()
+    #print(f'The prediction probs are: {prediction_probs}')
