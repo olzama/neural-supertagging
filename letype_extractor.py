@@ -532,7 +532,7 @@ if __name__ == "__main__":
         #data = le.read_and_reshuffle_testsuites(args[1])
         #le.process_reshuffled_nonautoreg(data,out_dir)
         data = le.read_testsuites(args[1])
-        for suf in ['dev', 'test']:
+        for suf in ['train', 'dev', 'test']:
             for ts in data[3][suf]['by corpus']:
                 le.process_testsuite_simple(ts)
         #print(5)
