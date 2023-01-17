@@ -157,8 +157,8 @@ def create_test_subdataset(data_dir, subdata_name):
     with open('label_names.txt', 'r') as f:
         class_names = [l.strip() for l in f.readlines()]
     data_tsv = {
-        #"train": data_dir + 'train',
-        #"validation": data_dir + 'dev',
+        "train": data_dir + 'train',
+        "validation": data_dir + 'dev',
         "test": data_dir + 'test/' + subdata_name
     }
     data_json = create_json_files(data_tsv, class_names)
