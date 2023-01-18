@@ -35,7 +35,8 @@ def compute_metrics(eval_preds):
     errors = collect_errors(true_predictions, true_labels)
     with open('errors.txt', 'w') as f:
         for e in errors:
-            f.write(id2label[e] + '\n')
+            #f.write(id2label[e] + '\n')
+            f.write(str(e) + '\n')
     all_metrics = metric.compute(predictions=true_predictions, references=true_labels, zero_division=0)
     return {
         "precision": all_metrics["overall_precision"],
