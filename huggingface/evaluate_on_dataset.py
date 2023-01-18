@@ -33,6 +33,7 @@ if __name__ == "__main__":
     model_path = sys.argv[1]
     dataset_path = sys.argv[2]
     output_path = sys.argv[3]
+    eval_type = sys.argv[4] if sys.argv[4]  == 'test' else 'validation'
     best_model = AutoModelForTokenClassification.from_pretrained(model_path) #"/media/olga/kesha/BERT/erg/debug/"
     tokenizer = AutoTokenizer.from_pretrained(model_path)
     data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
@@ -49,7 +50,7 @@ if __name__ == "__main__":
     trainer = Trainer(
         model=best_model,
         args=training_args,
-        eval_dataset=dataset["test"],
+        eval_dataset=dataset[eval_type],
         data_collator=data_collator,
         compute_metrics=compute_metrics,
         tokenizer=tokenizer,
