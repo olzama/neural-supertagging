@@ -37,18 +37,18 @@ def create_json_files(data_files, label_set):
                 sentence_tags = []
 
                 lines = sentence.split('\n')
-                if len(lines) > 1:
-                    for line in lines:
-                        if line:
-                            token, tag = line.split('\t')
-                            sentence_tokens.append(token)
-                            if split != 'test':
+                #if len(lines) > 1:
+                for line in lines:
+                    if line:
+                        token, tag = line.split('\t')
+                        sentence_tokens.append(token)
+                        if split != 'test':
+                            sentence_tags.append(tag)
+                        else:
+                            if tag in label_set:
                                 sentence_tags.append(tag)
                             else:
-                                if tag in label_set:
-                                    sentence_tags.append(tag)
-                                else:
-                                    sentence_tags.append('UNK')
+                                sentence_tags.append('UNK')
                 if sentence_tokens != []:
                     if split == "train":
                         train_list.append({"id": idx, "tokens": sentence_tokens, "tags": sentence_tags})
@@ -123,7 +123,6 @@ def create_full_dataset(le):
     with open('id2label.json', 'w') as f:
         json.dump(id2label, f)
     tokenizer = AutoTokenizer.from_pretrained('bert-base-cased')
-    data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
     dataset = load_dataset(
         "json",
         cache_dir='/media/olga/kesha/BERT/cache',
@@ -168,11 +167,10 @@ def create_test_subdataset(data_dir, subdata_name):
         label2id = json.load(f)
     with open('id2label.json', 'r') as f:
         id2label = json.load(f)
-    tokenizer = AutoTokenizer.from_pretrained('/media/olga/kesha/BERT/erg/best/')
-    data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
+    tokenizer = AutoTokenizer.from_pretrained('bert-base-cased')
     dataset = load_dataset(
         "json",
-        cache_dir='/media/olga/kesha/BERT/cache',
+        cache_dir='./cache',
         data_files=data_json,
         features=Features(
             {
