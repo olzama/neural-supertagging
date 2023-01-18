@@ -21,8 +21,6 @@ SPECIAL_TOKEN = -100
 def compute_metrics(eval_preds):
     with open('label_names.txt', 'r') as f:
         label_names = [l.strip() for l in f.readlines()]
-    with open('id2label.json','r') as f:
-        id2label = json.load(f)
     metric = evaluate.load("seqeval")
     logits, labels = eval_preds
     predictions = np.argmax(logits, axis=-1)
@@ -33,9 +31,9 @@ def compute_metrics(eval_preds):
         for prediction, label in zip(predictions, labels)
     ]
     errors = collect_errors(true_predictions, true_labels)
+    print("{} errors".format(len(errors)))
     with open('errors.txt', 'w') as f:
         for e in errors:
-            #f.write(id2label[e] + '\n')
             f.write(str(e) + '\n')
     all_metrics = metric.compute(predictions=true_predictions, references=true_labels, zero_division=0)
     return {
@@ -49,7 +47,7 @@ def collect_errors(predictions, true_labels):
     errors = []
     for i, p in enumerate(predictions):
         if p != true_labels[i]:
-            errors.append(p)
+            errors.append((p, true_labels[i]))
 
     return errors
 if __name__ == '__main__':
