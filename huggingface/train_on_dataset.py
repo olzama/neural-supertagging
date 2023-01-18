@@ -21,6 +21,8 @@ SPECIAL_TOKEN = -100
 def compute_metrics(eval_preds):
     with open('label_names.txt', 'r') as f:
         label_names = [l.strip() for l in f.readlines()]
+    with open('id2label.json','r') as f:
+        id2label = json.load(f)
     metric = evaluate.load("seqeval")
     logits, labels = eval_preds
     predictions = np.argmax(logits, axis=-1)
