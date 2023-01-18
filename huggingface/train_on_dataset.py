@@ -31,7 +31,7 @@ def compute_metrics(eval_preds):
         for prediction, label in zip(predictions, labels)
     ]
     errors, total_tok = collect_errors(true_predictions, true_labels)
-    print("{} errors out of {} classified tokens".format(len(errors), total_tok)
+    print("{} errors out of {} classified tokens".format(len(errors), total_tok))
     with open('errors.txt', 'w') as f:
         for e in errors:
             f.write(str(e) + '\n')
