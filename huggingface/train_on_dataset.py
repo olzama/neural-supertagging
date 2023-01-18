@@ -45,6 +45,7 @@ def compute_metrics(eval_preds):
 
 def collect_errors(predictions, true_labels):
     errors = []
+    print(predictions[0])
     for i, p in enumerate(predictions):
         if p != true_labels[i]:
             errors.append((p, true_labels[i]))
