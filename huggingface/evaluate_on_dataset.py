@@ -32,7 +32,7 @@ def test_eval_on_sentence(best_model, input_text, tokenizer):
 def convert_predictions(predictions, model_config):
     txt_labels = []
     for p in list(predictions):
-        txt_labels.append([model_config.id2label[idx] for idx in p])
+        txt_labels.append([model_config.id2label[idx] for idx in p if idx != -100])
     return txt_labels
 
 
