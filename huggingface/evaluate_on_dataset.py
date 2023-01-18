@@ -29,6 +29,11 @@ def test_eval_on_sentence(best_model, input_text, tokenizer):
     print(predicted_labels)
 
 
+def convert_predictions(predictions, model_config):
+    predicted_labels = [model_config.id2label[idx] for idx in predictions]
+    print(predicted_labels)
+
+
 if __name__ == "__main__":
     model_path = sys.argv[1]
     dataset_path = sys.argv[2]
@@ -61,7 +66,9 @@ if __name__ == "__main__":
     if len(sys.argv) == 5:
         #trainer.evaluate()
         predictions = trainer.predict(dataset['test'])
-        print(predictions)
+        #print(predictions)
+        print(predictions.label_ids)
+        #txt_predictions = convert_predictions(predictions.predictions,best_model.config)
 
     #best_model = AutoModelForTokenClassification.from_pretrained("/media/olga/kesha/BERT/erg/best/")
     #tokenizer = AutoTokenizer.from_pretrained("/media/olga/kesha/BERT/erg/best/")
