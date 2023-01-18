@@ -76,13 +76,16 @@ def compute_metrics(eval_preds):
     metric = evaluate.load("seqeval")
     logits, labels = eval_preds
     predictions = np.argmax(logits, axis=-1)
-
     # Remove ignored index (special tokens) and convert to labels
     true_labels = [[label_names[l] for l in label if l != SPECIAL_TOKEN] for label in labels]
     true_predictions = [
         [label_names[p] for (p, l) in zip(prediction, label) if l != SPECIAL_TOKEN]
         for prediction, label in zip(predictions, labels)
     ]
+    errors = collect_errors(true_predictions, true_labels)
+    with open('errors.txt', 'w') as f:
+        for e in errors:
+            f.write(e + '\n')
     all_metrics = metric.compute(predictions=true_predictions, references=true_labels)
     return {
         "precision": all_metrics["overall_precision"],
@@ -91,6 +94,13 @@ def compute_metrics(eval_preds):
         "accuracy": all_metrics["overall_accuracy"],
     }
 
+def collect_errors(predictions, true_labels):
+    errors = []
+    for i, p in enumerate(predictions):
+        if p != true_labels[i]:
+            errors.append(p)
+
+    return errors
 if __name__ == '__main__':
     dataset_path = sys.argv[1]
     output_path = sys.argv[2]
