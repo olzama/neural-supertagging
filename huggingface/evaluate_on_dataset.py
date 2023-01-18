@@ -30,7 +30,10 @@ def test_eval_on_sentence(best_model, input_text, tokenizer):
 
 
 def convert_predictions(predictions, model_config):
-    return [model_config.id2label[idx] for idx in predictions]
+    txt_labels = []
+    for p in list(predictions):
+        txt_labels.append([model_config.id2label[idx] for idx in p])
+    return txt_labels
 
 
 
