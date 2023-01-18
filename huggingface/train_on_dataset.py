@@ -30,8 +30,8 @@ def compute_metrics(eval_preds):
         [label_names[p] for (p, l) in zip(prediction, label) if l != SPECIAL_TOKEN]
         for prediction, label in zip(predictions, labels)
     ]
-    errors = collect_errors(true_predictions, true_labels)
-    print("{} errors out of {} classified tokens".format(len(errors), len(true_predictions)))
+    errors, total_tok = collect_errors(true_predictions, true_labels)
+    print("{} errors out of {} classified tokens".format(len(errors), total_tok)
     with open('errors.txt', 'w') as f:
         for e in errors:
             f.write(str(e) + '\n')
@@ -45,12 +45,14 @@ def compute_metrics(eval_preds):
 
 def collect_errors(predictions, true_labels):
     errors = []
-    print(predictions[0])
+    total = 0
     for i, p in enumerate(predictions):
-        if p != true_labels[i]:
-            errors.append((p, true_labels[i]))
+        for j, p_i in enumerate(p):
+            total +=1
+            if p_i != true_labels[i][j]:
+                errors.append((p_i, true_labels[i][j]))
+    return errors, total
 
-    return errors
 if __name__ == '__main__':
     dataset_path = sys.argv[1]
     output_path = sys.argv[2]
