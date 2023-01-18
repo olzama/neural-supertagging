@@ -13,6 +13,7 @@ import evaluate
 from transformers import AutoModelForTokenClassification, TrainingArguments, Trainer
 from transformers import DataCollatorForTokenClassification
 from transformers import AutoTokenizer
+import energyusage
 
 SPECIAL_TOKEN = -100
 
@@ -89,5 +90,6 @@ if __name__ == '__main__':
         compute_metrics=compute_metrics,
         tokenizer=tokenizer,
     )
-    trainer.train()
+
+    energyusage.evaluate(trainer.train(),pdf=True)
     trainer.save_model(output_path + '/saved/')
