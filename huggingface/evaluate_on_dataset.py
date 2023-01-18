@@ -51,7 +51,8 @@ if __name__ == "__main__":
         do_train=False,
         do_eval=False,
         do_predict=True,
-        output_dir=output_path
+        output_dir=output_path,
+        eval_accumulation_steps=1000
     )
 
     trainer = Trainer(
