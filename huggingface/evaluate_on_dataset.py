@@ -41,9 +41,6 @@ if __name__ == "__main__":
     model_path = sys.argv[1]
     dataset_path = sys.argv[2]
     output_path = sys.argv[3]
-    eval_type = sys.argv[4] if sys.argv[4]  == 'test' else 'validation'
-    if len(sys.argv) == 6:
-        test_sentence = sys.argv[5]
     best_model = AutoModelForTokenClassification.from_pretrained(model_path) #"/media/olga/kesha/BERT/erg/debug/"
     tokenizer = AutoTokenizer.from_pretrained(model_path)
     data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
@@ -60,17 +57,14 @@ if __name__ == "__main__":
     trainer = Trainer(
         model=best_model,
         args=training_args,
-        eval_dataset=dataset[eval_type],
+        eval_dataset=dataset['validation'],
         data_collator=data_collator,
         compute_metrics=compute_metrics,
         tokenizer=tokenizer,
     )
 
-    if len(sys.argv) == 5:
-        predictions = trainer.predict(dataset['test'])
-        txt_predictions = convert_predictions(predictions.label_ids,best_model.config)
-        print(predictions.metrics)
-        #print(txt_predictions)
+    predictions = trainer.predict(dataset['test'])
+    txt_predictions = convert_predictions(predictions.label_ids,best_model.config)
+    print(predictions.metrics)
+    print(txt_predictions)
 
-    elif len(sys.argv) == 6:
-        test_eval_on_sentence(best_model=best_model, input_text="predictive analytics encompasses a variety of techniques from statistics.")
