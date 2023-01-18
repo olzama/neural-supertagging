@@ -30,8 +30,8 @@ def test_eval_on_sentence(best_model, input_text, tokenizer):
 
 
 def convert_predictions(predictions, model_config):
-    predicted_labels = [model_config.id2label[idx] for idx in predictions]
-    print(predicted_labels)
+    return [model_config.id2label[idx] for idx in predictions]
+
 
 
 if __name__ == "__main__":
@@ -67,8 +67,9 @@ if __name__ == "__main__":
         #trainer.evaluate()
         predictions = trainer.predict(dataset['test'])
         #print(predictions)
-        print(predictions.label_ids)
-        #txt_predictions = convert_predictions(predictions.predictions,best_model.config)
+        #print(predictions.label_ids)
+        txt_predictions = convert_predictions(predictions.label_ids,best_model.config)
+        print(txt_predictions)
 
     #best_model = AutoModelForTokenClassification.from_pretrained("/media/olga/kesha/BERT/erg/best/")
     #tokenizer = AutoTokenizer.from_pretrained("/media/olga/kesha/BERT/erg/best/")
