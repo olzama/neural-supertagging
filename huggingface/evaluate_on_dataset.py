@@ -60,7 +60,8 @@ if __name__ == "__main__":
 
     if len(sys.argv) == 5:
         #trainer.evaluate()
-        trainer.predict(dataset['test'])
+        predictions = trainer.predict(dataset['test'])
+        print(predictions)
 
     #best_model = AutoModelForTokenClassification.from_pretrained("/media/olga/kesha/BERT/erg/best/")
     #tokenizer = AutoTokenizer.from_pretrained("/media/olga/kesha/BERT/erg/best/")
