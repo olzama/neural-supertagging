@@ -67,30 +67,10 @@ if __name__ == "__main__":
     )
 
     if len(sys.argv) == 5:
-        #trainer.evaluate()
         predictions = trainer.predict(dataset['test'])
-        #print(predictions)
-        #print(predictions.label_ids)
         txt_predictions = convert_predictions(predictions.label_ids,best_model.config)
-        print(txt_predictions)
+        print(predictions.metrics)
+        #print(txt_predictions)
 
-    #best_model = AutoModelForTokenClassification.from_pretrained("/media/olga/kesha/BERT/erg/best/")
-    #tokenizer = AutoTokenizer.from_pretrained("/media/olga/kesha/BERT/erg/best/")
-
-    # trainer = Trainer(
-    #     model=best_model,
-    #     data_collator=data_collator,
-    #     compute_metrics=compute_metrics,
-    #     tokenizer=tokenizer,
-    # )
-    #
-    # best_model.eval()
-    #
-    #
-    # dataset = load_from_disk('/media/olga/kesha/BERT/erg/dataset/')
-    # predictions = trainer.predict(dataset['validation'])
-    # print(5)
     elif len(sys.argv) == 6:
         test_eval_on_sentence(best_model=best_model, input_text="predictive analytics encompasses a variety of techniques from statistics.")
-    #prediction_probs = tf.nn.softmax(prediction_logits,axis=1).numpy()
-    #print(f'The prediction probs are: {prediction_probs}')
