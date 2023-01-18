@@ -31,6 +31,7 @@ def create_json_files(data_files, label_set):
         file = data_files[split]
         with open(file, 'r') as f:
             sentences = f.read().split('\n\n')
+            print("{} sentences in the dataset".format(len(sentences)))
             for sentence in sentences:
                 idx += 1
                 sentence_tokens = []
@@ -60,6 +61,9 @@ def create_json_files(data_files, label_set):
     train_dic = {"data": train_list}
     eval_dic = {"data": eval_list}
     test_dic = {"data": test_list}
+    print("{} examples added to the training dataset".format(len(train_list)))
+    print("{} examples added to the dev dataset".format(len(eval_list)))
+    print("{} examples added to the test dataset".format(len(test_list)))
 
     with open(train_json.name, 'w', encoding='utf8') as f:
         json.dump(train_dic, f, ensure_ascii=False)
