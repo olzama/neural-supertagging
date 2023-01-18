@@ -34,6 +34,8 @@ if __name__ == "__main__":
     dataset_path = sys.argv[2]
     output_path = sys.argv[3]
     eval_type = sys.argv[4] if sys.argv[4]  == 'test' else 'validation'
+    if len(sys.argv) == 6:
+        test_sentence = sys.argv[5]
     best_model = AutoModelForTokenClassification.from_pretrained(model_path) #"/media/olga/kesha/BERT/erg/debug/"
     tokenizer = AutoTokenizer.from_pretrained(model_path)
     data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
@@ -42,8 +44,8 @@ if __name__ == "__main__":
     training_args = TrainingArguments(
         disable_tqdm=True,
         do_train=False,
-        do_eval=True,
-        do_predict=False,
+        do_eval=False,
+        do_predict=True,
         output_dir=output_path
     )
 
@@ -56,7 +58,9 @@ if __name__ == "__main__":
         tokenizer=tokenizer,
     )
 
-    trainer.evaluate()
+    if len(sys.argv) == 5:
+        #trainer.evaluate()
+        trainer.predict(dataset['test'])
 
     #best_model = AutoModelForTokenClassification.from_pretrained("/media/olga/kesha/BERT/erg/best/")
     #tokenizer = AutoTokenizer.from_pretrained("/media/olga/kesha/BERT/erg/best/")
@@ -74,6 +78,7 @@ if __name__ == "__main__":
     # dataset = load_from_disk('/media/olga/kesha/BERT/erg/dataset/')
     # predictions = trainer.predict(dataset['validation'])
     # print(5)
-    #test_eval_on_sentence(best_model=best_model, input_text="predictive analytivs encompasses a variety of techniques from statistics.")
+    elif len(sys.argv) == 6:
+        test_eval_on_sentence(best_model=best_model, input_text="predictive analytics encompasses a variety of techniques from statistics.")
     #prediction_probs = tf.nn.softmax(prediction_logits,axis=1).numpy()
     #print(f'The prediction probs are: {prediction_probs}')
