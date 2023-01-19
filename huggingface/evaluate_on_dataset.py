@@ -67,5 +67,7 @@ if __name__ == "__main__":
     predictions = trainer.predict(dataset['test'])
     txt_predictions = convert_predictions(predictions.label_ids,best_model.config)
     print(predictions.metrics)
-    print(txt_predictions)
+    with open(output_path + 'predictions.txt', 'w') as f:
+        for p in txt_predictions:
+            f.write(str(p) + '\n')
 
