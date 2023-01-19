@@ -92,19 +92,23 @@ class LexTypeExtractor:
         n = 0
         for idx in ['train','dev','test']:
             t = 0
+            total_sen = 0
             for i, tsuite in enumerate(sorted(glob.iglob(path + idx + '/**'))):
                 n += 1
+                used_items = 0
                 ts = itsdb.TestSuite(tsuite)
                 if idx == 'train':
                     message = "A nontrain dataset {} is being added as training data!".format(ts.path.stem)
                     assert ts.path.stem not in NONTRAIN, message
                 data[idx]['by corpus'].append({'name':ts.path.stem})
                 items = list(ts.processed_items())
+                print("{} sentences in corpus {} including possible sentences with no parse.".format(len(items), ts.path.stem))
                 data[idx]['by corpus'][i]['sentences'] = {}
                 data[idx]['by corpus'][i]['tokens-tags'] = []
                 corpus_size += len(items)
                 for response in items:
                     if len(response['results']) > 0:
+                        used_items += 1
                         deriv = response.result(0).derivation()
                         terminals = deriv.terminals()
                         t += len(terminals)
@@ -120,7 +124,10 @@ class LexTypeExtractor:
                         data[idx]['by corpus'][i]['tokens-tags'].append(terminals_tok_tags)
                         if len(terminals) > max_sen_length:
                             max_sen_length = len(terminals)
+                print("Used {} sentences from corpus {}".format(used_items,ts.path.stem))
+                total_sen += used_items
             print('All raw {} tokens: {}'.format(idx,t))
+            print('All used sentences in {}: {}'.format(idx, total_sen))
             t1 = 0
             t2 = 0
             if idx == 'train':
@@ -279,8 +286,10 @@ class LexTypeExtractor:
         pairs = []
         y = []
         pos_mapper = pos_map.Pos_mapper('./pos-map.txt')  # do this for every test suite to count unknowns in each
+        total = 0
         for sentence_len in tsuite['sentences']:
             items = tsuite['sentences'][sentence_len]
+            total += len(items)
             for j, lst_of_terminals in enumerate(items):
                 tokens,labels,pos_tags,autoregress_labels = \
                      self.get_tokens_labels(tsuite['tokens-tags'][j],CONTEXT_WINDOW, self.lextypes,pos_mapper,test=False)
@@ -290,7 +299,41 @@ class LexTypeExtractor:
                     pairs.append((t, labels[k]))
                     y.append(labels[k])
                 pairs.append(('--EOS--','--EOS--')) # sentence separator
+        print("{} sentences in subcorpus {}".format(total, tsuite['name']))
         self.write_output_simple(pairs, tsuite['name'])
+
+
+    def process_bulk(self, data, suf):
+        print("Processing " + suf)
+        all_pairs = []
+        all_ys = []
+        pos_mapper = pos_map.Pos_mapper('./pos-map.txt')  # do this for every test suite to count unknowns in each
+        total = 0
+        for tsuite in data[suf]['by corpus']:
+            pairs = []
+            y = []
+            subtotal = 0
+            for sentence_len in tsuite['sentences']:
+                items = tsuite['sentences'][sentence_len]
+                total += len(items)
+                subtotal += len(items)
+                for j, lst_of_terminals in enumerate(items):
+                    tokens,labels,pos_tags,autoregress_labels = \
+                         self.get_tokens_labels(tsuite['tokens-tags'][j],CONTEXT_WINDOW, self.lextypes,pos_mapper,test=False)
+                    for k, t in enumerate(tokens):
+                        if k < CONTEXT_WINDOW or k >= len(tokens) - CONTEXT_WINDOW:
+                            continue
+                        pairs.append((t, labels[k]))
+                        all_pairs.append((t, labels[k]))
+                        y.append(labels[k])
+                        all_ys.append(labels[k])
+                    pairs.append(('--EOS--','--EOS--')) # sentence separator
+                    all_pairs.append(('--EOS--', '--EOS--'))  # sentence separator
+            print("{} sentences in subcorpus {}".format(subtotal, tsuite['name']))
+            self.write_output_simple('output/by-subcorpus/', pairs, tsuite['name'])
+        self.write_output_simple('output/full/', all_pairs, suf)
+        print("{} sentences in corpus {}".format(total, suf))
+
 
 
     def process_length(self, lextypes, items, autoregress_table, labels_table,test):
@@ -433,10 +476,9 @@ class LexTypeExtractor:
         with open('./output/by-corpus/contexts/' + suf + ts_name, 'w') as f:
             f.write(json.dumps(contexts))
 
-    def write_output_simple(self, pairs, ts_name):
+    def write_output_simple(self, dest_path, pairs, ts_name):
         for d in ['train/','test/','dev/', 'ignore/']:
-            for pd in ['simple/']:
-                pathlib.Path('./output/' + pd + d).mkdir(parents=True, exist_ok=True)
+            pathlib.Path(dest_path + d).mkdir(parents=True, exist_ok=True)
         true_labels = []
         suf = 'train/'
         if ts_name in IGNORE:
@@ -445,7 +487,7 @@ class LexTypeExtractor:
             suf = 'test/'
         elif ts_name in DEV:
             suf = 'dev/'
-        with open('./output/simple/' + suf + ts_name, 'w') as f:
+        with open(dest_path + suf + ts_name, 'w') as f:
             for form, letype in pairs:
                 if not letype=='--EOS--':
                     true_labels.append(str(letype))
@@ -531,11 +573,12 @@ if __name__ == "__main__":
         #le.process_testsuites_nonautoreg(args[1],le.lextypes,out_dir)
         #data = le.read_and_reshuffle_testsuites(args[1])
         #le.process_reshuffled_nonautoreg(data,out_dir)
-        data = le.read_testsuites(args[1])
-        for suf in ['train', 'dev', 'test']:
-            for ts in data[3][suf]['by corpus']:
-                le.process_testsuite_simple(ts)
-        #print(5)
+         data = le.read_testsuites(args[1])
+         for suf in ['train', 'dev', 'test']:
+             le.process_bulk(data[3],suf)
+             #for ts in data[3][suf]['by corpus']:
+             #    le.process_testsuite_simple(ts)
+         print(5)
     #with open(out_dir + '/lextypes','wb') as f:
     #    lextypes = set([str(v) for v in list(le.lextypes.values())])
     #    pickle.dump(lextypes,f)
