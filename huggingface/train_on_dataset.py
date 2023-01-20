@@ -80,7 +80,7 @@ if __name__ == '__main__':
         output_dir= output_path+'/checkpoints/', #"/media/olga/kesha/BERT/erg/3e-5/"
         evaluation_strategy = "epoch",
         learning_rate=2e-5,
-        num_train_epochs= 1,
+        num_train_epochs=60,
         weight_decay=0.01,
         save_strategy = "no"
     )
@@ -95,8 +95,8 @@ if __name__ == '__main__':
         tokenizer=tokenizer,
     )
 
-    tracker = CarbonTracker(epochs=1)
-    tracker.epoch_start()
+    #tracker = CarbonTracker(epochs=1)
+    #tracker.epoch_start()
     trainer.train()
-    tracker.epoch_end()
+    #tracker.epoch_end()
     trainer.save_model(output_path + '/saved/')
