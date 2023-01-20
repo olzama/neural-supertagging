@@ -14,8 +14,8 @@ from transformers import AutoModelForTokenClassification, TrainingArguments, Tra
 from transformers import DataCollatorForTokenClassification
 from transformers import AutoTokenizer
 from carbontracker.tracker import CarbonTracker
-
-
+import transformers
+import torch
 SPECIAL_TOKEN = -100
 
 
@@ -55,9 +55,11 @@ def collect_errors(predictions, true_labels):
                 errors.append((p_i, true_labels[i][j]))
     return errors, total
 
+
 if __name__ == '__main__':
     dataset_path = sys.argv[1]
     output_path = sys.argv[2]
+    transformers.trainer_utils.set_seed(42)
     dataset = load_from_disk(dataset_path) #'/media/olga/kesha/BERT/erg/dataset/'
     print('Loaded dataset. Shape: {}'.format(dataset.shape))
     tokenizer = AutoTokenizer.from_pretrained('bert-base-cased')
@@ -78,7 +80,7 @@ if __name__ == '__main__':
         output_dir= output_path+'/checkpoints/', #"/media/olga/kesha/BERT/erg/3e-5/"
         evaluation_strategy = "epoch",
         learning_rate=2e-5,
-        num_train_epochs= 60,
+        num_train_epochs= 1,
         weight_decay=0.01,
         save_strategy = "no"
     )
