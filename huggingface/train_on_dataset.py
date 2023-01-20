@@ -58,6 +58,7 @@ if __name__ == '__main__':
     dataset_path = sys.argv[1]
     output_path = sys.argv[2]
     dataset = load_from_disk(dataset_path) #'/media/olga/kesha/BERT/erg/dataset/'
+    print('Loaded dataset. Shape: {}'.format(dataset.shape))
     tokenizer = AutoTokenizer.from_pretrained('bert-base-cased')
     data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
     with open('id2label.json','r') as f:
@@ -91,5 +92,5 @@ if __name__ == '__main__':
         tokenizer=tokenizer,
     )
 
-    energyusage.evaluate(trainer.train(),pdf=True)
+    trainer.train()
     trainer.save_model(output_path + '/saved/')
