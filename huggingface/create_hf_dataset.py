@@ -110,10 +110,9 @@ def tokenize_and_align_labels(examples, tokenizer):
     return tokenized_inputs
 
 
-def create_full_dataset(le):
-    class_names = list(set([str(v) for v in list(le.lextypes.values())]))
-    class_names.append('None_label')
-    class_names.append('UNK')
+def create_full_dataset(output_dir):
+    with open('label_names.txt', 'r') as f:
+        class_names = [l.strip() for l in f.readlines()]
     data_tsv = {
         "train": data_dir + 'train',
         "validation": data_dir + 'dev',
@@ -122,12 +121,6 @@ def create_full_dataset(le):
     data_json = create_json_files(data_tsv, class_names)
     num_labels = len(class_names)
     print('Number of labels:{}'.format(num_labels))
-    label2id = {v: i for i, v in enumerate(class_names)}
-    id2label = {i: v for i, v in enumerate(class_names)}
-    with open('label2id.json', 'w') as f:
-        json.dump(label2id, f)
-    with open('id2label.json', 'w') as f:
-        json.dump(id2label, f)
     tokenizer = AutoTokenizer.from_pretrained('bert-base-cased')
     dataset = load_dataset(
         "json",
@@ -143,12 +136,6 @@ def create_full_dataset(le):
         field="data"
     )
     print('Dataset loaded.')
-    syntax_features = dataset['train'].features['tags']
-    label_names = syntax_features.feature.names
-    with open('label_names.txt', 'w') as f:
-        for l in label_names:
-            f.write(l + '\n')
-    print('Saved label names in label_names.txt')
     dataset = dataset.map(
         tokenize_and_align_labels,
         batched=True,
@@ -156,9 +143,9 @@ def create_full_dataset(le):
         fn_kwargs={"tokenizer": tokenizer}
 
     )
-    dataset.save_to_disk('/media/olga/kesha/BERT/erg/dataset/')
+    dataset.save_to_disk(output_dir)
 
-def create_test_subdataset(data_dir, subdata_name):
+def create_test_subdataset(data_dir, subdata_name, output_dir):
     with open('label_names.txt', 'r') as f:
         class_names = [l.strip() for l in f.readlines()]
     data_tsv = {
@@ -169,10 +156,6 @@ def create_test_subdataset(data_dir, subdata_name):
     data_json = create_json_files(data_tsv, class_names)
     num_labels = len(class_names)
     print('Number of labels:{}'.format(num_labels))
-    with open('label2id.json', 'r') as f:
-        label2id = json.load(f)
-    with open('id2label.json', 'r') as f:
-        id2label = json.load(f)
     tokenizer = AutoTokenizer.from_pretrained('bert-base-cased')
     dataset = load_dataset(
         "json",
@@ -195,14 +178,15 @@ def create_test_subdataset(data_dir, subdata_name):
         fn_kwargs={"tokenizer": tokenizer}
 
     )
-    dataset.save_to_disk('/media/olga/kesha/BERT/erg/dataset-test-separate/' + subdata_name)
+    dataset.save_to_disk(output_dir + subdata_name)
 
 
 if __name__ == '__main__':
     data_dir = sys.argv[1]
     subdataset_name = sys.argv[2]
+    output_dir = sys.argv[3]
     #lexicons_dir = sys.argv[2]
     #le = LexTypeExtractor()
     #le.parse_lexicons(lexicons_dir)
     #create_full_dataset(le)
-    create_test_subdataset(data_dir, subdataset_name)
+    create_test_subdataset(data_dir, subdataset_name, output_dir)
