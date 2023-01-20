@@ -181,6 +181,22 @@ def create_test_subdataset(data_dir, subdata_name, output_dir):
     dataset.save_to_disk(output_dir + subdata_name)
 
 
+def create_class_names(le):
+    class_names = list(set([str(v) for v in list(le.lextypes.values())]))
+    class_names.append('None_label')
+    class_names.append('UNK')
+
+
+def create_id2label_mappings(class_names):
+    label2id = {v: i for i, v in enumerate(class_names)}
+    id2label = {i: v for i, v in enumerate(class_names)}
+    with open('label2id.json', 'w') as f:
+        json.dump(label2id, f)
+    with open('id2label.json', 'w') as f:
+        json.dump(id2label, f)
+    return label2id, id2label
+
+
 if __name__ == '__main__':
     data_dir = sys.argv[1]
     subdataset_name = sys.argv[2]
