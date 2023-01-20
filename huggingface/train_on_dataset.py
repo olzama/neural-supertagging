@@ -13,7 +13,8 @@ import evaluate
 from transformers import AutoModelForTokenClassification, TrainingArguments, Trainer
 from transformers import DataCollatorForTokenClassification
 from transformers import AutoTokenizer
-import energyusage
+from carbontracker.tracker import CarbonTracker
+
 
 SPECIAL_TOKEN = -100
 
@@ -76,7 +77,7 @@ if __name__ == '__main__':
     training_args = TrainingArguments(
         output_dir= output_path+'/checkpoints/', #"/media/olga/kesha/BERT/erg/3e-5/"
         evaluation_strategy = "epoch",
-        learning_rate=1e-5,
+        learning_rate=2e-5,
         num_train_epochs= 60,
         weight_decay=0.01,
         save_strategy = "no"
@@ -92,5 +93,8 @@ if __name__ == '__main__':
         tokenizer=tokenizer,
     )
 
+    tracker = CarbonTracker(epochs=1)
+    tracker.epoch_start()
     trainer.train()
+    tracker.epoch_end()
     trainer.save_model(output_path + '/saved/')

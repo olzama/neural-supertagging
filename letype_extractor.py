@@ -330,8 +330,8 @@ class LexTypeExtractor:
                     pairs.append(('--EOS--','--EOS--')) # sentence separator
                     all_pairs.append(('--EOS--', '--EOS--'))  # sentence separator
             print("{} sentences in subcorpus {}".format(subtotal, tsuite['name']))
-            self.write_output_simple('output/by-subcorpus/', pairs, tsuite['name'])
-        self.write_output_simple('output/full/', all_pairs, suf)
+            self.write_output_simple('wiki-output/by-subcorpus/', pairs, tsuite['name'])
+        self.write_output_simple('wiki-output/full/', all_pairs, suf)
         print("{} sentences in corpus {}".format(total, suf))
 
 
@@ -578,7 +578,6 @@ if __name__ == "__main__":
              le.process_bulk(data[3],suf)
              #for ts in data[3][suf]['by corpus']:
              #    le.process_testsuite_simple(ts)
-         print(5)
     #with open(out_dir + '/lextypes','wb') as f:
     #    lextypes = set([str(v) for v in list(le.lextypes.values())])
     #    pickle.dump(lextypes,f)

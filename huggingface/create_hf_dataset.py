@@ -6,14 +6,9 @@
 
 import sys
 import json
-import numpy as np
 from tempfile import NamedTemporaryFile
 from datasets import Sequence, Value, ClassLabel, load_dataset, Features
-import evaluate
-from transformers import AutoModelForTokenClassification, TrainingArguments, Trainer
-from transformers import DataCollatorForTokenClassification
 from transformers import AutoTokenizer
-from letype_extractor import LexTypeExtractor
 
 SPECIAL_TOKEN = -100
 
@@ -29,6 +24,8 @@ def create_json_files(data_files, label_set):
     for split in data_files:
         idx = 0
         file = data_files[split]
+        skipped = 0
+        min_word_len = 1 if split == 'train' else 0
         with open(file, 'r') as f:
             sentences = f.read().split('\n\n')
             print("{} sentences in the dataset".format(len(sentences)))
@@ -36,9 +33,8 @@ def create_json_files(data_files, label_set):
                 idx += 1
                 sentence_tokens = []
                 sentence_tags = []
-
                 lines = sentence.split('\n')
-                if len(lines) > 1:
+                if len(lines) > min_word_len:
                     for line in lines:
                         if line:
                             token, tag = line.split('\t')
@@ -50,6 +46,9 @@ def create_json_files(data_files, label_set):
                                     sentence_tags.append(tag)
                                 else:
                                     sentence_tags.append('UNK')
+                else:
+                    #print('Skipped a sentence: {}'.format(sentence))
+                    skipped +=1
                 if len(sentence_tokens) > 0:
                     if split == "train":
                         train_list.append({"id": idx, "tokens": sentence_tokens, "tags": sentence_tags})
@@ -59,7 +58,7 @@ def create_json_files(data_files, label_set):
                         test_list.append({"id": idx, "tokens": sentence_tokens, "tags": sentence_tags})
                 else:
                     print("No tokens in sentence {}".format(sentence))
-
+        print("Skipped {} sentences below minimum length {}.".format(skipped, min_word_len))
     train_dic = {"data": train_list}
     eval_dic = {"data": eval_list}
     test_dic = {"data": test_list}
@@ -110,7 +109,7 @@ def tokenize_and_align_labels(examples, tokenizer):
     return tokenized_inputs
 
 
-def create_full_dataset(output_dir):
+def create_full_dataset(data_dir, output_dir):
     with open('label_names.txt', 'r') as f:
         class_names = [l.strip() for l in f.readlines()]
     data_tsv = {
@@ -199,10 +198,11 @@ def create_id2label_mappings(class_names):
 
 if __name__ == '__main__':
     data_dir = sys.argv[1]
-    subdataset_name = sys.argv[2]
-    output_dir = sys.argv[3]
+    output_dir = sys.argv[2]
+    if len(sys.argv) > 3:
+        subdataset_name = sys.argv[3]
     #lexicons_dir = sys.argv[2]
     #le = LexTypeExtractor()
     #le.parse_lexicons(lexicons_dir)
-    #create_full_dataset(le)
+    #create_full_dataset(data_dir, output_dir)
     create_test_subdataset(data_dir, subdataset_name, output_dir)
