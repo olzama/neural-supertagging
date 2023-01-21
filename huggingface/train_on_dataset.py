@@ -82,6 +82,7 @@ if __name__ == '__main__':
         learning_rate=1e-5,
         num_train_epochs=100,
         weight_decay=0.01,
+        warmup_ratio=0.01,
         save_strategy = "no"
     )
 
