@@ -1,0 +1,302 @@
+Reading test suite files into pydelphin objects...
+2579 sentences in corpus bcs including possible sentences with no parse.
+Used 2365 sentences from corpus bcs
+63 sentences in corpus ccs including possible sentences with no parse.
+Used 61 sentences from corpus ccs
+1832 sentences in corpus control including possible sentences with no parse.
+Used 1581 sentences from corpus control
+1348 sentences in corpus csli including possible sentences with no parse.
+Used 911 sentences from corpus csli
+1254 sentences in corpus ecoc including possible sentences with no parse.
+Used 1172 sentences from corpus ecoc
+1678 sentences in corpus ecos including possible sentences with no parse.
+Used 1491 sentences from corpus ecos
+62 sentences in corpus esd including possible sentences with no parse.
+Used 60 sentences from corpus esd
+640 sentences in corpus fracas including possible sentences with no parse.
+Used 630 sentences from corpus fracas
+417 sentences in corpus handp12 including possible sentences with no parse.
+Used 364 sentences from corpus handp12
+330 sentences in corpus hike including possible sentences with no parse.
+Used 327 sentences from corpus hike
+6436 sentences in corpus jh including possible sentences with no parse.
+Used 6207 sentences from corpus jh
+107 sentences in corpus mrs including possible sentences with no parse.
+Used 107 sentences from corpus mrs
+25 sentences in corpus pest including possible sentences with no parse.
+Used 25 sentences from corpus pest
+132 sentences in corpus peted including possible sentences with no parse.
+Used 127 sentences from corpus peted
+965 sentences in corpus ps including possible sentences with no parse.
+Used 942 sentences from corpus ps
+1500 sentences in corpus rtc000 including possible sentences with no parse.
+Used 1453 sentences from corpus rtc000
+1500 sentences in corpus rtc001 including possible sentences with no parse.
+Used 1451 sentences from corpus rtc001
+2841 sentences in corpus scm including possible sentences with no parse.
+Used 2605 sentences from corpus scm
+599 sentences in corpus sh-spec including possible sentences with no parse.
+Used 575 sentences from corpus sh-spec
+2014 sentences in corpus tg including possible sentences with no parse.
+Used 1905 sentences from corpus tg
+693 sentences in corpus trec including possible sentences with no parse.
+Used 690 sentences from corpus trec
+3408 sentences in corpus vm13 including possible sentences with no parse.
+Used 2906 sentences from corpus vm13
+3914 sentences in corpus vm31 including possible sentences with no parse.
+Used 3620 sentences from corpus vm31
+4037 sentences in corpus vm6 including possible sentences with no parse.
+Used 3599 sentences from corpus vm6
+799 sentences in corpus ws201 including possible sentences with no parse.
+Used 715 sentences from corpus ws201
+1233 sentences in corpus ws202 including possible sentences with no parse.
+Used 1160 sentences from corpus ws202
+649 sentences in corpus ws203 including possible sentences with no parse.
+Used 592 sentences from corpus ws203
+982 sentences in corpus ws204 including possible sentences with no parse.
+Used 882 sentences from corpus ws204
+884 sentences in corpus ws205 including possible sentences with no parse.
+Used 719 sentences from corpus ws205
+889 sentences in corpus ws206 including possible sentences with no parse.
+Used 805 sentences from corpus ws206
+796 sentences in corpus ws207 including possible sentences with no parse.
+Used 710 sentences from corpus ws207
+960 sentences in corpus ws208 including possible sentences with no parse.
+Used 839 sentences from corpus ws208
+810 sentences in corpus ws209 including possible sentences with no parse.
+Used 749 sentences from corpus ws209
+862 sentences in corpus ws210 including possible sentences with no parse.
+Used 778 sentences from corpus ws210
+674 sentences in corpus ws211 including possible sentences with no parse.
+Used 594 sentences from corpus ws211
+1921 sentences in corpus wsj00 including possible sentences with no parse.
+Used 1841 sentences from corpus wsj00
+1993 sentences in corpus wsj01 including possible sentences with no parse.
+Used 1875 sentences from corpus wsj01
+1989 sentences in corpus wsj02 including possible sentences with no parse.
+Used 1873 sentences from corpus wsj02
+1480 sentences in corpus wsj03 including possible sentences with no parse.
+Used 1407 sentences from corpus wsj03
+2265 sentences in corpus wsj04 including possible sentences with no parse.
+Used 2131 sentences from corpus wsj04
+2134 sentences in corpus wsj05 including possible sentences with no parse.
+Used 1994 sentences from corpus wsj05
+1827 sentences in corpus wsj06 including possible sentences with no parse.
+Used 1711 sentences from corpus wsj06
+2163 sentences in corpus wsj07 including possible sentences with no parse.
+Used 2008 sentences from corpus wsj07
+477 sentences in corpus wsj08 including possible sentences with no parse.
+Used 443 sentences from corpus wsj08
+2069 sentences in corpus wsj09 including possible sentences with no parse.
+Used 1947 sentences from corpus wsj09
+1942 sentences in corpus wsj10 including possible sentences with no parse.
+Used 1853 sentences from corpus wsj10
+2236 sentences in corpus wsj11 including possible sentences with no parse.
+Used 2111 sentences from corpus wsj11
+2124 sentences in corpus wsj12 including possible sentences with no parse.
+Used 1932 sentences from corpus wsj12
+2481 sentences in corpus wsj13 including possible sentences with no parse.
+Used 2366 sentences from corpus wsj13
+2182 sentences in corpus wsj14 including possible sentences with no parse.
+Used 2064 sentences from corpus wsj14
+2118 sentences in corpus wsj15 including possible sentences with no parse.
+Used 2018 sentences from corpus wsj15
+2785 sentences in corpus wsj16 including possible sentences with no parse.
+Used 2601 sentences from corpus wsj16
+1771 sentences in corpus wsj17 including possible sentences with no parse.
+Used 1676 sentences from corpus wsj17
+2262 sentences in corpus wsj18 including possible sentences with no parse.
+Used 2128 sentences from corpus wsj18
+1844 sentences in corpus wsj19 including possible sentences with no parse.
+Used 1722 sentences from corpus wsj19
+2012 sentences in corpus wsj20 including possible sentences with no parse.
+Used 1902 sentences from corpus wsj20
+1671 sentences in corpus wsj21 including possible sentences with no parse.
+Used 1574 sentences from corpus wsj21
+All raw train tokens: 1547391
+Added 1547391 train tokens to the by-corpus table
+Added 1547391 train tokens to the by-length table
+1654 sentences in corpus ecpa including possible sentences with no parse.
+Used 1495 sentences from corpus ecpa
+613 sentences in corpus ws212 including possible sentences with no parse.
+Used 550 sentences from corpus ws212
+All raw dev tokens: 25076
+Added 25076 dev tokens to the by-corpus table
+Added 25076 dev tokens to the by-length table
+769 sentences in corpus cb including possible sentences with no parse.
+Used 713 sentences from corpus cb
+1207 sentences in corpus ecpr including possible sentences with no parse.
+Used 1088 sentences from corpus ecpr
+250 sentences in corpus jhk including possible sentences with no parse.
+Used 247 sentences from corpus jhk
+294 sentences in corpus jhu including possible sentences with no parse.
+Used 284 sentences from corpus jhu
+602 sentences in corpus petet including possible sentences with no parse.
+Used 581 sentences from corpus petet
+45 sentences in corpus psk including possible sentences with no parse.
+Used 40 sentences from corpus psk
+45 sentences in corpus psu including possible sentences with no parse.
+Used 40 sentences from corpus psu
+1424 sentences in corpus rondane including possible sentences with no parse.
+Used 1334 sentences from corpus rondane
+90 sentences in corpus tgk including possible sentences with no parse.
+Used 85 sentences from corpus tgk
+90 sentences in corpus tgu including possible sentences with no parse.
+Used 86 sentences from corpus tgu
+1034 sentences in corpus vm32 including possible sentences with no parse.
+Used 1000 sentences from corpus vm32
+613 sentences in corpus ws212 including possible sentences with no parse.
+Used 550 sentences from corpus ws212
+927 sentences in corpus ws213 including possible sentences with no parse.
+Used 872 sentences from corpus ws213
+2416 sentences in corpus wsj23 including possible sentences with no parse.
+Used 950 sentences from corpus wsj23
+All raw test tokens: 129908
+Added 129908 test tokens to the by-corpus table
+Added 129908 test tokens to the by-length table
+Processing bcs
+2365 sentences in subcorpus bcs
+Processing ccs
+61 sentences in subcorpus ccs
+Processing control
+1581 sentences in subcorpus control
+Processing csli
+911 sentences in subcorpus csli
+Processing ecoc
+1172 sentences in subcorpus ecoc
+Processing ecos
+1491 sentences in subcorpus ecos
+Processing esd
+60 sentences in subcorpus esd
+Processing fracas
+630 sentences in subcorpus fracas
+Processing handp12
+364 sentences in subcorpus handp12
+Processing hike
+327 sentences in subcorpus hike
+Processing jh
+6207 sentences in subcorpus jh
+Processing mrs
+107 sentences in subcorpus mrs
+Processing pest
+25 sentences in subcorpus pest
+Processing peted
+127 sentences in subcorpus peted
+Processing ps
+942 sentences in subcorpus ps
+Processing rtc000
+1453 sentences in subcorpus rtc000
+Processing rtc001
+1451 sentences in subcorpus rtc001
+Processing scm
+2605 sentences in subcorpus scm
+Processing sh-spec
+575 sentences in subcorpus sh-spec
+Processing tg
+1905 sentences in subcorpus tg
+Processing trec
+690 sentences in subcorpus trec
+Processing vm13
+2906 sentences in subcorpus vm13
+Processing vm31
+3620 sentences in subcorpus vm31
+Processing vm6
+3599 sentences in subcorpus vm6
+Processing ws201
+715 sentences in subcorpus ws201
+Processing ws202
+1160 sentences in subcorpus ws202
+Processing ws203
+592 sentences in subcorpus ws203
+Processing ws204
+882 sentences in subcorpus ws204
+Processing ws205
+719 sentences in subcorpus ws205
+Processing ws206
+805 sentences in subcorpus ws206
+Processing ws207
+710 sentences in subcorpus ws207
+Processing ws208
+839 sentences in subcorpus ws208
+Processing ws209
+749 sentences in subcorpus ws209
+Processing ws210
+778 sentences in subcorpus ws210
+Processing ws211
+594 sentences in subcorpus ws211
+Processing wsj00
+1841 sentences in subcorpus wsj00
+Processing wsj01
+1875 sentences in subcorpus wsj01
+Processing wsj02
+1873 sentences in subcorpus wsj02
+Processing wsj03
+1407 sentences in subcorpus wsj03
+Processing wsj04
+2131 sentences in subcorpus wsj04
+Processing wsj05
+1994 sentences in subcorpus wsj05
+Processing wsj06
+1711 sentences in subcorpus wsj06
+Processing wsj07
+2008 sentences in subcorpus wsj07
+Processing wsj08
+443 sentences in subcorpus wsj08
+Processing wsj09
+1947 sentences in subcorpus wsj09
+Processing wsj10
+1853 sentences in subcorpus wsj10
+Processing wsj11
+2111 sentences in subcorpus wsj11
+Processing wsj12
+1932 sentences in subcorpus wsj12
+Processing wsj13
+2366 sentences in subcorpus wsj13
+Processing wsj14
+2064 sentences in subcorpus wsj14
+Processing wsj15
+2018 sentences in subcorpus wsj15
+Processing wsj16
+2601 sentences in subcorpus wsj16
+Processing wsj17
+1676 sentences in subcorpus wsj17
+Processing wsj18
+2128 sentences in subcorpus wsj18
+Processing wsj19
+1722 sentences in subcorpus wsj19
+Processing wsj20
+1902 sentences in subcorpus wsj20
+Processing wsj21
+1574 sentences in subcorpus wsj21
+Processing ecpa
+1495 sentences in subcorpus ecpa
+Processing ws212
+550 sentences in subcorpus ws212
+Processing cb
+713 sentences in subcorpus cb
+Processing ecpr
+1088 sentences in subcorpus ecpr
+Processing jhk
+247 sentences in subcorpus jhk
+Processing jhu
+284 sentences in subcorpus jhu
+Processing petet
+581 sentences in subcorpus petet
+Processing psk
+40 sentences in subcorpus psk
+Processing psu
+40 sentences in subcorpus psu
+Processing rondane
+1334 sentences in subcorpus rondane
+Processing tgk
+85 sentences in subcorpus tgk
+Processing tgu
+86 sentences in subcorpus tgu
+Processing vm32
+1000 sentences in subcorpus vm32
+Processing ws212
+550 sentences in subcorpus ws212
+Processing ws213
+872 sentences in subcorpus ws213
+Processing wsj23
+950 sentences in subcorpus wsj23

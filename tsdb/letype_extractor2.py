@@ -12,7 +12,7 @@ import random
 CONTEXT_WINDOW = 2
 
 DEV = ['ws212', 'ecpa']
-TEST = ['cb', 'ecpr', 'jhk', 'jhu', 'tgk', 'tgu', 'psk', 'psu', #'rondane',
+TEST = ['cb', 'ecpr', 'jhk', 'jhu', 'tgk', 'tgu', 'psk', 'psu', 'rondane',
              'vm32', 'ws213', 'ws214', 'petet', 'wsj23']
 IGNORE = ['ntucle', 'omw', 'wlb03', 'wnb03']
 NONTRAIN = DEV + TEST + IGNORE
@@ -58,7 +58,7 @@ class LexTypeExtractor:
         return data
 
     def process_reshuffled_nonautoreg(self,data,out_dir):
-        pos_mapper = pos_map.Pos_mapper('./pos-map.txt')
+        pos_mapper = pos_map.Pos_mapper('pos-map.txt')
         for k in ['train','dev','test']:
             data_table = {'ft': [], 'lt': []}
             pathlib.Path(out_dir + '/labeled-data/' + k).mkdir(parents=True, exist_ok=False)
@@ -97,6 +97,7 @@ class LexTypeExtractor:
                 n += 1
                 used_items = 0
                 ts = itsdb.TestSuite(tsuite)
+                text_sentences = []
                 if idx == 'train':
                     message = "A nontrain dataset {} is being added as training data!".format(ts.path.stem)
                     assert ts.path.stem not in NONTRAIN, message
@@ -107,6 +108,7 @@ class LexTypeExtractor:
                 data[idx]['by corpus'][i]['tokens-tags'] = []
                 corpus_size += len(items)
                 for response in items:
+                    text_sentences.append(response['i-input'])
                     if len(response['results']) > 0:
                         used_items += 1
                         deriv = response.result(0).derivation()
@@ -197,7 +199,7 @@ class LexTypeExtractor:
         return resplit_data
 
     def process_testsuites_nonautoreg(self,testsuites,lextypes, out_dir):
-        pos_mapper = pos_map.Pos_mapper('./pos-map.txt')
+        pos_mapper = pos_map.Pos_mapper('pos-map.txt')
         max_sen_length, corpus_size, num_ts, data = self.read_testsuites(testsuites)
         for k in ['train','dev','test']:
             is_devtest_data = k in ['dev','test']
@@ -259,7 +261,7 @@ class LexTypeExtractor:
         contexts = []
         y = []
         ys = []
-        pos_mapper = pos_map.Pos_mapper('./pos-map.txt')  # do this for every test suite to count unknowns in each
+        pos_mapper = pos_map.Pos_mapper('pos-map.txt')  # do this for every test suite to count unknowns in each
         for sentence_len in tsuite['sentences']:
             items = tsuite['sentences'][sentence_len]
             for j, lst_of_terminals in enumerate(items):
@@ -285,7 +287,7 @@ class LexTypeExtractor:
         print("Processing " + tsuite['name'])
         pairs = []
         y = []
-        pos_mapper = pos_map.Pos_mapper('./pos-map.txt')  # do this for every test suite to count unknowns in each
+        pos_mapper = pos_map.Pos_mapper('pos-map.txt')  # do this for every test suite to count unknowns in each
         total = 0
         for sentence_len in tsuite['sentences']:
             items = tsuite['sentences'][sentence_len]
@@ -303,36 +305,42 @@ class LexTypeExtractor:
         self.write_output_simple(pairs, tsuite['name'])
 
 
-    def process_bulk(self, data, suf):
-        print("Processing " + suf)
-        all_pairs = []
-        all_ys = []
-        pos_mapper = pos_map.Pos_mapper('./pos-map.txt')  # do this for every test suite to count unknowns in each
-        total = 0
-        for tsuite in data[suf]['by corpus']:
-            pairs = []
-            y = []
-            subtotal = 0
-            for sentence_len in tsuite['sentences']:
-                items = tsuite['sentences'][sentence_len]
-                total += len(items)
-                subtotal += len(items)
-                for j, lst_of_terminals in enumerate(items):
-                    tokens,labels,pos_tags,autoregress_labels = \
-                         self.get_tokens_labels(tsuite['tokens-tags'][j],CONTEXT_WINDOW, self.lextypes,pos_mapper,test=False)
-                    for k, t in enumerate(tokens):
-                        if k < CONTEXT_WINDOW or k >= len(tokens) - CONTEXT_WINDOW:
-                            continue
-                        pairs.append((t, labels[k]))
-                        all_pairs.append((t, labels[k]))
-                        y.append(labels[k])
-                        all_ys.append(labels[k])
-                    pairs.append(('--EOS--','--EOS--')) # sentence separator
-                    all_pairs.append(('--EOS--', '--EOS--'))  # sentence separator
-            print("{} sentences in subcorpus {}".format(subtotal, tsuite['name']))
-            self.write_output_simple('wiki-output/by-subcorpus/', pairs, tsuite['name'])
-        self.write_output_simple('wiki-output/full/', all_pairs, suf)
-        print("{} sentences in corpus {}".format(total, suf))
+    def process_bulk(self, data, output_dir):
+        pathlib.Path(output_dir + '/output/full/').mkdir(parents=True, exist_ok=False)
+        for suf in ['train', 'dev', 'test']:
+            print("Processing " + suf)
+            all_pairs = []
+            all_ys = []
+            pos_mapper = pos_map.Pos_mapper('pos-map.txt')  # do this for every test suite to count unknowns in each
+            total = 0
+            for tsuite in data[suf]['by corpus']:
+                pairs = []
+                y = []
+                subtotal = 0
+                pairs_subtotal = 0
+                for sentence_len in tsuite['sentences']:
+                    items = tsuite['sentences'][sentence_len]
+                    total += len(items)
+                    subtotal += len(items)
+                    for j, lst_of_terminals in enumerate(items):
+                        tokens,labels,pos_tags,autoregress_labels = \
+                             self.get_tokens_labels(tsuite['tokens-tags'][j],CONTEXT_WINDOW, self.lextypes,pos_mapper,test=False)
+                        for k, t in enumerate(tokens):
+                            if k < CONTEXT_WINDOW or k >= len(tokens) - CONTEXT_WINDOW:
+                                continue
+                            pairs.append((t, labels[k]))
+                            all_pairs.append((t, labels[k]))
+                            y.append(labels[k])
+                            all_ys.append(labels[k])
+                        pairs.append(('--EOS--','--EOS--')) # sentence separator
+                        all_pairs.append(('--EOS--', '--EOS--'))  # sentence separator
+                        pairs_subtotal += 1
+                print("{} sentences in subcorpus {}".format(subtotal, tsuite['name']))
+                print("Added {} token-tag pairs to subcorpus {}".format(pairs_subtotal, tsuite['name']))
+                pathlib.Path(output_dir + '/output/by-subcorpus/' + suf + '/').mkdir(parents=True, exist_ok=True)
+                self.write_output_simple(output_dir + '/output/by-subcorpus/' + suf + '/', pairs, tsuite['name'])
+            self.write_output_simple(output_dir + '/output/full/', all_pairs, suf)
+            print("{} sentences in corpus {}".format(total, suf))
 
 
 
@@ -340,7 +348,7 @@ class LexTypeExtractor:
         y = []
         ys = []
         all_tokens = 0
-        pos_mapper = pos_map.Pos_mapper('./pos-map.txt')  # do this for every test suite to count unknowns in each
+        pos_mapper = pos_map.Pos_mapper('pos-map.txt')  # do this for every test suite to count unknowns in each
         for j, lst_of_terminals in enumerate(items):
             #if j % 100 == 0:
             #    print("Processing item {} out of {}...".format(j, len(items)))
@@ -477,17 +485,9 @@ class LexTypeExtractor:
             f.write(json.dumps(contexts))
 
     def write_output_simple(self, dest_path, pairs, ts_name):
-        for d in ['train/','test/','dev/', 'ignore/']:
-            pathlib.Path(dest_path + d).mkdir(parents=True, exist_ok=True)
         true_labels = []
-        suf = 'train/'
-        if ts_name in IGNORE:
-            suf = 'ignore/'
-        if ts_name in TEST:
-            suf = 'test/'
-        elif ts_name in DEV:
-            suf = 'dev/'
-        with open(dest_path + suf + ts_name, 'w') as f:
+        with open(dest_path + ts_name, 'w') as f:
+            total = 0
             for form, letype in pairs:
                 if not letype=='--EOS--':
                     true_labels.append(str(letype))
@@ -496,7 +496,8 @@ class LexTypeExtractor:
                 else:
                     f.write('\n') # sentence separator
                     true_labels.append('\n') # sentence separator
-
+                    total += 1
+            print('Wrote {} sentences out.'.format(total))
 
     def get_context(self, t, tokens, pos_tags, i, window):
         context = {'w': t, 'pos': pos_tags[i]}
@@ -562,7 +563,7 @@ if __name__ == "__main__":
     run_id = sys.argv[3] + dt_str
     if len(sys.argv) > 3:
         autoreg = sys.argv[4] == 'autoreg'
-    out_dir = './output/' + run_id
+    out_dir = './output/' + run_id + '/'
     pathlib.Path(out_dir).mkdir(parents=True, exist_ok=False)
     le = LexTypeExtractor()
     le.parse_lexicons(args[0])
@@ -573,11 +574,10 @@ if __name__ == "__main__":
         #le.process_testsuites_nonautoreg(args[1],le.lextypes,out_dir)
         #data = le.read_and_reshuffle_testsuites(args[1])
         #le.process_reshuffled_nonautoreg(data,out_dir)
-         data = le.read_testsuites(args[1])
-         for suf in ['train', 'dev', 'test']:
-             le.process_bulk(data[3],suf)
-             #for ts in data[3][suf]['by corpus']:
-             #    le.process_testsuite_simple(ts)
+        data = le.read_testsuites(args[1])
+        le.process_bulk(data[3],out_dir)
+            #for ts in data[3][suf]['by corpus']:
+            #    le.process_testsuite_simple(ts)
     #with open(out_dir + '/lextypes','wb') as f:
     #    lextypes = set([str(v) for v in list(le.lextypes.values())])
     #    pickle.dump(lextypes,f)

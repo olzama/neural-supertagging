@@ -1,0 +1,156 @@
+Reading test suite files into pydelphin objects...
+All raw train tokens: 1547391
+Added 1547391 train tokens to the by-corpus table
+Added 1547391 train tokens to the by-length table
+All raw dev tokens: 25076
+Added 25076 dev tokens to the by-corpus table
+Added 25076 dev tokens to the by-length table
+All raw test tokens: 129908
+Added 129908 test tokens to the by-corpus table
+Added 129908 test tokens to the by-length table
+Processing bcs
+2365 sentences in subcorpus bcs
+Processing ccs
+61 sentences in subcorpus ccs
+Processing control
+1581 sentences in subcorpus control
+Processing csli
+911 sentences in subcorpus csli
+Processing ecoc
+1172 sentences in subcorpus ecoc
+Processing ecos
+1491 sentences in subcorpus ecos
+Processing esd
+60 sentences in subcorpus esd
+Processing fracas
+630 sentences in subcorpus fracas
+Processing handp12
+364 sentences in subcorpus handp12
+Processing hike
+327 sentences in subcorpus hike
+Processing jh
+6207 sentences in subcorpus jh
+Processing mrs
+107 sentences in subcorpus mrs
+Processing pest
+25 sentences in subcorpus pest
+Processing peted
+127 sentences in subcorpus peted
+Processing ps
+942 sentences in subcorpus ps
+Processing rtc000
+1453 sentences in subcorpus rtc000
+Processing rtc001
+1451 sentences in subcorpus rtc001
+Processing scm
+2605 sentences in subcorpus scm
+Processing sh-spec
+575 sentences in subcorpus sh-spec
+Processing tg
+1905 sentences in subcorpus tg
+Processing trec
+690 sentences in subcorpus trec
+Processing vm13
+2906 sentences in subcorpus vm13
+Processing vm31
+3620 sentences in subcorpus vm31
+Processing vm6
+3599 sentences in subcorpus vm6
+Processing ws201
+715 sentences in subcorpus ws201
+Processing ws202
+1160 sentences in subcorpus ws202
+Processing ws203
+592 sentences in subcorpus ws203
+Processing ws204
+882 sentences in subcorpus ws204
+Processing ws205
+719 sentences in subcorpus ws205
+Processing ws206
+805 sentences in subcorpus ws206
+Processing ws207
+710 sentences in subcorpus ws207
+Processing ws208
+839 sentences in subcorpus ws208
+Processing ws209
+749 sentences in subcorpus ws209
+Processing ws210
+778 sentences in subcorpus ws210
+Processing ws211
+594 sentences in subcorpus ws211
+Processing wsj00
+1841 sentences in subcorpus wsj00
+Processing wsj01
+1875 sentences in subcorpus wsj01
+Processing wsj02
+1873 sentences in subcorpus wsj02
+Processing wsj03
+1407 sentences in subcorpus wsj03
+Processing wsj04
+2131 sentences in subcorpus wsj04
+Processing wsj05
+1994 sentences in subcorpus wsj05
+Processing wsj06
+1711 sentences in subcorpus wsj06
+Processing wsj07
+2008 sentences in subcorpus wsj07
+Processing wsj08
+443 sentences in subcorpus wsj08
+Processing wsj09
+1947 sentences in subcorpus wsj09
+Processing wsj10
+1853 sentences in subcorpus wsj10
+Processing wsj11
+2111 sentences in subcorpus wsj11
+Processing wsj12
+1932 sentences in subcorpus wsj12
+Processing wsj13
+2366 sentences in subcorpus wsj13
+Processing wsj14
+2064 sentences in subcorpus wsj14
+Processing wsj15
+2018 sentences in subcorpus wsj15
+Processing wsj16
+2601 sentences in subcorpus wsj16
+Processing wsj17
+1676 sentences in subcorpus wsj17
+Processing wsj18
+2128 sentences in subcorpus wsj18
+Processing wsj19
+1722 sentences in subcorpus wsj19
+Processing wsj20
+1902 sentences in subcorpus wsj20
+Processing wsj21
+1574 sentences in subcorpus wsj21
+Processing ecpa
+1495 sentences in subcorpus ecpa
+Processing ws212
+550 sentences in subcorpus ws212
+Processing cb
+713 sentences in subcorpus cb
+Processing ecpr
+1088 sentences in subcorpus ecpr
+Processing jhk
+247 sentences in subcorpus jhk
+Processing jhu
+284 sentences in subcorpus jhu
+Processing petet
+581 sentences in subcorpus petet
+Processing psk
+40 sentences in subcorpus psk
+Processing psu
+40 sentences in subcorpus psu
+Processing rondane
+1334 sentences in subcorpus rondane
+Processing tgk
+85 sentences in subcorpus tgk
+Processing tgu
+86 sentences in subcorpus tgu
+Processing vm32
+1000 sentences in subcorpus vm32
+Processing ws212
+550 sentences in subcorpus ws212
+Processing ws213
+872 sentences in subcorpus ws213
+Processing wsj23
+950 sentences in subcorpus wsj23
