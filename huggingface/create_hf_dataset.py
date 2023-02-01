@@ -22,15 +22,15 @@ def create_json_files(data_files, label_set):
     test_json = NamedTemporaryFile("w", delete=False)
 
     for split in data_files:
-        idx = 0
+        total_sen = 0
+        total_tok = 0
         file = data_files[split]
         skipped = 0
-        min_word_len = 1 if split == 'train' else 0
+        min_word_len = 0 # if split == 'train' else 0
         with open(file, 'r') as f:
-            sentences = f.read().split('\n\n')
-            print("{} sentences in the dataset".format(len(sentences)))
+            sentences = [ sen for sen in f.read().split('\n\n') if sen != '' ]
+            print("{} sentences read from the source dataset".format(len(sentences)))
             for sentence in sentences:
-                idx += 1
                 sentence_tokens = []
                 sentence_tags = []
                 lines = sentence.split('\n')
@@ -39,6 +39,7 @@ def create_json_files(data_files, label_set):
                         if line:
                             token, tag = line.split('\t')
                             sentence_tokens.append(token)
+                            total_tok += 1
                             if split != 'test':
                                 sentence_tags.append(tag)
                             else:
@@ -46,25 +47,24 @@ def create_json_files(data_files, label_set):
                                     sentence_tags.append(tag)
                                 else:
                                     sentence_tags.append('UNK')
+                    total_sen += 1
                 else:
                     #print('Skipped a sentence: {}'.format(sentence))
                     skipped +=1
                 if len(sentence_tokens) > 0:
                     if split == "train":
-                        train_list.append({"id": idx, "tokens": sentence_tokens, "tags": sentence_tags})
+                        train_list.append({"id": total_sen, "tokens": sentence_tokens, "tags": sentence_tags})
                     elif split == "validation":
-                        eval_list.append({"id": idx, "tokens": sentence_tokens, "tags": sentence_tags})
+                        eval_list.append({"id": total_sen, "tokens": sentence_tokens, "tags": sentence_tags})
                     else:
-                        test_list.append({"id": idx, "tokens": sentence_tokens, "tags": sentence_tags})
+                        test_list.append({"id": total_sen, "tokens": sentence_tokens, "tags": sentence_tags})
                 else:
                     print("No tokens in sentence {}".format(sentence))
+        print("{} examples, {} tokens added to the {} dataset".format(total_sen, total_tok, split))
         print("Skipped {} sentences below minimum length {}.".format(skipped, min_word_len))
     train_dic = {"data": train_list}
     eval_dic = {"data": eval_list}
     test_dic = {"data": test_list}
-    print("{} examples added to the training dataset".format(len(train_list)))
-    print("{} examples added to the dev dataset".format(len(eval_list)))
-    print("{} examples added to the test dataset".format(len(test_list)))
 
     with open(train_json.name, 'w', encoding='utf8') as f:
         json.dump(train_dic, f, ensure_ascii=False)
@@ -113,9 +113,9 @@ def create_full_dataset(data_dir, output_dir):
     with open('label_names.txt', 'r') as f:
         class_names = [l.strip() for l in f.readlines()]
     data_tsv = {
-        "train": data_dir + 'train',
-        "validation": data_dir + 'dev',
-        "test": data_dir + 'test'
+        "train": data_dir + 'train/train',
+        "validation": data_dir + 'dev/dev',
+        "test": data_dir + 'test/test'
     }
     data_json = create_json_files(data_tsv, class_names)
     num_labels = len(class_names)
@@ -201,8 +201,5 @@ if __name__ == '__main__':
     output_dir = sys.argv[2]
     if len(sys.argv) > 3:
         subdataset_name = sys.argv[3]
-    #lexicons_dir = sys.argv[2]
-    #le = LexTypeExtractor()
-    #le.parse_lexicons(lexicons_dir)
-    #create_full_dataset(data_dir, output_dir)
-    create_test_subdataset(data_dir, subdataset_name, output_dir)
+    create_full_dataset(data_dir, output_dir)
+    #create_test_subdataset(data_dir, subdataset_name, output_dir)

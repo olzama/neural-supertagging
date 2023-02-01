@@ -1,8 +1,8 @@
 import unittest
 from tsdb.tok_classification import Token_Tag_Extractor
 
-LEXICONS = './test-treebanks/lexicons/'
-TREEBANKS = './test-treebanks/treebanks-small/'
+LEXICONS = 'tsdb/test-treebanks/lexicons/'
+TREEBANKS = 'tsdb/test-treebanks/treebanks-small/'
 
 class ExampleTestCase(unittest.TestCase):
     def test_something(self):
@@ -19,7 +19,7 @@ class MRSTest(unittest.TestCase):
         self.assertEqual(len(data['train'][0].full_sentence_list),107) # should contain 107 sentences
         self.assertEqual(len(data['train'][0].parsed_sentence_list), 107) # shoud parse all sentences
         self.assertEqual(len(data['train'][0].processed_data), 107)  # should contain 107 token-tag pairs
-        
+
 
 
 if __name__ == '__main__':

@@ -24,7 +24,7 @@ import glob
 
 from delphin import itsdb
 
-from TestsuiteProcessor import ProcessedCorpus, TestsuiteProcessor
+from tsdb.TestsuiteProcessor import ProcessedCorpus, TestsuiteProcessor
 
 EOS_TOKEN = 'EOS'
 
