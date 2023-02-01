@@ -19,6 +19,8 @@ class MRSTest(unittest.TestCase):
         self.assertEqual(len(data['train'][0].full_sentence_list),107) # should contain 107 sentences
         self.assertEqual(len(data['train'][0].parsed_sentence_list), 107) # shoud parse all sentences
         self.assertEqual(len(data['train'][0].processed_data), 107)  # should contain 107 token-tag pairs
+        
+
 
 if __name__ == '__main__':
     unittest.main()

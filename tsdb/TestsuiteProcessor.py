@@ -31,6 +31,20 @@ class ProcessedCorpus:
         self.type = type
 
 
+'''
+This class is for experiments which require the data to be in different formats.
+For example, for neural classifiers, the data for token classification might be expected in simple text format
+such as "token\ttag" with sentences separated by an empty line. For classic ML classifiers, the data will be 
+feature vectors, etc.
+Thus, every TestsuiteProcessor must:
+1) Read in the data from the [incr tsdb()] testsuites, in pydelphin implementation.
+2) Process it so that it is in the desired format (the specifics will vary).
+3) Store the processed data according to the training-development-test split, in a dictionary.
+4) Write out the data into files, in the required format (the specifics will vary):
+   4.1) stored by corpus, e.g. test/cb, test/wsj23
+   4.2) stored all together, e.g. test/all_test
+    
+'''
 class TestsuiteProcessor(ABC):
     def parse_lexicons(self,lexicons):
         lextypes = {}  # mapping of lexical entry IDs to types
@@ -42,7 +56,11 @@ class TestsuiteProcessor(ABC):
 
 
     @abstractmethod
-    def write_output(self, dest_path, data):
+    def write_output_by_corpus(self, dest_path, data):
+        pass
+
+    @abstractmethod
+    def write_output_by_split(self, dest_path, data):
         pass
 
     @abstractmethod

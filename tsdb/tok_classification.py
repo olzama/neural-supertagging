@@ -80,7 +80,7 @@ class Token_Tag_Extractor(TestsuiteProcessor):
 
 
 
-    def write_output(self, dest_path, data):
+    def write_output_by_corpus(self, dest_path, data):
         for split_type in ['train', 'dev', 'test']:
             for pc in data[split_type]:
                 with open(dest_path + split_type + '/' + pc.name, 'w') as f:
@@ -93,4 +93,19 @@ class Token_Tag_Extractor(TestsuiteProcessor):
                             total_tok += 1
                         f.write('\n') # sentence separator
                         total_sen += 1
-                    print('Wrote {} sentences, {} tokens out.'.format(total_sen, total_tok))
+                    print('Wrote {} sentences, {} tokens out for {}.'.format(total_sen, total_tok, pc.name))
+
+    def write_output_by_split(self, dest_path, data):
+        for split_type in ['train', 'dev', 'test']:
+            with open(dest_path + split_type + '/' + split_type, 'w') as f:
+                total_sen = 0
+                total_tok = 0
+                for pc in data[split_type]:
+                    for sentence in pc.processed_data:
+                        for form, letype in sentence:
+                            str_pair = f'{form}\t{letype}'
+                            f.write(str_pair + '\n')
+                            total_tok += 1
+                        f.write('\n') # sentence separator
+                        total_sen += 1
+                print('Wrote {} sentences, {} tokens out for {}.'.format(total_sen, total_tok, split_type))
