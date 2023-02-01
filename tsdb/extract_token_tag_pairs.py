@@ -1,7 +1,6 @@
 import sys
 from datetime import datetime
 import pathlib
-from tsdb.letype_extractor import LexTypeExtractor
 from tsdb.tok_classification import Token_Tag_Extractor
 
 
