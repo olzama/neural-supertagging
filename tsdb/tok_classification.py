@@ -24,8 +24,9 @@ import glob
 
 from delphin import itsdb
 
-from letype_extractor import ProcessedCorpus
-from TestsuiteProcessor import TestsuiteProcessor
+from TestsuiteProcessor import ProcessedCorpus, TestsuiteProcessor
+
+EOS_TOKEN = 'EOS'
 
 class Token_Tag_Extractor(TestsuiteProcessor):
 
@@ -58,6 +59,7 @@ class Token_Tag_Extractor(TestsuiteProcessor):
         for response in items:
             all_sentences.append(response['i-input'])
             if len(response['results']) > 0:
+                parsed_sentences.append(response['i-input'])
                 deriv = response.result(0).derivation()
                 terminals = deriv.terminals()
                 pairs.append(self.get_tokens_labels(terminals, lextypes))
@@ -80,14 +82,15 @@ class Token_Tag_Extractor(TestsuiteProcessor):
 
     def write_output(self, dest_path, data):
         for split_type in ['train', 'dev', 'test']:
-            for ts_name in data[split_type]:
-                with open(dest_path + ts_name, 'w') as f:
-                    total = 0
-                    for form, letype in data[split_type][ts_name]:
-                        if not letype=='--EOS--':
+            for pc in data[split_type]:
+                with open(dest_path + split_type + '/' + pc.name, 'w') as f:
+                    total_sen = 0
+                    total_tok = 0
+                    for sentence in pc.processed_data:
+                        for form, letype in sentence:
                             str_pair = f'{form}\t{letype}'
                             f.write(str_pair + '\n')
-                        else:
-                            f.write('\n') # sentence separator
-                            total += 1
-                    print('Wrote {} sentences out.'.format(total))
+                            total_tok += 1
+                        f.write('\n') # sentence separator
+                        total_sen += 1
+                    print('Wrote {} sentences, {} tokens out.'.format(total_sen, total_tok))

@@ -11,8 +11,9 @@ if __name__ == "__main__":
     dt_str = '-'.join(str(datetime.now()).split()).replace(':','.')
     run_id = sys.argv[3] + dt_str
     out_dir = './output/' + run_id + '/'
-    pathlib.Path(out_dir).mkdir(parents=True, exist_ok=False)
-    le = LexTypeExtractor(lexicons_path)
+    for split in ['train', 'dev', 'test']:
+        pathlib.Path(out_dir + split + '/').mkdir(parents=True, exist_ok=False)
     tte = Token_Tag_Extractor() # This extracts token-tag pairs, per corpus, sentences separated by special character
-    data = tte.process_testsuites(treebanks_path, le.lextypes)
+    lextypes = tte.parse_lexicons(lexicons_path)
+    data = tte.process_testsuites(treebanks_path, lextypes)
     tte.write_output(out_dir,data)

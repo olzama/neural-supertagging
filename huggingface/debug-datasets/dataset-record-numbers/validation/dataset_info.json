@@ -1,0 +1,81 @@
+{
+  "builder_name": "json",
+  "citation": "",
+  "config_name": "default",
+  "dataset_size": 29021276,
+  "description": "",
+  "download_checksums": {
+    "/tmp/tmpfll50r32": {
+      "num_bytes": 41219079,
+      "checksum": "826bdbeb9dcead3a1d77c3d49dba8c296bcd8151f1af09d1a5c1950432a972c4"
+    },
+    "/tmp/tmpn41t8s25": {
+      "num_bytes": 679469,
+      "checksum": "0aabeef23704cca0bdc8bd8bafa4460fad6cfd1d3f043339844ab8ed71b1a843"
+    },
+    "/tmp/tmphoc6589z": {
+      "num_bytes": 3494886,
+      "checksum": "c46b4cb798dd06d5aa232a4f2881ee2ba52d566e4750e71497fcf3a80154145f"
+    }
+  },
+  "download_size": 45393434,
+  "features": {
+    "input_ids": {
+      "feature": {
+        "dtype": "int32",
+        "_type": "Value"
+      },
+      "_type": "Sequence"
+    },
+    "token_type_ids": {
+      "feature": {
+        "dtype": "int8",
+        "_type": "Value"
+      },
+      "_type": "Sequence"
+    },
+    "attention_mask": {
+      "feature": {
+        "dtype": "int8",
+        "_type": "Value"
+      },
+      "_type": "Sequence"
+    },
+    "labels": {
+      "feature": {
+        "dtype": "int64",
+        "_type": "Value"
+      },
+      "_type": "Sequence"
+    }
+  },
+  "homepage": "",
+  "license": "",
+  "size_in_bytes": 74414710,
+  "splits": {
+    "train": {
+      "name": "train",
+      "num_bytes": 26342650,
+      "num_examples": 83755,
+      "dataset_name": "json"
+    },
+    "validation": {
+      "name": "validation",
+      "num_bytes": 432497,
+      "num_examples": 2019,
+      "dataset_name": "json"
+    },
+    "test": {
+      "name": "test",
+      "num_bytes": 2246129,
+      "num_examples": 7783,
+      "dataset_name": "json"
+    }
+  },
+  "version": {
+    "version_str": "0.0.0",
+    "major": 0,
+    "minor": 0,
+    "patch": 0
+  }
+}
