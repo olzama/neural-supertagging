@@ -109,8 +109,8 @@ def tokenize_and_align_labels(examples, tokenizer):
     return tokenized_inputs
 
 
-def create_full_dataset(data_dir, output_dir):
-    with open('label_names.txt', 'r') as f:
+def create_full_dataset(data_dir, label_file):
+    with open(label_file, 'r') as f:
         class_names = [l.strip() for l in f.readlines()]
     data_tsv = {
         "train": data_dir + 'train/train',
@@ -142,7 +142,7 @@ def create_full_dataset(data_dir, output_dir):
         fn_kwargs={"tokenizer": tokenizer}
 
     )
-    dataset.save_to_disk(output_dir)
+    return dataset
 
 def create_test_subdataset(data_dir, subdata_name, output_dir):
     with open('label_names.txt', 'r') as f:
@@ -179,6 +179,8 @@ def create_test_subdataset(data_dir, subdata_name, output_dir):
     )
     dataset.save_to_disk(output_dir + subdata_name)
 
+def save_dataset(dataset, output_dir, subdataset_name):
+    dataset.save_to_disk(output_dir + subdataset_name)
 
 def create_class_names(le):
     class_names = list(set([str(v) for v in list(le.lextypes.values())]))
@@ -201,5 +203,6 @@ if __name__ == '__main__':
     output_dir = sys.argv[2]
     if len(sys.argv) > 3:
         subdataset_name = sys.argv[3]
-    create_full_dataset(data_dir, output_dir)
+    hf_ds = create_full_dataset(data_dir, 'label_names.txt')
+    save_dataset(hf_ds, output_dir, subdataset_name='')
     #create_test_subdataset(data_dir, subdataset_name, output_dir)
