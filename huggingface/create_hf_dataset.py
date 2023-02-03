@@ -109,13 +109,13 @@ def tokenize_and_align_labels(examples, tokenizer):
     return tokenized_inputs
 
 
-def create_full_dataset(data_dir, label_file):
+def create_dataset(data_dir, label_file, test_subdataset='test'):
     with open(label_file, 'r') as f:
         class_names = [l.strip() for l in f.readlines()]
     data_tsv = {
         "train": data_dir + 'train/train',
         "validation": data_dir + 'dev/dev',
-        "test": data_dir + 'test/test'
+        "test": data_dir + 'test/' + test_subdataset
     }
     data_json = create_json_files(data_tsv, class_names)
     num_labels = len(class_names)
@@ -144,8 +144,8 @@ def create_full_dataset(data_dir, label_file):
     )
     return dataset
 
-def create_test_subdataset(data_dir, subdata_name, output_dir):
-    with open('label_names.txt', 'r') as f:
+def create_test_subdataset(data_dir, label_file, subdata_name):
+    with open(label_file, 'r') as f:
         class_names = [l.strip() for l in f.readlines()]
     data_tsv = {
         "train": data_dir + 'train',
@@ -177,7 +177,7 @@ def create_test_subdataset(data_dir, subdata_name, output_dir):
         fn_kwargs={"tokenizer": tokenizer}
 
     )
-    dataset.save_to_disk(output_dir + subdata_name)
+    return dataset
 
 def save_dataset(dataset, output_dir, subdataset_name):
     dataset.save_to_disk(output_dir + subdataset_name)
@@ -201,8 +201,6 @@ def create_id2label_mappings(class_names):
 if __name__ == '__main__':
     data_dir = sys.argv[1]
     output_dir = sys.argv[2]
-    if len(sys.argv) > 3:
-        subdataset_name = sys.argv[3]
-    hf_ds = create_full_dataset(data_dir, 'label_names.txt')
-    save_dataset(hf_ds, output_dir, subdataset_name='')
-    #create_test_subdataset(data_dir, subdataset_name, output_dir)
+    subdataset_name = sys.argv[3] if len(sys.argv) > 3 else ''
+    hf_ds = create_dataset(data_dir, 'label_names.txt')
+    save_dataset(hf_ds, output_dir, subdataset_name)
