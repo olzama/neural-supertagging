@@ -7,10 +7,33 @@
 import sys
 import json
 from tempfile import NamedTemporaryFile
-from datasets import Sequence, Value, ClassLabel, load_dataset, Features
+from datasets import Sequence, Value, ClassLabel, load_dataset, load_from_disk, Features, DatasetInfo
 from transformers import AutoTokenizer
 
 SPECIAL_TOKEN = -100
+
+LICENSE = "MIT LICENSE"
+
+FLICKINGER2002 = """@article{flickinger2000building,
+  title={On building a more efficient grammar by exploiting types},
+  author={Flickinger, Dan},
+  journal={Natural Language Engineering},
+  volume={6},
+  number={01},
+  pages={15--28},
+  year={2000},
+  publisher={Cambridge University Press}
+}"""
+FLICKINGER2011 = """@incollection{Flickinger:11,
+  author = {Flickinger, Dan},
+  title = {Accuracy v. Robustness in Grammar Engineering},
+  booktitle = {Language from a Cognitive Perspective: Grammar, Usage and Processing},
+  editor = {Bender, Emily M. and Arnold, Jennifer E.},
+  address = {Stanford, CA},
+  publisher = {CSLI Publications},
+  year = 2011,
+  pages = {31--50}
+}"""
 
 def create_json_files(data_files, label_set):
     train_list = []
@@ -109,7 +132,7 @@ def tokenize_and_align_labels(examples, tokenizer):
     return tokenized_inputs
 
 
-def create_dataset(data_dir, label_file, test_subdataset='test'):
+def create_dataset(data_dir, label_file, test_subdataset, ds_info):
     with open(label_file, 'r') as f:
         class_names = [l.strip() for l in f.readlines()]
     data_tsv = {
@@ -123,7 +146,7 @@ def create_dataset(data_dir, label_file, test_subdataset='test'):
     tokenizer = AutoTokenizer.from_pretrained('bert-base-cased')
     dataset = load_dataset(
         "json",
-        cache_dir='/media/olga/kesha/BERT/cache',
+        cache_dir="./cache", #'/media/olga/kesha/BERT/cache',
         data_files=data_json,
         features=Features(
             {
@@ -132,52 +155,24 @@ def create_dataset(data_dir, label_file, test_subdataset='test'):
                 "tags": Sequence(ClassLabel(names=list(class_names), num_classes=num_labels))
             }
         ),
-        field="data"
+        field="data",
     )
     print('Dataset loaded.')
     dataset = dataset.map(
         tokenize_and_align_labels,
         batched=True,
         remove_columns=dataset['train'].column_names,
-        fn_kwargs={"tokenizer": tokenizer}
-
+        fn_kwargs={"tokenizer": tokenizer},
     )
+    for split in ['train', 'validation', 'test']:
+        update_info(dataset[split]._info, ds_info, split)
     return dataset
 
-def create_test_subdataset(data_dir, label_file, subdata_name):
-    with open(label_file, 'r') as f:
-        class_names = [l.strip() for l in f.readlines()]
-    data_tsv = {
-        "train": data_dir + 'train',
-        "validation": data_dir + 'dev',
-        "test": data_dir + 'test/' + subdata_name
-    }
-    data_json = create_json_files(data_tsv, class_names)
-    num_labels = len(class_names)
-    print('Number of labels:{}'.format(num_labels))
-    tokenizer = AutoTokenizer.from_pretrained('bert-base-cased')
-    dataset = load_dataset(
-        "json",
-        cache_dir='./cache',
-        data_files=data_json,
-        features=Features(
-            {
-                "id": Value("int32"),
-                "tokens": Sequence(Value("string")),
-                "tags": Sequence(ClassLabel(names=list(class_names), num_classes=num_labels))
-            }
-        ),
-        field="data"
-    )
-    print('Dataset loaded.')
-    dataset = dataset.map(
-        tokenize_and_align_labels,
-        batched=True,
-        remove_columns=dataset['train'].column_names,
-        fn_kwargs={"tokenizer": tokenizer}
-
-    )
-    return dataset
+def update_info(cur_info, update_info, split):
+    cur_info.citation = update_info.citation
+    cur_info.homepage = update_info.homepage
+    cur_info.description = "The recommended {} portion of the ".format(split.upper()) + update_info.description
+    cur_info.license = update_info.license
 
 def save_dataset(dataset, output_dir, subdataset_name):
     dataset.save_to_disk(output_dir + subdataset_name)
@@ -202,5 +197,15 @@ if __name__ == '__main__':
     data_dir = sys.argv[1]
     output_dir = sys.argv[2]
     subdataset_name = sys.argv[3] if len(sys.argv) > 3 else ''
-    hf_ds = create_dataset(data_dir, 'label_names.txt')
-    save_dataset(hf_ds, output_dir, subdataset_name)
+    ds_info = DatasetInfo(citation=FLICKINGER2002 + ';' + FLICKINGER2011,
+                          homepage="https://github.com/delph-in/docs/wiki/ErgTop",
+                          description="collection of manually verified treebanked data parsed "
+                                      "by the English Recource Grammar.",
+                          license=LICENSE)
+
+    hf_ds = create_dataset(data_dir, 'label_names.txt', 'test', ds_info)
+    #save_dataset(hf_ds, output_dir + '/full', subdataset_name)
+
+    for dtype in ['train', 'validation', 'test']:
+        save_dataset(hf_ds[dtype], output_dir + '/' + dtype + '/', subdataset_name)
+        test_load_ds = load_from_disk(output_dir + '/' + dtype + '/' + subdataset_name)

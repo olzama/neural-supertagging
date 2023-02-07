@@ -13,7 +13,7 @@ import evaluate
 from transformers import AutoModelForTokenClassification, TrainingArguments, Trainer
 from transformers import DataCollatorForTokenClassification
 from transformers import AutoTokenizer
-from carbontracker.tracker import CarbonTracker
+#from carbontracker.tracker import CarbonTracker
 import transformers
 import torch
 SPECIAL_TOKEN = -100
@@ -57,11 +57,14 @@ def collect_errors(predictions, true_labels):
 
 
 if __name__ == '__main__':
-    dataset_path = sys.argv[1]
-    output_path = sys.argv[2]
+    training_dataset_path = sys.argv[1]
+    dev_dataset_path = sys.argv[2]
+    output_path = sys.argv[3]
     transformers.trainer_utils.set_seed(42)
-    dataset = load_from_disk(dataset_path) #'/media/olga/kesha/BERT/erg/dataset/'
-    print('Loaded dataset. Shape: {}'.format(dataset.shape))
+    training_dataset = load_from_disk(training_dataset_path) #'/media/olga/kesha/BERT/erg/dataset/'
+    print('Loaded training dataset. Shape: {}'.format(training_dataset.shape))
+    dev_dataset = load_from_disk(dev_dataset_path)  # '/media/olga/kesha/BERT/erg/dataset/'
+    print('Loaded validation dataset. Shape: {}'.format(dev_dataset.shape))
     tokenizer = AutoTokenizer.from_pretrained('bert-base-cased')
     data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
     with open('id2label.json','r') as f:
@@ -88,8 +91,8 @@ if __name__ == '__main__':
     trainer = Trainer(
         model=model,
         args=training_args,
-        train_dataset=dataset["train"],
-        eval_dataset=dataset["validation"],
+        train_dataset=training_dataset,
+        eval_dataset=dev_dataset,
         data_collator=data_collator,
         compute_metrics=compute_metrics,
         tokenizer=tokenizer,
