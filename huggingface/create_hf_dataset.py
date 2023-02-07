@@ -35,6 +35,50 @@ FLICKINGER2011 = """@incollection{Flickinger:11,
   pages = {31--50}
 }"""
 
+def create_json(data, label_set, dtype):
+    examples = []
+    jsonf = NamedTemporaryFile("w", delete=False)
+    total_sen = 0
+    total_tok = 0
+    skipped = 0
+    min_word_len = 0 # if split == 'train' else 0
+    with open(data, 'r') as f:
+        sentences = [ sen for sen in f.read().split('\n\n') if sen != '' ]
+        print("{} sentences read from the source dataset".format(len(sentences)))
+        for sentence in sentences:
+            sentence_tokens = []
+            sentence_tags = []
+            lines = sentence.split('\n')
+            if len(lines) > min_word_len:
+                for line in lines:
+                    if line:
+                        token, tag = line.split('\t')
+                        sentence_tokens.append(token)
+                        total_tok += 1
+                        if dtype != 'test':
+                            sentence_tags.append(tag)
+                        else:
+                            if tag in label_set:
+                                sentence_tags.append(tag)
+                            else:
+                                sentence_tags.append('UNK')
+                total_sen += 1
+            else:
+                #print('Skipped a sentence: {}'.format(sentence))
+                skipped +=1
+            if len(sentence_tokens) > 0:
+                examples.append({"id": total_sen, "tokens": sentence_tokens, "tags": sentence_tags})
+            else:
+                print("No tokens in sentence {}".format(sentence))
+    print("{} examples, {} tokens added to the {} dataset".format(total_sen, total_tok, dtype))
+    print("Skipped {} sentences below minimum length {}.".format(skipped, min_word_len))
+
+    with open(jsonf.name, 'w', encoding='utf8') as f:
+        json.dump({'data': examples}, f, ensure_ascii=False)
+
+    return jsonf.name
+
+
 def create_json_files(data_files, label_set):
     train_list = []
     eval_list = []
@@ -131,8 +175,37 @@ def tokenize_and_align_labels(examples, tokenizer):
     tokenized_inputs["labels"] = new_labels
     return tokenized_inputs
 
+def create_dataset(data, label_file, ds_info, ds_type):
+    with open(label_file, 'r') as f:
+        class_names = [l.strip() for l in f.readlines()]
+    data_json = create_json(data, class_names,ds_type)
+    num_labels = len(class_names)
+    print('Number of labels:{}'.format(num_labels))
+    tokenizer = AutoTokenizer.from_pretrained('bert-base-cased')
+    dataset = load_dataset(
+        'json',
+        data_files={ds_type: data_json},
+        cache_dir="./cache", #'/media/olga/kesha/BERT/cache',
+        features=Features(
+            {
+                "id": Value("int32"),
+                "tokens": Sequence(Value("string")),
+                "tags": Sequence(ClassLabel(names=list(class_names), num_classes=num_labels))
+            }
+        ),
+        field="data",
+    )
+    dataset = dataset.map(
+        tokenize_and_align_labels,
+        batched=True,
+        remove_columns=dataset[ds_type].column_names,
+        fn_kwargs={"tokenizer": tokenizer},
+    )
+    update_info(dataset[ds_type]._info, ds_info, ds_type)
+    print("Created dataset with shape {}".format(dataset.shape))
+    return dataset
 
-def create_dataset(data_dir, label_file, test_subdataset, ds_info):
+def create_dataset2(data_dir, label_file, test_subdataset, ds_info):
     with open(label_file, 'r') as f:
         class_names = [l.strip() for l in f.readlines()]
     data_tsv = {
@@ -174,8 +247,6 @@ def update_info(cur_info, update_info, split):
     cur_info.description = "The recommended {} portion of the ".format(split.upper()) + update_info.description
     cur_info.license = update_info.license
 
-def save_dataset(dataset, output_dir, subdataset_name):
-    dataset.save_to_disk(output_dir + subdataset_name)
 
 def create_class_names(le):
     class_names = list(set([str(v) for v in list(le.lextypes.values())]))
@@ -194,18 +265,14 @@ def create_id2label_mappings(class_names):
 
 
 if __name__ == '__main__':
-    data_dir = sys.argv[1]
+    data = sys.argv[1] # A text file with token-tag pairs, sentences separated by additional newline
     output_dir = sys.argv[2]
-    subdataset_name = sys.argv[3] if len(sys.argv) > 3 else ''
+    ds_type = sys.argv[3]
     ds_info = DatasetInfo(citation=FLICKINGER2002 + ';' + FLICKINGER2011,
                           homepage="https://github.com/delph-in/docs/wiki/ErgTop",
                           description="collection of manually verified treebanked data parsed "
                                       "by the English Recource Grammar.",
                           license=LICENSE)
-
-    hf_ds = create_dataset(data_dir, 'label_names.txt', 'test', ds_info)
-    #save_dataset(hf_ds, output_dir + '/full', subdataset_name)
-
-    for dtype in ['train', 'validation', 'test']:
-        save_dataset(hf_ds[dtype], output_dir + '/' + dtype + '/', subdataset_name)
-        test_load_ds = load_from_disk(output_dir + '/' + dtype + '/' + subdataset_name)
+    hf_ds = create_dataset(data, 'label_names.txt', ds_info, ds_type)
+    #hf_ds = create_dataset2(data, 'label_names.txt', 'test', ds_info)
+    hf_ds[ds_type].save_to_disk(output_dir)
