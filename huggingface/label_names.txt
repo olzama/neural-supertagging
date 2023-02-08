@@ -1291,5 +1291,9 @@ n_np_mc-a-def_le
 d_-_rel_le
 v_np_poss-cx_le
 v_vp_seq-from_le
+n_-_c-ns-maycap_le
+n_-_pr-ad-temp_le
+n_-_pr-ad-temp-nom_le
+av_-_dg-v-nonlex_le
 None_label
 UNK

@@ -74,7 +74,7 @@ class Token_Tag_Extractor(TestsuiteProcessor):
     def get_tokens_labels(self, terminals, lextypes):
         pairs = []
         for i,terminal, in enumerate(terminals):
-            letype = str(lextypes.get(terminal.parent.entity, "<UNK>"))
+            letype = str(lextypes.get(terminal.parent.entity, "None_label"))
             pairs.append((terminal.form, letype))
         return pairs
 

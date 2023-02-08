@@ -74,7 +74,7 @@ if __name__ == '__main__':
 
     model = AutoModelForTokenClassification.from_pretrained(
         "bert-base-cased",
-        num_labels=1295,
+        num_labels=1299,
         id2label=id2label,
         label2id=label2id
     )
@@ -82,7 +82,7 @@ if __name__ == '__main__':
     training_args = TrainingArguments(
         output_dir= output_path+'/checkpoints/', #"/media/olga/kesha/BERT/erg/3e-5/"
         evaluation_strategy = "epoch",
-        learning_rate=5e-6,
+        learning_rate=2e-5,
         num_train_epochs=50,
         weight_decay=0.01,
         save_strategy = "no"
