@@ -81,6 +81,7 @@ class Token_Tag_Extractor(TestsuiteProcessor):
 
 
     def write_output_by_corpus(self, dest_path, data):
+        # Training and dev data is lumped all together
         for split_type in ['train', 'dev']:
             with open(dest_path + split_type + '/' + split_type, 'w') as f:
                 total_sen = 0
@@ -88,6 +89,7 @@ class Token_Tag_Extractor(TestsuiteProcessor):
                 for pc in data[split_type]:
                     total_sen, total_tok = self.write_out_one_corpus(f, pc, total_sen, total_tok)
                 print('Wrote {} sentences, {} tokens out for {}.'.format(total_sen, total_tok, split_type))
+        # Test data is kept separately by corpus, to be able to look at accuracy with different domains
         for pc in data['test']:
             with open(dest_path + 'test' + '/' + pc.name, 'w') as f:
                 total_sen = 0
