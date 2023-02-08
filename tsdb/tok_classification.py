@@ -89,7 +89,7 @@ class Token_Tag_Extractor(TestsuiteProcessor):
                     total_sen, total_tok = self.write_out_one_corpus(f, pc, total_sen, total_tok)
                 print('Wrote {} sentences, {} tokens out for {}.'.format(total_sen, total_tok, split_type))
         for pc in data['test']:
-            with open(dest_path + split_type + '/' + pc.name, 'w') as f:
+            with open(dest_path + 'test' + '/' + pc.name, 'w') as f:
                 total_sen = 0
                 total_tok = 0
                 total_sen, total_tok = self.write_out_one_corpus(f, pc, total_sen, total_tok)
