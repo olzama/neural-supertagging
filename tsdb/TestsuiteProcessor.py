@@ -1,4 +1,4 @@
-import glob
+import glob, pathlib
 from abc import ABC, abstractmethod
 from delphin import tdl
 
@@ -9,6 +9,30 @@ TEST = ['cb', 'ecpr', 'jhk', 'jhu', 'tgk', 'tgu', 'psk', 'psu', 'rondane',
              'vm32', 'ws213', 'ws214', 'petet', 'wsj23']
 IGNORE = ['ntucle', 'omw', 'wlb03', 'wnb03']
 NONTRAIN = DEV + TEST + IGNORE
+
+'''
+Put the tsdb treebank folders into subdirectories train, dev, and test, according to the recommended split.
+'''
+
+
+def organize_treebanks(treebanks_path, output_dir):
+    dir_str = [["full", "various-subsets"], ["tsdb"], ["train", "dev", "test"]]
+    base_dir = output_dir
+    pathlib.Path(base_dir).mkdir(parents=True, exist_ok=False)
+    for i, lvl in enumerate(dir_str):
+        for subdir in dir_str[i]:
+            pathlib.Path(base_dir + '/' + subdir).mkdir(parents=True, exist_ok=False)
+        base_dir = base_dir + '/' + subdir
+
+    # for subdir1 in dir_str[0]:
+    #     pathlib.Path(output_dir + '/' + subdir1).mkdir(parents=True, exist_ok=False)
+    #     for subdir2 in dir_str[1]:
+    #         pathlib.Path(output_dir + '/' + subdir1 + '/' + subdir2).mkdir(parents=True, exist_ok=False)
+    #         for subdir3 in dir_str[2]:
+    #             pathlib.Path(output_dir + '/' + subdir1 + '/' + subdir2 + '/' + subdir3).mkdir(parents=True, exist_ok=False)
+
+    for tb in glob.iglob(treebanks_path + '/**'):
+        pass
 
 
 '''
@@ -53,7 +77,6 @@ class TestsuiteProcessor(ABC):
                 if event == 'TypeDefinition':
                     lextypes[obj.identifier] = obj.supertypes[0]  # assume exactly 1
         return lextypes
-
 
     @abstractmethod
     def write_output_by_corpus(self, dest_path, data):
