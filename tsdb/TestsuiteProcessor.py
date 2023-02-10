@@ -13,16 +13,19 @@ NONTRAIN = DEV + TEST + IGNORE
 '''
 Put the tsdb treebank folders into subdirectories train, dev, and test, according to the recommended split.
 '''
+import os
+
+import os
+
+import os
 
 
-def organize_treebanks(treebanks_path, output_dir):
-    dir_str = [["full", "various-subsets"], ["tsdb"], ["train", "dev", "test"]]
-    base_dir = output_dir
-    pathlib.Path(base_dir).mkdir(parents=True, exist_ok=False)
-    for i, lvl in enumerate(dir_str):
-        for subdir in dir_str[i]:
-            pathlib.Path(base_dir + '/' + subdir).mkdir(parents=True, exist_ok=False)
-        base_dir = base_dir + '/' + subdir
+def organize_treebanks(dir_str_stack, current_path, treebanks_path):
+    if not dir_str_stack:
+        pathlib.Path(current_path).mkdir(parents=True, exist_ok=True)
+        return
+    for item in dir_str_stack[0]:
+        organize_treebanks(dir_str_stack[1:], current_path + '/' + item, treebanks_path)
 
     # for subdir1 in dir_str[0]:
     #     pathlib.Path(output_dir + '/' + subdir1).mkdir(parents=True, exist_ok=False)
@@ -31,8 +34,8 @@ def organize_treebanks(treebanks_path, output_dir):
     #         for subdir3 in dir_str[2]:
     #             pathlib.Path(output_dir + '/' + subdir1 + '/' + subdir2 + '/' + subdir3).mkdir(parents=True, exist_ok=False)
 
-    for tb in glob.iglob(treebanks_path + '/**'):
-        pass
+    #for tb in glob.iglob(treebanks_path + '/**'):
+    #    pass
 
 
 '''
