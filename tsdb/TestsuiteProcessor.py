@@ -1,4 +1,6 @@
 import glob, pathlib
+import os
+from distutils.dir_util import copy_tree
 from abc import ABC, abstractmethod
 from delphin import tdl
 
@@ -7,37 +9,29 @@ from delphin import tdl
 DEV = ['ws212', 'ecpa']
 TEST = ['cb', 'ecpr', 'jhk', 'jhu', 'tgk', 'tgu', 'psk', 'psu', 'rondane',
              'vm32', 'ws213', 'ws214', 'petet', 'wsj23']
-IGNORE = ['ntucle', 'omw', 'wlb03', 'wnb03']
+IGNORE = ['ntucle', 'omw', 'wlb03', 'wnb03', 'redwoods', 'wescience']
 NONTRAIN = DEV + TEST + IGNORE
 
 '''
 Put the tsdb treebank folders into subdirectories train, dev, and test, according to the recommended split.
 '''
-import os
 
-import os
-
-import os
-
-
-def organize_treebanks(dir_str_stack, current_path, treebanks_path):
+def create_treebank_dirs(dir_str_stack, current_path):
     if not dir_str_stack:
         pathlib.Path(current_path).mkdir(parents=True, exist_ok=True)
         return
     for item in dir_str_stack[0]:
-        organize_treebanks(dir_str_stack[1:], current_path + '/' + item, treebanks_path)
+        create_treebank_dirs(dir_str_stack[1:], current_path + '/' + item)
 
-    # for subdir1 in dir_str[0]:
-    #     pathlib.Path(output_dir + '/' + subdir1).mkdir(parents=True, exist_ok=False)
-    #     for subdir2 in dir_str[1]:
-    #         pathlib.Path(output_dir + '/' + subdir1 + '/' + subdir2).mkdir(parents=True, exist_ok=False)
-    #         for subdir3 in dir_str[2]:
-    #             pathlib.Path(output_dir + '/' + subdir1 + '/' + subdir2 + '/' + subdir3).mkdir(parents=True, exist_ok=False)
-
-    #for tb in glob.iglob(treebanks_path + '/**'):
-    #    pass
-
-
+def organize_treebanks(treebanks_path, output_dir):
+    for tb in glob.iglob(treebanks_path + '/**'):
+        tb_name = os.path.basename(os.path.normpath(tb))
+        if tb_name in TEST:
+            copy_tree(tb, output_dir + '/test/' + tb_name + '/')
+        elif tb_name in DEV:
+            copy_tree(tb, output_dir + '/dev/'+ tb_name + '/')
+        elif tb_name not in IGNORE:
+            copy_tree(tb, output_dir + '/train/'+ tb_name + '/')
 '''
 A ProcessedCorpus contains partial information from a [incr tsdb()] database.
 It should have the list of all sentences from the corpus in a text form;
