@@ -10,9 +10,10 @@ import numpy as np
 from tempfile import NamedTemporaryFile
 from datasets import Sequence, Value, ClassLabel, load_from_disk, Features
 import evaluate
-from transformers import AutoModelForTokenClassification, TrainingArguments, Trainer
+from transformers import AutoModelForTokenClassification, TrainingArguments, Trainer, EarlyStoppingCallback
 from transformers import DataCollatorForTokenClassification
 from transformers import AutoTokenizer
+
 #from carbontracker.tracker import CarbonTracker
 import transformers
 import torch
@@ -82,10 +83,12 @@ if __name__ == '__main__':
     training_args = TrainingArguments(
         output_dir= output_path+'/checkpoints/', #"/media/olga/kesha/BERT/erg/3e-5/"
         evaluation_strategy = "epoch",
-        learning_rate=1e-5,
+        learning_rate=2e-5,
         num_train_epochs=50,
         weight_decay=0.01,
-        save_strategy = "no"
+        save_strategy = "epoch",
+        metric_for_best_model="accuracy",
+        load_best_model_at_end=True
     )
 
     trainer = Trainer(
@@ -96,6 +99,7 @@ if __name__ == '__main__':
         data_collator=data_collator,
         compute_metrics=compute_metrics,
         tokenizer=tokenizer,
+        callbacks=[EarlyStoppingCallback(early_stopping_patience=5)]
     )
 
     #tracker = CarbonTracker(epochs=1)
