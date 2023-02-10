@@ -81,6 +81,7 @@ class Token_Tag_Extractor(TestsuiteProcessor):
 
 
     def write_output_by_corpus(self, dest_path, data):
+        print('Writing output to {}'.format(dest_path))
         # Training and dev data is lumped all together
         for split_type in ['train', 'dev']:
             with open(dest_path + split_type + '/' + split_type, 'w') as f:
@@ -108,6 +109,7 @@ class Token_Tag_Extractor(TestsuiteProcessor):
         return total_sen, total_tok
 
     def write_output_by_split(self, dest_path, data):
+        print('Writing output to {}'.format(dest_path))
         for split_type in ['train', 'dev', 'test']:
             with open(dest_path + split_type + '/' + split_type, 'w') as f:
                 total_sen = 0
