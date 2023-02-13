@@ -271,7 +271,7 @@ if __name__ == '__main__':
     ds_info = DatasetInfo(citation=FLICKINGER2002 + ';' + FLICKINGER2011,
                           homepage="https://github.com/delph-in/docs/wiki/ErgTop",
                           description="collection of manually verified treebanked data parsed "
-                                      "by the English Recource Grammar, trunk version.",
+                                      "by the English Recource Grammar, 2020 version.",
                           license=LICENSE)
     hf_ds = create_dataset(data, 'label_names.txt', ds_info, ds_type)
     #hf_ds = create_dataset2(data, 'label_names.txt', 'test', ds_info)
