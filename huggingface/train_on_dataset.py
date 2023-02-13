@@ -83,7 +83,7 @@ if __name__ == '__main__':
     training_args = TrainingArguments(
         output_dir= output_path+'/checkpoints/', #"/media/olga/kesha/BERT/erg/3e-5/"
         evaluation_strategy = "epoch",
-        learning_rate=1e-5,
+        learning_rate=5e-6,
         num_train_epochs=50,
         weight_decay=0.01,
         save_strategy = "epoch",
