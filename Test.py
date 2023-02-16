@@ -1,6 +1,7 @@
 import unittest
 import pickle
 from tsdb.tok_classification import Token_Tag_Extractor
+from tsdb.feature_vectors import Feature_Vec_Extractor
 from huggingface import create_hf_dataset
 from classic_supertagging import vectorizer
 
@@ -50,9 +51,9 @@ class TestTSDB_to_HF(unittest.TestCase):
         #self.assertEqual(ds_test.shape['test'][0], 125) # psk + tgk should have 125 sentences
         #self.assertEqual(ds_dev.shape['validation'][0],121) # ccs + esd should have 121 sentences
 
-class TestTSDB_to_FeatVec(unittest.TestCase):
+class TestTSDB_to_FeatVecNonAutoReg(unittest.TestCase):
     def test(self):
-        fve = Token_Tag_Extractor()  # This extracts token-tag pairs, per corpus, sentences separated by special character
+        fve = Feature_Vec_Extractor()  # This extracts token-tag pairs, per corpus, sentences separated by special character
         lextypes = fve.parse_lexicons(LEXICONS)
         data = fve.process_testsuites(TREEBANKS, lextypes)
         self.assertEqual(len(data['train'][0].full_sentence_list),107) # should contain 107 sentences
@@ -61,7 +62,7 @@ class TestTSDB_to_FeatVec(unittest.TestCase):
 
 class TestTSDB_to_SCIKIT(unittest.TestCase):
     def test(self):
-        fve = Token_Tag_Extractor()  # This extracts token-tag pairs, per corpus, sentences separated by special character
+        fve = Feature_Vec_Extractor()  # This extracts token-tag pairs, per corpus, sentences separated by special character
         lextypes = fve.parse_lexicons(LEXICONS)
         data = fve.process_testsuites(TREEBANKS, lextypes)
         fve.write_output_by_split(TEST_DEST, data)

@@ -4,13 +4,11 @@ preparing the data for token classification based on feature vectors for scikit-
 
 The output is binary files which are loadable with scikit-learn.
 '''
-
-import pathlib
 import pickle
 from delphin import itsdb
 from delphin.tokens import YYTokenLattice
 from tsdb.TestsuiteProcessor import ProcessedCorpus, TestsuiteProcessor
-import pos_map
+from tsdb import pos_map
 
 EOS_TOKEN = 'EOS'
 CONTEXT_WINDOW = 2
@@ -22,7 +20,7 @@ class Feature_Vec_Extractor(TestsuiteProcessor):
 
     @property
     def output_format(self):
-        return 'wb'
+        return 'a+'
 
     def process_one_testsuite(self, tsuite, type, lextypes):
         ts = itsdb.TestSuite(tsuite)
@@ -39,8 +37,11 @@ class Feature_Vec_Extractor(TestsuiteProcessor):
                 deriv = response.result(0).derivation()
                 p_input = response['p-input']
                 p_tokens = response['p-tokens']
-                terminals_tok_tags = self.map_lattice_to_input(p_input, p_tokens, deriv)
-                observations.append(self.get_observations(terminals_tok_tags, lextypes))
+                if p_tokens:
+                    terminals_tok_tags = self.map_lattice_to_input(p_input, p_tokens, deriv)
+                    observations.append(self.get_observations(terminals_tok_tags, lextypes))
+                else:
+                    print("Skipping a sentence from corpus {} because it does not have p-tokens.".format(ts.path.stem))
         pc = ProcessedCorpus(ts.path.stem, type, observations, all_sentences, parsed_sentences, total_tokens )
         return pc
 
