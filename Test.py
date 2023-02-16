@@ -4,8 +4,11 @@ from huggingface import create_hf_dataset
 
 LEXICONS = 'tsdb/test-treebanks/lexicons/'
 TREEBANKS = 'tsdb/test-treebanks/treebanks-small/'
-PROCESSED_FULL = 'tsdb/test-treebanks/processed-toktag-small/full/'
+PROCESSED_TRAIN = 'tsdb/test-treebanks/processed-toktag-small/full/train/train'
+PROCESSED_DEV = 'tsdb/test-treebanks/processed-toktag-small/full/dev/dev'
+PROCESSED_TEST = 'tsdb/test-treebanks/processed-toktag-small/full/test/test'
 LABELS = 'huggingface/label_names.txt'
+TEST_DEST = 'tsdb/test-treebanks/test-tsdb-processing/'
 
 
 class ExampleTestCase(unittest.TestCase):
@@ -26,10 +29,23 @@ class MRSTest(unittest.TestCase):
 
 class TestCreateHFDataset(unittest.TestCase):
     def test_create_hf_dataset(self):
-        ds = create_hf_dataset.create_full_dataset(PROCESSED_FULL, LABELS)
-        self.assertEqual(ds.shape['train'][0], 132) #mrs + pest should have 132 sentences
-        self.assertEqual(ds.shape['test'][0], 125) # psk + tgk should have 125 sentences
-        self.assertEqual(ds.shape['validation'][0],121) # ccs + esd should have 121 sentences
+        ds_train = create_hf_dataset.create_dataset(PROCESSED_TRAIN, LABELS, '', 'train')
+        ds_test = create_hf_dataset.create_dataset(PROCESSED_TEST, LABELS, '', 'test')
+        ds_dev = create_hf_dataset.create_dataset(PROCESSED_DEV, LABELS, '', 'validation')
+        self.assertEqual(ds_train['train'].shape[0], 132) #mrs + pest should have 132 sentences
+        self.assertEqual(ds_test.shape['test'][0], 125) # psk + tgk should have 125 sentences
+        self.assertEqual(ds_dev.shape['validation'][0],121) # ccs + esd should have 121 sentences
+
+class TestTSDB_to_HF(unittest.TestCase):
+    def test_create_hf_dataset(self):
+        tte = Token_Tag_Extractor()  # This extracts token-tag pairs, per corpus, sentences separated by special character
+        lextypes = tte.parse_lexicons(LEXICONS)
+        data = tte.process_testsuites(TREEBANKS, lextypes)
+        tte.write_output_by_split(TEST_DEST, data)
+        ds_train = create_hf_dataset.create_dataset(TEST_DEST + '/train/train', LABELS, '', 'train')
+        self.assertEqual(ds_train['train'].shape[0], 132) #mrs + pest should have 132 sentences
+        #self.assertEqual(ds_test.shape['test'][0], 125) # psk + tgk should have 125 sentences
+        #self.assertEqual(ds_dev.shape['validation'][0],121) # ccs + esd should have 121 sentences
 
 if __name__ == '__main__':
     unittest.main()
