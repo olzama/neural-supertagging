@@ -66,6 +66,9 @@ class TestTSDB_to_SCIKIT(unittest.TestCase):
         lextypes = fve.parse_lexicons(LEXICONS)
         data = fve.process_testsuites(TREEBANKS, lextypes)
         fve.write_output_by_split(TEST_DEST, data)
+        with open(TEST_DEST + '/train/train', 'rb') as f:
+            data_reloaded = pickle.load(f)
+        self.assertEqual(len(data_reloaded['train']['fv']), 132)
         #ds_train = create_hf_dataset.create_dataset(TEST_DEST + '/train/train', LABELS, '', 'train')
         #self.assertEqual(ds_train['train'].shape[0], 132) #mrs + pest should have 132 sentences
         #self.assertEqual(ds_test.shape['test'][0], 125) # psk + tgk should have 125 sentences

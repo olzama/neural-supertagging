@@ -20,7 +20,7 @@ class Feature_Vec_Extractor(TestsuiteProcessor):
 
     @property
     def output_format(self):
-        return 'a+'
+        return 'ab'
 
     def process_one_testsuite(self, tsuite, type, lextypes):
         ts = itsdb.TestSuite(tsuite)
@@ -152,6 +152,7 @@ class Feature_Vec_Extractor(TestsuiteProcessor):
             data['lt'].append(y)
             total_tok += len(x)
             total_sen += 1
-        pickle.dump(data,f)
+        pickle.dump(data,f) # Need to change this; either correctly append
+        # to pickle or don't use pickle; or writing methods should be subclass-specific afterall
         return total_sen, total_tok
 
