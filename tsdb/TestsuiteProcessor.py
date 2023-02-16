@@ -2,7 +2,7 @@ import glob, pathlib
 import os
 from distutils.dir_util import copy_tree
 from abc import ABC, abstractmethod
-from delphin import tdl
+from delphin import tdl, itsdb
 
 
 
@@ -44,7 +44,7 @@ For example, data may contain a list of token-tag pairs, to be used for a token 
 class ProcessedCorpus:
     def __init__(self, name, type, data, all_sentences, parsed_sentences, total_tokens):
         self.name = name
-        self.processed_data = data # E.g. list of token-tag pairs
+        self.processed_data = data # E.g. list of token-tag pairs, or feature vectors
         # Lists of strings representing original text sentences in the corpus, in the same order they appear in the corpus
         self.parsed_sentence_list = parsed_sentences # Sentences for which a correct parse was recorded
         self.full_sentence_list = all_sentences # All sentences, regardless of whether they were parsed correctly
@@ -67,6 +67,20 @@ Thus, every TestsuiteProcessor must:
     
 '''
 class TestsuiteProcessor(ABC):
+
+    @abstractmethod
+    def get_observations(self, terminals, lextypes):
+        pass
+
+    @property
+    @abstractmethod
+    def output_format(self):
+        pass
+
+    @abstractmethod
+    def write_out_one_corpus(self, f, pc, total_sen, total_tok):
+        pass
+
     def parse_lexicons(self,lexicons):
         lextypes = {}  # mapping of lexical entry IDs to types
         for lexicon in glob.iglob(lexicons+'**'):
@@ -75,18 +89,63 @@ class TestsuiteProcessor(ABC):
                     lextypes[obj.identifier] = obj.supertypes[0]  # assume exactly 1
         return lextypes
 
-    @abstractmethod
-    def write_output_by_corpus(self, dest_path, data):
-        pass
-
-    @abstractmethod
-    def write_output_by_split(self, dest_path, data):
-        pass
-
-    @abstractmethod
+    '''
+    Takes a path to treebanks, already separated into train, dev, and test folders.
+    The treebanks are in [incr tsdb()] format.
+    Outputs a dictionary of three ProcessedCorpus lists (train, dev, and test).
+    '''
     def process_testsuites(self, treebanks_path, lextypes):
-        pass
+        data = {'train': [], 'dev': [], 'test': []}
+        print('Reading test suite files into pydelphin objects...')
+        for idx in ['train','dev','test']:
+            for i, tsuite in enumerate(sorted(glob.iglob(treebanks_path + idx + '/**'))):
+                data[idx].append(self.process_one_testsuite(tsuite, idx, lextypes))
+        return data
 
-    @abstractmethod
     def process_one_testsuite(self, tsuite, type, lextypes):
-        pass
+        ts = itsdb.TestSuite(tsuite)
+        all_sentences = []
+        parsed_sentences = []
+        items = list(ts.processed_items())
+        observations = []
+        total_tokens = 0
+        print("{} sentences in corpus {} including possible sentences with no parse.".format(len(items), ts.path.stem))
+        for response in items:
+            all_sentences.append(response['i-input'])
+            if len(response['results']) > 0:
+                parsed_sentences.append(response['i-input'])
+                deriv = response.result(0).derivation()
+                terminals = deriv.terminals()
+                observations.append(self.get_observations(terminals, lextypes))
+        pc = ProcessedCorpus(ts.path.stem, type, observations, all_sentences, parsed_sentences, total_tokens )
+        return pc
+
+    def write_output_by_corpus(self, dest_path, data):
+        print('Writing output to {}'.format(dest_path))
+        # Training and dev data is lumped all together
+        for split_type in ['train', 'dev']:
+            with open(dest_path + split_type + '/' + split_type, self.output_format) as f:
+                total_sen = 0
+                total_tok = 0
+                for pc in data[split_type]:
+                    total_sen, total_tok = self.write_out_one_corpus(f, pc, total_sen, total_tok)
+                print('Wrote {} sentences, {} tokens out for {}.'.format(total_sen, total_tok, split_type))
+        # Test data is kept separately by corpus, to be able to look at accuracy with different domains
+        for pc in data['test']:
+            with open(dest_path + 'test' + '/' + pc.name, self.output_format) as f:
+                total_sen = 0
+                total_tok = 0
+                total_sen, total_tok = self.write_out_one_corpus(f, pc, total_sen, total_tok)
+                print('Wrote {} sentences, {} tokens out for {}.'.format(total_sen, total_tok, pc.name))
+
+    def write_output_by_split(self, dest_path, data):
+        print('Writing output to {}'.format(dest_path))
+        for split_type in ['train', 'dev', 'test']:
+            with open(dest_path + split_type + '/' + split_type, self.output_format) as f:
+                total_sen = 0
+                total_tok = 0
+                for pc in data[split_type]:
+                    total_sen, total_tok = self.write_out_one_corpus(f, pc, total_sen, total_tok)
+                print('Wrote {} sentences, {} tokens out for {}.'.format(total_sen, total_tok, split_type))
+
+
