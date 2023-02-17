@@ -20,7 +20,7 @@ class Feature_Vec_Extractor(TestsuiteProcessor):
 
     @property
     def output_format(self):
-        return 'ab'
+        return 'wb'
 
     def process_one_testsuite(self, tsuite, type, lextypes):
         ts = itsdb.TestSuite(tsuite)
@@ -145,14 +145,28 @@ class Feature_Vec_Extractor(TestsuiteProcessor):
             context['pos+' + str(j)] = next_pos
         return context
 
-    def write_out_one_corpus(self, f, pc, total_sen, total_tok):
+    def get_output_for_one_corpus(self, pc, total_sen, total_tok):
         data = {'ft': [], 'lt': []}
         for x,y in pc.processed_data:
             data['ft'].append(x)
             data['lt'].append(y)
             total_tok += len(x)
             total_sen += 1
-        pickle.dump(data,f) # Need to change this; either correctly append
-        # to pickle or don't use pickle; or writing methods should be subclass-specific afterall
-        return total_sen, total_tok
+        return data, total_sen, total_tok
 
+    def write_output_by_split(self, dest_path, data):
+        print('Writing output to {}'.format(dest_path))
+        for split_type in ['train', 'dev', 'test']:
+            with open(dest_path + split_type + '/' + split_type, self.output_format) as f:
+                whole_output = {'ft': [], 'lt': []}
+                total_sen = 0
+                total_tok = 0
+                for pc in data[split_type]:
+                    output, total_sen, total_tok = self.get_output_for_one_corpus(pc, total_sen, total_tok)
+                    whole_output['ft'].extend(output['ft'])
+                    whole_output['lt'].extend(output['lt'])
+                pickle.dump(whole_output,f)
+                print('Wrote {} sentences, {} tokens out for {}.'.format(total_sen, total_tok, split_type))
+
+    def write_output_by_corpus(self, dest_path, data):
+        pass

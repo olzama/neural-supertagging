@@ -48,13 +48,44 @@ class Token_Tag_Extractor(TestsuiteProcessor):
             pairs.append((terminal.form, letype))
         return pairs
 
-    def write_out_one_corpus(self, f, pc, total_sen, total_tok):
+    def get_output_for_one_corpus(self, pc, total_sen, total_tok):
+        output = ''
         for sentence in pc.processed_data:
             for form, letype in sentence:
                 str_pair = f'{form}\t{letype}'
-                f.write(str_pair + '\n')
+                output += str_pair + '\n'
                 total_tok += 1
-            f.write('\n')  # sentence separator
+            output += '\n'  # sentence separator
             total_sen += 1
-        return total_sen, total_tok
+        return output, total_sen, total_tok
 
+    def write_output_by_corpus(self, dest_path, data):
+        print('Writing output to {}'.format(dest_path))
+        # Training and dev data is lumped all together
+        for split_type in ['train', 'dev']:
+            with open(dest_path + split_type + '/' + split_type, self.output_format) as f:
+                total_sen = 0
+                total_tok = 0
+                for pc in data[split_type]:
+                    output, total_sen, total_tok = self.get_output_for_one_corpus(pc, total_sen, total_tok)
+                    f.write(output)
+                print('Wrote {} sentences, {} tokens out for {}.'.format(total_sen, total_tok, split_type))
+        # Test data is kept separately by corpus, to be able to look at accuracy with different domains
+        for pc in data['test']:
+            with open(dest_path + 'test' + '/' + pc.name, self.output_format) as f:
+                total_sen = 0
+                total_tok = 0
+                output, total_sen, total_tok = self.get_output_for_one_corpus(pc, total_sen, total_tok)
+                f.write(output)
+                print('Wrote {} sentences, {} tokens out for {}.'.format(total_sen, total_tok, pc.name))
+
+    def write_output_by_split(self, dest_path, data):
+        print('Writing output to {}'.format(dest_path))
+        for split_type in ['train', 'dev', 'test']:
+            with open(dest_path + split_type + '/' + split_type, self.output_format) as f:
+                total_sen = 0
+                total_tok = 0
+                for pc in data[split_type]:
+                    output, total_sen, total_tok = self.get_output_for_one_corpus(pc, total_sen, total_tok)
+                    f.write(output)
+                print('Wrote {} sentences, {} tokens out for {}.'.format(total_sen, total_tok, split_type))
