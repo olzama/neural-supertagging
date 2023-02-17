@@ -169,4 +169,24 @@ class Feature_Vec_Extractor(TestsuiteProcessor):
                 print('Wrote {} sentences, {} tokens out for {}.'.format(total_sen, total_tok, split_type))
 
     def write_output_by_corpus(self, dest_path, data):
-        pass
+        print('Writing output to {}'.format(dest_path))
+        # Training and dev data is lumped all together
+        for split_type in ['train', 'dev']:
+            with open(dest_path + split_type + '/' + split_type, self.output_format) as f:
+                whole_output = {'ft': [], 'lt': []}
+                total_sen = 0
+                total_tok = 0
+                for pc in data[split_type]:
+                    output, total_sen, total_tok = self.get_output_for_one_corpus(pc, total_sen, total_tok)
+                    whole_output['ft'].extend(output['ft'])
+                    whole_output['lt'].extend(output['lt'])
+                pickle.dump(whole_output,f)
+                print('Wrote {} sentences, {} tokens out for {}.'.format(total_sen, total_tok, split_type))
+        # Test data is kept separately by corpus, to be able to look at accuracy with different domains
+        for pc in data['test']:
+            with open(dest_path + 'test' + '/' + pc.name, self.output_format) as f:
+                total_sen = 0
+                total_tok = 0
+                output, total_sen, total_tok = self.get_output_for_one_corpus(pc, total_sen, total_tok)
+                pickle.dump(output,f)
+                print('Wrote {} sentences, {} tokens out for {}.'.format(total_sen, total_tok, pc.name))
