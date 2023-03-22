@@ -39,7 +39,8 @@ class Feature_Vec_Extractor(TestsuiteProcessor):
                 p_tokens = response['p-tokens']
                 if p_tokens:
                     terminals_tok_tags = self.map_lattice_to_input(p_input, p_tokens, deriv)
-                    observations.append(self.get_observations(terminals_tok_tags, lextypes))
+                    is_test_data = type=='test'
+                    observations.append(self.get_observations(terminals_tok_tags, lextypes, is_test_data))
                 else:
                     print("Skipping a sentence from corpus {} because it does not have p-tokens.".format(ts.path.stem))
         pc = ProcessedCorpus(ts.path.stem, type, observations, all_sentences, parsed_sentences, total_tokens )
@@ -84,42 +85,37 @@ class Feature_Vec_Extractor(TestsuiteProcessor):
     Input: a list of pydelphin itsdb terminals and a list of known lexical types (e.g. from the training data).
     Output: a list of tuples: the terminal orthographic form and its lexical type, if it is known, or <UNK> otherwise.
     '''
-    def get_observations(self, terminals_tok_tags, lextypes):
+    def get_observations(self, terminals_tok_tags, lextypes, is_test_data):
         pos_mapper = pos_map.Pos_mapper('pos-map.txt')
         x = []
         y = []
-        tokens, labels, pos_tags, autoregress_labels = \
-            self.get_tokens_labels(terminals_tok_tags, CONTEXT_WINDOW, lextypes, pos_mapper, False)
+        tokens, labels, pos_tags = \
+            self.get_tokens_labels(terminals_tok_tags, CONTEXT_WINDOW, lextypes, pos_mapper)
         for k, t in enumerate(tokens):
             if k < CONTEXT_WINDOW or k >= len(tokens) - CONTEXT_WINDOW:
                 continue
             y.append(labels[k])
-            x.append(self.get_context(t, tokens, pos_tags, k, CONTEXT_WINDOW))
+            # For non-autoregressive models, do not pass labels
+            x.append(self.get_context(t, tokens, pos_tags, k, CONTEXT_WINDOW, is_test_data))
         return (x,y)
 
-    def get_tokens_labels(self, terms_and_tokens_tags, context_window, lextypes,pos_mapper, test):
+    def get_tokens_labels(self, terms_and_tokens_tags, context_window, lextypes, pos_mapper):
         tokens = []
         labels = []
         pos_tags = []
-        previous_tags = []
         for i,(terminal, toks_tags) in enumerate(terms_and_tokens_tags):
             letype = str(lextypes.get(terminal.parent.entity, "<UNK>"))
             tokens.append(terminal.form)
             labels.append(letype)
             pos_tags.append(self.get_pos_tag(toks_tags, pos_mapper))
-            if test:
-                previous_tags.append(None)
-            else:
-                previous_tags.append(letype)
         for i in range(1,1+context_window):
             tokens.insert(0, 'FAKE-' + str(i))
             labels.insert(0, 'FAKE-' + str(i))
             pos_tags.insert(0,'FAKE-' + str(i))
-            previous_tags.insert(0, 'FAKE-' + str(i))
             tokens.append('FAKE+' + str(i))
             labels.append('FAKE+' + str(i))
             pos_tags.append('FAKE+' + str(i))
-        return tokens, labels, pos_tags, previous_tags
+        return tokens, labels, pos_tags
 
     def get_pos_tag(self,tokens_tags, pos_mapper):
         tag = ''
@@ -132,7 +128,7 @@ class Feature_Vec_Extractor(TestsuiteProcessor):
             tag = pos_mapper.map_tag(tag)
         return tag
 
-    def get_context(self, t, tokens, pos_tags, i, window):
+    def get_context(self, t, tokens, pos_tags, i, window, is_test_data, labels=None):
         context = {'w': t, 'pos': pos_tags[i]}
         for j in range(1,window+1):
             prev_tok = tokens[i-j]
@@ -143,13 +139,16 @@ class Feature_Vec_Extractor(TestsuiteProcessor):
             context['w+' + str(j)] = next_tok
             context['pos-' + str(j)] = prev_pos
             context['pos+' + str(j)] = next_pos
+            if labels: # only in autoregressive models
+                prev_tag = labels[i-j] if not is_test_data else None
+                context['tag-' + str(j)] = prev_tag
         return context
 
     def get_output_for_one_corpus(self, pc, total_sen, total_tok):
         data = {'ft': [], 'lt': []}
         for x,y in pc.processed_data:
-            data['ft'].append(x)
-            data['lt'].append(y)
+            data['ft'].extend(x)
+            data['lt'].extend(y)
             total_tok += len(x)
             total_sen += 1
         return data, total_sen, total_tok

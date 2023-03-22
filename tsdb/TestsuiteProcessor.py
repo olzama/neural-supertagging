@@ -70,7 +70,7 @@ Thus, every TestsuiteProcessor must:
 class TestsuiteProcessor(ABC):
 
     @abstractmethod
-    def get_observations(self, terminals, lextypes):
+    def get_observations(self, terminals, lextypes, is_test_data):
         pass
 
     @property
