@@ -46,6 +46,23 @@ class Feature_Vec_Autoreg(Feature_Vec_Extractor):
             x.append(self.get_context(t, tokens, pos_tags, k, CONTEXT_WINDOW, is_test_data, labels=labels))
         return (x,y)
 
+    def write_output_by_split(self, dest_path, data):
+        print('Writing output to {}'.format(dest_path))
+        for split_type in ['train', 'dev', 'test']:
+            with open(dest_path + split_type + '/' + split_type, self.output_format) as f:
+                whole_output = {}
+                total_sen = 0
+                total_tok = 0
+                for sen_len in data[split_type]:
+                    whole_output[sen_len] = {'ft': [], 'lt': []}
+                    for vec in data[split_type][sen_len]:
+                        whole_output[sen_len]['ft'].extend(vec[0])
+                        whole_output[sen_len]['lt'].extend(vec[1])
+                        total_sen += 1
+                        total_tok += len(vec[0])
+                pickle.dump(whole_output,f)
+                print('Wrote {} sentences, {} tokens out for {}.'.format(total_sen, total_tok, split_type))
+
 
     def org_sen_by_length(self, all_sentences, ts):
         n = 0
