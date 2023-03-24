@@ -147,8 +147,8 @@ class Feature_Vec_Extractor(TestsuiteProcessor):
     def get_output_for_one_corpus(self, pc, total_sen, total_tok):
         data = {'ft': [], 'lt': []}
         for x,y in pc.processed_data:
-            data['ft'].extend(x)
-            data['lt'].extend(y)
+            data['ft'].append(x)
+            data['lt'].append(y)
             total_tok += len(x)
             total_sen += 1
         return data, total_sen, total_tok
