@@ -86,8 +86,11 @@ class TestTSDB_to_SCIKIT_Autoreg(unittest.TestCase):
         fve.write_output_by_split(TEST_DEST, data)
         with open(TEST_DEST + '/train/train', 'rb') as f:
             data_reloaded = pickle.load(f)
-        #TODO: Compute how many 3-word sentences, etc, are there, to properly compare
-        #self.assertEqual(len(data_reloaded['ft']), 132)
+        self.assertEqual(len(data_reloaded[3]['ft']), 12) # there should be 12 sentences of length 3 in the training set
+        total_train = 0
+        for slen in data_reloaded:
+            total_train += len(data_reloaded[slen]['ft'])
+        self.assertEqual(total_train, 132) # There should still be 132 sentences in the training set
 
 
 if __name__ == '__main__':
