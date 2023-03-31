@@ -87,10 +87,24 @@ class TestTSDB_to_SCIKIT_Autoreg(unittest.TestCase):
         with open(TEST_DEST + '/train/train', 'rb') as f:
             data_reloaded = pickle.load(f)
         self.assertEqual(len(data_reloaded[3]['ft']), 12) # there should be 12 sentences of length 3 in the training set
-        total_train = 0
+        total = 0
         for slen in data_reloaded:
-            total_train += len(data_reloaded[slen]['ft'])
-        self.assertEqual(total_train, 132) # There should still be 132 sentences in the training set
+            total += len(data_reloaded[slen]['ft'])
+        self.assertEqual(total, 132) # There should be 132 sentences in the training set
+        total = 0
+        fve.write_output_by_corpus(TEST_DEST, data)
+        with open(TEST_DEST + '/train/train', 'rb') as f:
+            data_reloaded = pickle.load(f)
+        for slen in data_reloaded:
+            total += len(data_reloaded[slen]['ft'])
+        self.assertEqual(total, 132) # There should still be 132 sentences in the training set
+        total = 0
+        with open(TEST_DEST + '/test/tgk', 'rb') as f:
+            data_reloaded = pickle.load(f)
+        for slen in data_reloaded:
+            total += len(data_reloaded[slen]['ft'])
+        self.assertEqual(total, 85)  # The tgk corpus has 85 parsed sentences
+
 
 
 if __name__ == '__main__':
