@@ -5,21 +5,14 @@
 import timeit
 import warnings
 from pathlib import Path
-
-import matplotlib.pyplot as plt
-
 import numpy as np
-
 import pickle,glob
-
 import sys
-
-import energyusage
 
 from sklearn.linear_model import LogisticRegression
 from sklearn.exceptions import ConvergenceWarning
 from sklearn import svm
-from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+#from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
@@ -27,6 +20,7 @@ def eprint(*args, **kwargs):
 warnings.filterwarnings("ignore", category=ConvergenceWarning, module="sklearn")
 
 def train_SVM(X, Y,fp):
+    print("Training SVM...")
     clf = svm.LinearSVC() # Kernels would be too slow, so using liblinear SVM
     name = "svm-liblinear-l2-sq-hinge-1000"
     fit_serialize(X,Y,clf,name,fp) # for models over 4GB, need to add protocol=4
@@ -52,7 +46,7 @@ def train_MaxEnt(X, Y, fp, all=False):
         }
     else:
         models = {
-            'saga': { 'l1': {"OVR": {"name": "OVR-L1", "iters": [100]}}}
+            'saga': { 'l2': {"multinomial": {"name": "multinomial-L2", "iters": [100]}}}
         }
 
     for solver in models:
@@ -132,12 +126,12 @@ def test_autoreg(clf, name,vec,le_dict,table_path,inv_le_dict):
     print('Number of predictions: {}'.format(len(all_preds_for_acc)))
     print('Number of true labels: {}'.format(len(all_true_labels)))
     print('Number of errors: {}'.format(len(errors)))
-    classes = list(set([inv_le_dict[l] for l in all_preds_for_acc] + [inv_le_dict.get(l,'UNK') for l in all_true_labels]))
-    cm = ConfusionMatrixDisplay.from_predictions(all_preds_for_acc, all_true_labels, display_labels=classes,
-                                                 xticks_rotation="vertical")
-    fig, ax = plt.subplots(figsize=(500, 500))
-    cm.plot(ax=ax, xticks_rotation="vertical")
-    plt.savefig(name + '-confmatrix.png')
+    #classes = list(set([inv_le_dict[l] for l in all_preds_for_acc] + [inv_le_dict.get(l,'UNK') for l in all_true_labels]))
+    #cm = ConfusionMatrixDisplay.from_predictions(all_preds_for_acc, all_true_labels, display_labels=classes,
+    #                                             xticks_rotation="vertical")
+    #fig, ax = plt.subplots(figsize=(500, 500))
+    #cm.plot(ax=ax, xticks_rotation="vertical")
+    #plt.savefig(name + '-confmatrix.png')
     return errors
 
 def remove_tag_features(obs):
@@ -220,16 +214,17 @@ if __name__ == "__main__":
     if sys.argv[1] == 'train':
         Path(sys.argv[2] + '/models').mkdir(parents=True, exist_ok=True)
         X, Y = load_vectors(sys.argv[2]+'/vectors/X_train', sys.argv[2]+'/vectors/Y_train')
+        print("{} observations in the dataset".format(X.shape[0]))
         with open(sys.argv[2] +'/vectors/vectorizer','rb') as f:
             vec = pickle.load(f)
         # with open('/Users/olzama/Desktop/cur-features.txt', 'w') as f:
         #     for feat in vec.feature_names_:
         #         f.write(feat + '\n')
         #energyusage.evaluate(train_SVM,X,Y,sys.argv[2] + '/models')
-        train_SVM(X,Y,sys.argv[2] + '/models')
-        #train_MaxEnt(X,Y,sys.argv[2] + '/models',all=True)
+        #train_SVM(X,Y,sys.argv[2] + '/models')
+        train_MaxEnt(X,Y, '/mnt/kesha/ERG/classic-models/repro-trunk-nonautoregress/models',all=True)
     elif sys.argv[1] == 'test':
-        to_test = sys.argv[2] + '/labeled-data/' + sys.argv[3]
+        to_test = sys.argv[2]  + sys.argv[3]
         with open(sys.argv[2] +'/vectors/vectorizer','rb') as f:
             vec = pickle.load(f)
             print("The loaded vectorizer was created using sklearn version {}".format(

@@ -58,7 +58,7 @@ class LexTypeExtractor:
         return data
 
     def process_reshuffled_nonautoreg(self,data,out_dir):
-        pos_mapper = pos_map.Pos_mapper('pos-map.txt')
+        pos_mapper = pos_map.Pos_mapper('../pos-map.txt')
         for k in ['train','dev','test']:
             data_table = {'ft': [], 'lt': []}
             pathlib.Path(out_dir + '/labeled-data/' + k).mkdir(parents=True, exist_ok=False)
@@ -199,7 +199,7 @@ class LexTypeExtractor:
         return resplit_data
 
     def process_testsuites_nonautoreg(self,testsuites,lextypes, out_dir):
-        pos_mapper = pos_map.Pos_mapper('pos-map.txt')
+        pos_mapper = pos_map.Pos_mapper('../pos-map.txt')
         max_sen_length, corpus_size, num_ts, data = self.read_testsuites(testsuites)
         for k in ['train','dev','test']:
             is_devtest_data = k in ['dev','test']
@@ -261,7 +261,7 @@ class LexTypeExtractor:
         contexts = []
         y = []
         ys = []
-        pos_mapper = pos_map.Pos_mapper('pos-map.txt')  # do this for every test suite to count unknowns in each
+        pos_mapper = pos_map.Pos_mapper('../pos-map.txt')  # do this for every test suite to count unknowns in each
         for sentence_len in tsuite['sentences']:
             items = tsuite['sentences'][sentence_len]
             for j, lst_of_terminals in enumerate(items):
@@ -287,7 +287,7 @@ class LexTypeExtractor:
         print("Processing " + tsuite['name'])
         pairs = []
         y = []
-        pos_mapper = pos_map.Pos_mapper('pos-map.txt')  # do this for every test suite to count unknowns in each
+        pos_mapper = pos_map.Pos_mapper('../pos-map.txt')  # do this for every test suite to count unknowns in each
         total = 0
         for sentence_len in tsuite['sentences']:
             items = tsuite['sentences'][sentence_len]
@@ -311,7 +311,7 @@ class LexTypeExtractor:
             print("Processing " + suf)
             all_pairs = []
             all_ys = []
-            pos_mapper = pos_map.Pos_mapper('pos-map.txt')  # do this for every test suite to count unknowns in each
+            pos_mapper = pos_map.Pos_mapper('../pos-map.txt')  # do this for every test suite to count unknowns in each
             total = 0
             for tsuite in data[suf]['by corpus']:
                 pairs = []
@@ -348,7 +348,7 @@ class LexTypeExtractor:
         y = []
         ys = []
         all_tokens = 0
-        pos_mapper = pos_map.Pos_mapper('pos-map.txt')  # do this for every test suite to count unknowns in each
+        pos_mapper = pos_map.Pos_mapper('../pos-map.txt')  # do this for every test suite to count unknowns in each
         for j, lst_of_terminals in enumerate(items):
             #if j % 100 == 0:
             #    print("Processing item {} out of {}...".format(j, len(items)))

@@ -86,7 +86,7 @@ class Feature_Vec_Extractor(TestsuiteProcessor):
     Output: a list of tuples: the terminal orthographic form and its lexical type, if it is known, or <UNK> otherwise.
     '''
     def get_observations(self, terminals_tok_tags, lextypes, is_test_data):
-        pos_mapper = pos_map.Pos_mapper('pos-map.txt')
+        pos_mapper = pos_map.Pos_mapper('../pos-map.txt')
         x = []
         y = []
         tokens, labels, pos_tags = \
@@ -140,15 +140,15 @@ class Feature_Vec_Extractor(TestsuiteProcessor):
             context['pos-' + str(j)] = prev_pos
             context['pos+' + str(j)] = next_pos
             if labels: # only in autoregressive models
-                prev_tag = labels[i-j] if not is_test_data else None
+                prev_tag = labels[i-j] if not is_test_data else 'FAKE'
                 context['tag-' + str(j)] = prev_tag
         return context
 
     def get_output_for_one_corpus(self, pc, total_sen, total_tok):
         data = {'ft': [], 'lt': []}
         for x,y in pc.processed_data:
-            data['ft'].append(x)
-            data['lt'].append(y)
+            data['ft'].extend(x)
+            data['lt'].extend(y)
             total_tok += len(x)
             total_sen += 1
         return data, total_sen, total_tok

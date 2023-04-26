@@ -37,8 +37,14 @@ def vectorize_nonautoreg(fp):
     le = LabelEncoder()
     with open(fp,'rb') as f:
         table = pickle.load(f)
-    X = table['ft']
-    Y = table['lt']
+    X = []
+    Y = []
+    #X = table['ft']
+    #Y = table['lt']
+    for i, row in enumerate(table['ft']):
+        X.extend(row)
+        Y.extend(table['lt'][i])
+    print("Number of observations in the vector matrix: {}".format(len(X)))
     vectors = vec.fit_transform(X)
     le.fit(Y)
     labels = le.transform(Y)
@@ -48,13 +54,13 @@ def vectorize_nonautoreg(fp):
 
 
 if __name__ == "__main__":
-    # See sample data for the expected format.
-    Path(sys.argv[1]+'/vectors').mkdir(parents=True, exist_ok=False)
+    Path(sys.argv[1]+'/vectors').mkdir(parents=True, exist_ok=True)
     autoreg = sys.argv[2] == 'autoreg'
+    data_file = sys.argv[3]
     if autoreg:
-        X, Y, vectorizer, label_dict, inv_label_dict = vectorize_autoreg(sys.argv[1]+'/labeled-data/train/train')
+        X, Y, vectorizer, label_dict, inv_label_dict = vectorize_autoreg(sys.argv[1] + '/' + data_file)
     else:
-        X, Y, vectorizer, label_dict, inv_label_dict = vectorize_nonautoreg(sys.argv[1] + '/labeled-data/train/train')
+        X, Y, vectorizer, label_dict, inv_label_dict = vectorize_nonautoreg(sys.argv[1]+ '/' + data_file)
     with open(sys.argv[1] + '/vectors/label-inv-dict', 'wb') as f:
         pickle.dump(inv_label_dict, f)
     with open(sys.argv[1]+'/vectors/vectorizer', 'wb') as f:
@@ -62,7 +68,7 @@ if __name__ == "__main__":
         print("The saved vectorizer was created using sklearn version {}".format(vectorizer.__getstate__()['_sklearn_version']))
     with open(sys.argv[1]+'/vectors/label-dict','wb') as f:
         pickle.dump(label_dict,f)
-    pickle_vectors(sys.argv[1]+'/vectors/', X, Y, 'train')
+    pickle_vectors(sys.argv[1]+'/vectors/', X, Y, data_file)
 
 
 

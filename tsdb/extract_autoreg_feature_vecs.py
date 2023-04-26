@@ -1,7 +1,7 @@
 import sys
 from datetime import datetime
 import pathlib
-from tsdb.feature_vectors import Feature_Vec_Extractor
+from tsdb.feature_vectors_autoreg import Feature_Vec_Autoreg
 
 
 if __name__ == "__main__":
@@ -12,7 +12,7 @@ if __name__ == "__main__":
     for split in ['train', 'dev', 'test']:
         for output_style in ['separate/', 'full/']:
             pathlib.Path(out_dir + output_style + split + '/').mkdir(parents=True, exist_ok=False)
-    fve = Feature_Vec_Extractor()
+    fve = Feature_Vec_Autoreg()
     lextypes = fve.parse_lexicons(lexicons_path)
     data = fve.process_testsuites(treebanks_path, lextypes)
     fve.write_output_by_corpus(out_dir + 'separate/',data)

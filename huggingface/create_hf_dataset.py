@@ -201,7 +201,8 @@ def create_dataset(data, label_file, ds_info, ds_type):
         remove_columns=dataset[ds_type].column_names,
         fn_kwargs={"tokenizer": tokenizer},
     )
-    update_info(dataset[ds_type]._info, ds_info, ds_type)
+    if ds_info:
+        update_info(dataset[ds_type]._info, ds_info, ds_type)
     print("Created dataset with shape {}".format(dataset.shape))
     return dataset
 
