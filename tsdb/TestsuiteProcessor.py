@@ -107,6 +107,7 @@ class TestsuiteProcessor(ABC):
         data = {'train': [], 'dev': [], 'test': []}
         print('Reading test suite files into pydelphin objects...')
         for idx in ['train','dev','test']:
+            print(treebanks_path + idx)
             for i, tsuite in enumerate(sorted(glob.iglob(treebanks_path + idx + '/**'))):
                 data[idx].append(self.process_one_testsuite(tsuite, idx, lextypes))
         return data
