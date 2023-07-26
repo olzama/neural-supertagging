@@ -9,6 +9,7 @@ from torch import nn, max as torch_max, IntTensor
 from train_on_dataset import compute_metrics
 
 SPECIAL_TOKEN = -100
+MWE = 28996
 
 def test_eval_on_sentence(best_model, input_text, tokenizer):
     #input_text = "The text on which I test"
@@ -32,21 +33,37 @@ def test_eval_on_sentence(best_model, input_text, tokenizer):
 def convert_predictions(predictions, model_config, vocab):
     txt_labels = []
     inputs = []
+    token_nums = []
+    prev = None
     for i,p in enumerate(list(predictions.label_ids)):
         this_sent_labels = []
         this_sent_tokens = []
+        this_sent_token_nums = []
+        prev_j = None
         for j,idx in enumerate(p):
-            if idx != -100:
-                this_sent_labels.append(model_config.id2label[idx])
+            #if idx == MWE:
+            #    print("MWE")
+            input_idx = predictions.inputs[i][j]
+            if input_idx > 107: # meaningful words start at 107 in the vocab
+                if idx != SPECIAL_TOKEN:
+                    this_sent_labels.append(model_config.id2label[idx])
+                    this_sent_token_nums.append(j)
+                    prev = idx
+                    prev_j = j
+                else:
+                    this_sent_labels.append(model_config.id2label[prev])
+                    this_sent_token_nums.append(prev_j)
                 this_sent_tokens.append(vocab[predictions.inputs[i][j]])
+
             #else:
             #    this_sent_labels.append('SPECIAL_TOKEN')
             #    this_sent_tokens.append('SPECIAL_TOKEN')
         txt_labels.append(this_sent_labels)
         inputs.append(this_sent_tokens)
+        token_nums.append(this_sent_token_nums)
         #txt_labels.append([model_config.id2label[idx] for idx in p if idx != -100])
         #|inputs.append(vocab[idx] for idx in predictions.inputs[i]['input_ids'])
-    return txt_labels, inputs
+    return txt_labels, inputs, token_nums
 
 def convert_inputs(inputs, tokenizer, vocab):
     txt_inputs = []
@@ -95,14 +112,21 @@ if __name__ == "__main__":
 
     sent = 'The seeds produced as much as 20% corn.'
     tok_sent = tokenizer.encode_plus(sent, return_offsets_mapping=True)
+    tokenizer.add_special_tokens({'additional_special_tokens': ['MWE']})
     # If the dataset was created from a single folder, then the whole thing gets passed to the predict()
     predictions = trainer.predict(dataset)
     # predictions = trainer.predict(dataset['test']) # If the dataset was created from separate train/dev/test folders
-    txt_predictions = convert_predictions(predictions,best_model.config,vocab)
+    txt_predictions, input_tokens, word_numbers = convert_predictions(predictions,best_model.config,vocab)
     #txt_inputs = convert_inputs(dataset,trainer.tokenizer,vocab)
     print(predictions.metrics)
     print('Saving predicted labels to ' + output_path + 'predictions.txt')
     with open(output_path + 'predictions.txt', 'w') as f:
         for p in txt_predictions:
+            f.write(str(p) + '\n')
+    with open(output_path + 'word_nums.txt', 'w') as f:
+        for p in word_numbers:
+            f.write(str(p) + '\n')
+    with open(output_path + 'inputs.txt', 'w') as f:
+        for p in input_tokens:
             f.write(str(p) + '\n')
 

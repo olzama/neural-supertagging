@@ -11,6 +11,7 @@ from datasets import Sequence, Value, ClassLabel, load_dataset, load_from_disk, 
 from transformers import AutoTokenizer
 
 SPECIAL_TOKEN = -100
+MWE = -100
 
 LICENSE = "MIT LICENSE"
 
@@ -158,7 +159,7 @@ def align_labels_with_tokens(labels, word_ids):
             new_labels.append(SPECIAL_TOKEN)
         else:
             # Same word as previous token
-            new_labels.append(SPECIAL_TOKEN)
+            new_labels.append(MWE)
 
     return new_labels
 
