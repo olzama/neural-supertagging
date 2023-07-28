@@ -1,13 +1,12 @@
 import sys
-from datasets import load_from_disk, load_dataset, Features, Value, Sequence, ClassLabel
-import evaluate
+from datasets import load_from_disk
 from transformers import AutoModelForTokenClassification, Trainer, TrainingArguments
 from transformers import DataCollatorForTokenClassification
 from transformers import AutoTokenizer
 import numpy as np
-from torch import nn, max as torch_max, IntTensor
+from torch import nn, max as torch_max
 from train_on_dataset import compute_metrics
-import torch
+
 
 
 SPECIAL_TOKEN = -100
@@ -121,22 +120,6 @@ if __name__ == "__main__":
         vocab_lines = f.readlines()
     for i, w in enumerate(vocab_lines):
         vocab[i] = w.strip()
-
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    model = best_model.to(device)
-    example = 'The seeds produced as much as 20% corn.'
-    tokenized_input_with_mapping = tokenizer(example, is_split_into_words=False, return_tensors="pt",return_offsets_mapping=True)
-    tokenized_input = tokenizer(example, is_split_into_words=False, return_tensors="pt")
-    tokenized_input = {k: v.to(device) for k, v in tokenized_input.items()}
-    tokens = tokenizer.convert_ids_to_tokens(tokenized_input["input_ids"][0])
-    output = model(**tokenized_input)
-    # Get character span for each token
-    offset_mapping = tokenized_input_with_mapping['offset_mapping'][0].tolist()
-    char_spans = [(start, end) for start, end in offset_mapping]
-    # Get the predicted labels for each token
-    predicted_labels = torch.argmax(output.logits, dim=2)[0].tolist()
-    char_spans_to_tags = {char_span: tag for char_span, tag in zip(char_spans, predicted_labels)}
-    #tokenizer.add_special_tokens({'additional_special_tokens': ['MWE']})
     # If the dataset was created from a single folder, then the whole thing gets passed to the predict()
     predictions = trainer.predict(dataset)
     # predictions = trainer.predict(dataset['test']) # If the dataset was created from separate train/dev/test folders
