@@ -25,7 +25,7 @@ def compute_metrics(eval_preds):
     with open('label_names.txt', 'r') as f:
         label_names = [l.strip() for l in f.readlines()]
     metric = evaluate.load("seqeval")
-    logits, labels = eval_preds
+    logits, labels, inputs = eval_preds
     predictions = np.argmax(logits, axis=-1)
     # Remove ignored index (special tokens) and convert to labels
     true_labels = [[label_names[l] for l in label if l != SPECIAL_TOKEN] for label in labels]

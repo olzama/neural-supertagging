@@ -171,6 +171,7 @@ def tokenize_and_align_labels(examples, tokenizer):
     new_labels = []
     for i, labels in enumerate(all_labels):
         word_ids = tokenized_inputs.word_ids(i)
+        charspan = tokenized_inputs.token_to_chars(i)
         new_labels.append(align_labels_with_tokens(labels, word_ids))
 
     tokenized_inputs["labels"] = new_labels

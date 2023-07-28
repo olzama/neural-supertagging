@@ -7,6 +7,8 @@ from transformers import AutoTokenizer
 import numpy as np
 from torch import nn, max as torch_max, IntTensor
 from train_on_dataset import compute_metrics
+import torch
+
 
 SPECIAL_TOKEN = -100
 MWE = 28996
@@ -39,17 +41,17 @@ def convert_predictions(predictions, model_config, vocab):
         this_sent_labels = []
         this_sent_tokens = []
         this_sent_token_nums = []
-        prev_j = None
+        prev_j = 0
         for j,idx in enumerate(p):
             #if idx == MWE:
             #    print("MWE")
             input_idx = predictions.inputs[i][j]
             if input_idx > 107: # meaningful words start at 107 in the vocab
                 if idx != SPECIAL_TOKEN:
+                    prev_j += 1
                     this_sent_labels.append(model_config.id2label[idx])
-                    this_sent_token_nums.append(j)
+                    this_sent_token_nums.append(prev_j)
                     prev = idx
-                    prev_j = j
                 else:
                     this_sent_labels.append(model_config.id2label[prev])
                     this_sent_token_nums.append(prev_j)
@@ -67,12 +69,22 @@ def convert_predictions(predictions, model_config, vocab):
 
 def convert_inputs(inputs, tokenizer, vocab):
     txt_inputs = []
-    for i in list(inputs):
-        txt_inputs.append(tokenizer.decode(i['input_ids'], skip_special_tokens=True))
-        for tok in i['input_ids']:
+    spans = []
+    for ii, i in enumerate(list(inputs)):
+        sent = tokenizer.decode(i['input_ids'], skip_special_tokens=True)
+        txt_inputs.append(sent)
+        spans.append([])
+        for t,tok in enumerate(i['input_ids']):
             print(vocab[tok])
+            vtok = vocab[tok]
+            lbl = i['labels'][t]
+            if lbl == -100:
+                print("SPECIAL_TOKEN")
+            # Find vocab[tok]'s character span in sent:
+            start, end = sent.find(vocab[tok]), sent.find(vocab[tok]) + len(vocab[tok])
+            spans[ii].append((start, end, vocab[tok]))
             #print(super(PreTrainedTokenizerBase, tokenizer).tokens_to_chars(tok))
-    return txt_inputs
+    return txt_inputs, spans
 
 
 if __name__ == "__main__":
@@ -110,14 +122,26 @@ if __name__ == "__main__":
     for i, w in enumerate(vocab_lines):
         vocab[i] = w.strip()
 
-    sent = 'The seeds produced as much as 20% corn.'
-    tok_sent = tokenizer.encode_plus(sent, return_offsets_mapping=True)
-    tokenizer.add_special_tokens({'additional_special_tokens': ['MWE']})
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    model = best_model.to(device)
+    example = 'The seeds produced as much as 20% corn.'
+    tokenized_input_with_mapping = tokenizer(example, is_split_into_words=False, return_tensors="pt",return_offsets_mapping=True)
+    tokenized_input = tokenizer(example, is_split_into_words=False, return_tensors="pt")
+    tokenized_input = {k: v.to(device) for k, v in tokenized_input.items()}
+    tokens = tokenizer.convert_ids_to_tokens(tokenized_input["input_ids"][0])
+    output = model(**tokenized_input)
+    # Get character span for each token
+    offset_mapping = tokenized_input_with_mapping['offset_mapping'][0].tolist()
+    char_spans = [(start, end) for start, end in offset_mapping]
+    # Get the predicted labels for each token
+    predicted_labels = torch.argmax(output.logits, dim=2)[0].tolist()
+    char_spans_to_tags = {char_span: tag for char_span, tag in zip(char_spans, predicted_labels)}
+    #tokenizer.add_special_tokens({'additional_special_tokens': ['MWE']})
     # If the dataset was created from a single folder, then the whole thing gets passed to the predict()
     predictions = trainer.predict(dataset)
     # predictions = trainer.predict(dataset['test']) # If the dataset was created from separate train/dev/test folders
     txt_predictions, input_tokens, word_numbers = convert_predictions(predictions,best_model.config,vocab)
-    #txt_inputs = convert_inputs(dataset,trainer.tokenizer,vocab)
+    txt_inputs, spans = convert_inputs(dataset,trainer.tokenizer,vocab)
     print(predictions.metrics)
     print('Saving predicted labels to ' + output_path + 'predictions.txt')
     with open(output_path + 'predictions.txt', 'w') as f:
@@ -128,5 +152,8 @@ if __name__ == "__main__":
             f.write(str(p) + '\n')
     with open(output_path + 'inputs.txt', 'w') as f:
         for p in input_tokens:
+            f.write(str(p) + '\n')
+    with open(output_path + 'spans.txt', 'w') as f:
+        for p in spans:
             f.write(str(p) + '\n')
 
