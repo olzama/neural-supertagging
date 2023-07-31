@@ -69,7 +69,15 @@ def predict_tags_for_sentence(example, tokenizer, model, device):
     # Get the predicted labels for each token
     predicted_labels = torch.argmax(output.logits, dim=2)[0].tolist()
     char_spans_to_tags = {char_span: tag for char_span, tag in zip(char_spans, predicted_labels)}
-    return char_spans_to_tags
+    adjusted = adjust_mapping(char_spans_to_tags, example['char_spans'])
+    return adjusted
+
+def adjust_mapping(char_spans_to_tags, char_spans):
+    adjusted = {}
+    for char_span, tag in char_spans_to_tags.items():
+        if char_span in char_spans:
+            adjusted[char_spans[char_span]['span']] = tag
+    return adjusted
 
 if __name__ == "__main__":
     model_path = sys.argv[1]
