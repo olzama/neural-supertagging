@@ -152,7 +152,7 @@ if __name__ == "__main__":
             for i, span in enumerate(sent):
                 f.write(str(span))
                 if i < len(sent) - 1:
-                    f.write(', ')
+                    f.write('\t')
             f.write('\n')
     with open(output_path + '/predictions.txt', 'w') as f:
         for sent in all_predictions:
