@@ -127,6 +127,12 @@ def find_multi_token_tag(oracle_spans, char_span):
                 return spans
     return None
 
+def convert_predictions(predictions, model_config):
+    txt_labels = []
+    for pred in predictions:
+        txt_labels.append([model_config.id2label[idx] for idx in pred])
+    return txt_labels
+
 if __name__ == "__main__":
     model_path = sys.argv[1]
     dataset_path = sys.argv[2]
@@ -141,8 +147,21 @@ if __name__ == "__main__":
     for example in sentences:
         char_spans_to_tags = predict_tags_for_sentence(example, tokenizer, model, device)
         all_predictions.append(char_spans_to_tags)
+    with open(output_path + '/spans.txt', 'w') as f:
+        for sent in all_predictions:
+            for i, span in enumerate(sent):
+                f.write(str(span))
+                if i < len(sent) - 1:
+                    f.write(', ')
+            f.write('\n')
     with open(output_path + '/predictions.txt', 'w') as f:
-        f.write(str(all_predictions))
+        for sent in all_predictions:
+            for i,span in enumerate(sent):
+                lbl = model.config.id2label[sent[span]]
+                f.write(str(lbl))
+                if i < len(sent) - 1:
+                    f.write(', ')
+            f.write('\n')
         #f.write(json.dumps(char_spans_to_tags))
         # for char_span, tag in char_spans_to_tags.items():
         #     f.write(str(char_span) + '\t' + str(tag) + '\n')
