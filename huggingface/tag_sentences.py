@@ -118,13 +118,14 @@ def adjust_mapping(char_spans_to_tags, oracle_spans):
 def find_multi_token_tag(oracle_spans, char_span):
     for oracle_span in oracle_spans:
         if oracle_spans[oracle_span][0]['start'] == char_span[0]:
-            if len(oracle_spans[oracle_span]) == 1:
-                return [str(oracle_span)]
-            else:
-                spans = []
-                for span in oracle_spans[oracle_span]:
-                    spans.append(str((span['start'], span['end'])))
-                return spans
+            return [str(oracle_span)]
+            # if len(oracle_spans[oracle_span]) == 1:
+            #     return [str(oracle_span)]
+            # else:
+            #     spans = []
+            #     for span in oracle_spans[oracle_span]:
+            #         spans.append(str((span['start'], span['end'])))
+            #     return spans
     return None
 
 def convert_predictions(predictions, model_config):
