@@ -1,4 +1,9 @@
-TO REPRODUCE THE EXPERIMENT DESCRIBED IN THE PAPER:
+TO REPRODUCE THE EXPERIMENT DESCRIBED IN THE PAPER (need a GPU):
+1. Install the dependencies as per requirements.txt
+2. python3 train_on_dataset.py path/to/traininig_dataset path/to/dev_dataset path/to/save/model
+3. python3 evaluate_hf.py path/to/save/model/saved/ path/to/test_dataset path/to/log/output
+
+FOR THE NCRF++ model:
 
 1. Install the dependencies as per requirements.txt (in particular, torch==1.11.0)
 2. Download the glove.840B.300d word embeddings from https://nlp.stanford.edu/projects/glove/
