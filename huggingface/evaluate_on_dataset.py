@@ -129,14 +129,22 @@ if __name__ == "__main__":
     print('Saving predicted labels to ' + output_path + 'predictions.txt')
     with open(output_path + 'predictions.txt', 'w') as f:
         for p in txt_predictions:
-            f.write(str(p) + '\n')
-    with open(output_path + 'word_nums.txt', 'w') as f:
-        for p in word_numbers:
-            f.write(str(p) + '\n')
-    with open(output_path + 'inputs.txt', 'w') as f:
-        for p in input_tokens:
-            f.write(str(p) + '\n')
+            # strip the [ and ] from the list, strip single quotes from each item, and write to the file:
+            f.write(str(p)[1:-1].replace("'", "") + '\n')
+    # with open(output_path + 'word_nums.txt', 'w') as f:
+    #     for p in word_numbers:
+    #         f.write(str(p) + '\n')
+    # with open(output_path + 'inputs.txt', 'w') as f:
+    #     for p in input_tokens:
+    #         f.write(str(p) + '\n')
     with open(output_path + 'spans.txt', 'w') as f:
         for p in spans:
-            f.write(str(p) + '\n')
+            # Turn the list of the format: [(-1, 4, '[CLS]'), (0, 3, 'and')] into (-1,4) (0,3) and write to file such that there is no comma between (-1,4) and (0,3):
+            for i,s in enumerate(p):
+                if s[0] >= 0:
+                    span = str(s[:2])
+                    f.write(span)
+                    if i < len(p)-1:
+                        f.write('\t')
+            f.write('\n')
 

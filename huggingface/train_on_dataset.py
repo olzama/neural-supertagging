@@ -25,7 +25,10 @@ def compute_metrics(eval_preds):
     with open('label_names.txt', 'r') as f:
         label_names = [l.strip() for l in f.readlines()]
     metric = evaluate.load("seqeval")
+    #if test:
     logits, labels, inputs = eval_preds
+    #else:
+    #logits, labels = eval_preds
     predictions = np.argmax(logits, axis=-1)
     # Remove ignored index (special tokens) and convert to labels
     true_labels = [[label_names[l] for l in label if l != SPECIAL_TOKEN] for label in labels]
@@ -83,7 +86,7 @@ if __name__ == '__main__':
     training_args = TrainingArguments(
         output_dir= output_path+'/checkpoints/', #"/media/olga/kesha/BERT/erg/3e-5/"
         evaluation_strategy = "epoch",
-        learning_rate=5e-6, #fix commit message
+        learning_rate=2e-5, #fix commit message
         num_train_epochs=50,
         weight_decay=0.01,
         save_strategy = "epoch",
