@@ -1,3 +1,4 @@
+import glob
 import sys
 from transformers import AutoModelForTokenClassification
 from transformers import AutoTokenizer
@@ -7,7 +8,8 @@ import torch
 import re
 from delphin import itsdb
 from delphin.tokens import YYTokenLattice
-
+from tsdb.TestsuiteProcessor import TestsuiteProcessor
+from tsdb.tok_classification import Token_Tag_Extractor
 
 SPECIAL_TOKEN = -100
 MWE = 28996
@@ -52,11 +54,14 @@ def extract_span(terminal):
         return None
 
 
-def extract_sentences(tsuite):
+def extract_sentences(profiles, lextypes, tte):
     sentences = []
-    ts = itsdb.TestSuite(tsuite)
+    #for ppath in glob.iglob(profiles + '/**'):
+    ts = itsdb.TestSuite(profiles)
+    #ts = itsdb.TestSuite(ppath)
     items = list(ts.processed_items())
     for item in items:
+        this_gold = []
         words = []
         terminals = None
         lattice = None
@@ -66,8 +71,8 @@ def extract_sentences(tsuite):
         if (item['p-input']):
             lattice = YYTokenLattice.from_string(item['p-input'])
         if lattice and terminals:
-            # toks_terms = find_corresponding_toks(lattice.tokens, terminals)
             for i, t in enumerate(terminals):
+                this_gold.append(str(lextypes.get(t.parent.entity, "None_label")))
                 terminal_span = extract_span(t)
                 tokens = find_corresponding_toks(lattice.tokens, terminal_span)
                 words.append(t.form)
@@ -76,7 +81,8 @@ def extract_sentences(tsuite):
                     char_spans[str(terminal_span)].append({'terminal-form': t.form, 'token-form': tok.form,
                                                               'start':tok.lnk.data[0],
                                                               'end': tok.lnk.data[1]})
-        sentences.append({'sentence': item['i-input'], 'words':words, 'char_spans': char_spans})
+        assert len(words) == len(this_gold) == len(char_spans)
+        sentences.append({'sentence': item['i-input'], 'words':words, 'char_spans': char_spans, 'gold': this_gold})
     return sentences
 
 
@@ -131,23 +137,63 @@ def find_multi_token_tag(oracle_spans, char_span):
 def convert_predictions(predictions, model_config):
     txt_labels = []
     for pred in predictions:
-        txt_labels.append([model_config.id2label[idx] for idx in pred])
+        txt_labels.append([model_config.id2label[idx] for idx in list(pred.values())])
     return txt_labels
 
+def check_accuracy(predictions, sentences):
+    correct = 0
+    total = 0
+    correct_excluding_gen_le = 0
+    correct_sentences = 0
+    correct_sen_excluding_gen_le = 0
+    for pred, sen in zip(predictions, sentences):
+        whole_correct = True
+        whole_correct_excluding_gen_le = True
+        for p, g in zip(pred, sen['gold']):
+            if p == g:
+                correct += 1
+                correct_excluding_gen_le += 1
+            else:
+                whole_correct = False
+                whole_correct_excluding_gen_le = False
+                if p == "n_-_pn-gen_le":
+                    whole_correct_excluding_gen_le = True
+                    correct_excluding_gen_le += 1
+                else:
+                    print("Predicted: ", p, " Gold: ", g, "Sentence: ", sen['sentence'])
+            total += 1
+        if whole_correct:
+            correct_sentences += 1
+        if whole_correct_excluding_gen_le:
+            correct_sen_excluding_gen_le += 1
+    return correct/total, correct_sentences/len(sentences), correct_excluding_gen_le/total, \
+           correct_sen_excluding_gen_le/len(sentences)
+
 if __name__ == "__main__":
-    model_path = sys.argv[1]
-    dataset_path = sys.argv[2]
-    output_path = sys.argv[3]
+    lexicons = sys.argv[1]
+    model_path = sys.argv[2]
+    dataset_path = sys.argv[3]
+    output_path = sys.argv[4]
+
+    tte = Token_Tag_Extractor()
+    lextypes = tte.parse_lexicons(lexicons)
     best_model = AutoModelForTokenClassification.from_pretrained(model_path) #"/media/olga/kesha/BERT/erg/debug/"
     tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=True)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = best_model.to(device)
-    sentences = extract_sentences(dataset_path)
-    #example = 'The seeds produced as much as 20% corn.'
+    sentences = extract_sentences(dataset_path, lextypes,tte)
     all_predictions = []
     for example in sentences:
         char_spans_to_tags = predict_tags_for_sentence(example, tokenizer, model, device)
         all_predictions.append(char_spans_to_tags)
+    text_predictions = convert_predictions(all_predictions, model.config)
+    token_acc, sen_acc, token_acc_nogenle, sen_acc_nogenle = check_accuracy(text_predictions, sentences)
+    print("Token accuracy: {}, Sentence accuracy: {}".format(token_acc, sen_acc))
+    print("Token accuracy excluding generic le: {}, Sentence accuracy excluding generic_le: {}".format(token_acc_nogenle,
+                                                                                                       sen_acc_nogenle))
+    with open(output_path + '/sentences.txt', 'w') as f:
+        for sent in sentences:
+            f.write(sent['sentence'] + '\n')
     with open(output_path + '/spans.txt', 'w') as f:
         for sent in all_predictions:
             for i, span in enumerate(sent):
